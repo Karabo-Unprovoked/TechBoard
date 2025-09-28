@@ -20,7 +20,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
-              src="/Logo.png" 
+              src="/Untitled-CG.png" 
               alt="Guardian Assist Logo" 
               className="w-10 h-10 rounded-lg"
             />

@@ -63,7 +63,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <div className="text-center mb-8">
           <div className="mb-4">
             <img 
-              src="/Logo.png" 
+              src="/Untitled-CG.png" 
               alt="Guardian Assist Logo" 
               className="w-16 h-16 mx-auto rounded-xl"
             />
