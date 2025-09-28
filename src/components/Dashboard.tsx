@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, LogOut, Monitor, FileText } from 'lucide-react';
+import { Plus, LogOut, Shield, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
@@ -20,7 +20,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-lg">
-              <Monitor className="text-white" size={24} />
+              <Shield className="text-white" size={24} />
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Guardian Assist</h1>
