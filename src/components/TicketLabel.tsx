@@ -178,7 +178,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack, onNewT
                 >
                   {/* Header */}
                   <div className="text-center border-b border-gray-200 pb-3">
-                    <h3 className="text-lg font-bold text-gray-900">RepairTracker</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Guardian Assist</h3>
                     <p className="text-sm text-gray-600">Computer Repair Service</p>
                   </div>
 

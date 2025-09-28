@@ -23,7 +23,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
               <Monitor className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">RepairTracker</h1>
+              <h1 className="text-xl font-bold text-gray-900">Guardian Assist</h1>
               <p className="text-sm text-gray-600">Computer Repair Management</p>
             </div>
           </div>
