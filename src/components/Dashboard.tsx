@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, LogOut, FileText } from 'lucide-react';
+import { Plus, LogOut, FileText, Monitor } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
