@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface LoginFormProps {
@@ -61,8 +61,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="bg-blue-600 p-3 rounded-xl inline-block mb-4">
-            <Shield className="text-white" size={32} />
+          <div className="mb-4">
+            <img 
+              src="/Logo.png" 
+              alt="Guardian Assist Logo" 
+              className="w-16 h-16 mx-auto rounded-xl"
+            />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Guardian Assist</h1>
           <p className="text-gray-600 mt-2">Computer Repair Management</p>
