@@ -7,9 +7,10 @@ interface CustomerTrackingProps {
   onBack: () => void;
   onLogout: () => void;
   isAuthenticated: boolean;
+  onDashboard?: () => void;
 }
 
-export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLogout, isAuthenticated }) => {
+export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLogout, isAuthenticated, onDashboard }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
@@ -158,14 +159,26 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
             </div>
             
             {isAuthenticated && (
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
-                style={{ color: SECONDARY }}
-              >
-                <LogOut size={16} />
-                <span>Logout</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {onDashboard && (
+                  <button
+                    onClick={onDashboard}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100"
+                    style={{ color: SECONDARY }}
+                  >
+                    <User size={16} />
+                    <span>Dashboard</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100"
+                  style={{ color: SECONDARY }}
+                >
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </button>
+              </div>
             )}
           </div>
         </header>

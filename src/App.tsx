@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { LoginForm } from './components/LoginForm';
 import { CustomerTracking } from './components/CustomerTracking';
+import { Dashboard } from './components/Dashboard';
 import { supabase } from './lib/supabase';
 
-type AppState = 'login' | 'track-customer';
+type AppState = 'login' | 'track-customer' | 'dashboard';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('login');
@@ -44,6 +45,10 @@ function App() {
     setAppState('track-customer');
   };
 
+  const handleDashboard = () => {
+    setAppState('dashboard');
+  };
+
   const handleBackToLogin = () => {
     setAppState('login');
   };
@@ -61,7 +66,7 @@ function App() {
 
   switch (appState) {
     case 'login':
-      return <LoginForm onTrackCustomer={handleTrackCustomer} />;
+      return <LoginForm onTrackCustomer={handleTrackCustomer} onDashboard={handleDashboard} />;
     
     case 'track-customer':
       return (
@@ -69,6 +74,20 @@ function App() {
           onBack={handleBackToLogin}
           onLogout={handleLogout}
           isAuthenticated={isAuthenticated}
+          onDashboard={isAuthenticated ? handleDashboard : undefined}
+        />
+      );
+    
+    case 'dashboard':
+      if (!isAuthenticated) {
+        setAppState('login');
+        return null;
+      }
+      return (
+        <Dashboard 
+          onBack={handleBackToLogin}
+          onLogout={handleLogout}
+          onTrackCustomer={handleTrackCustomer}
         />
       );
     

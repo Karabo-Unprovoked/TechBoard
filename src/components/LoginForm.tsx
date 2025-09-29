@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase';
 
 interface LoginFormProps {
   onTrackCustomer: () => void;
+  onDashboard: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboard }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +36,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer }) => {
         setError(error.message);
       } else {
         // Authentication state change will be handled by App component
-        onTrackCustomer();
+        onDashboard();
       }
     } catch (err) {
       setError('An unexpected error occurred');
