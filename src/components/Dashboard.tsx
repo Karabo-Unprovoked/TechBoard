@@ -89,7 +89,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     return matchesSearch && matchesStatus;
   });
 
-  const PRIMARY = '#ffb400';
+  const PRIMARY = '#5d5d5d';
   const SECONDARY = '#5d5d5d';
 
   return (
