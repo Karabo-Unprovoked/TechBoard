@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, LogOut, Monitor, Clock, User, Laptop, Calendar } from 'lucide-react';
+import { Search, LogOut, Monitor, Clock, User, Laptop, Calendar, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
