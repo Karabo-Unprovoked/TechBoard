@@ -1,106 +1,276 @@
-import React from 'react';
-import { DashboardHeader } from './DashboardHeader';
-import { StatCard } from './StatCard';
-import { QuickActions } from './QuickActions';
-import { RevenueChart } from './RevenueChart';
-import { TicketsOverview } from './TicketsOverview';
-import { TechniciansPanel } from './TechniciansPanel';
-import { InventoryAlert } from './InventoryAlert';
-import { LogOut, ArrowLeft, Ticket, CheckCircle, DollarSign, Clock } from 'lucide-react';
-import { mockStats, mockInventory, mockTickets, mockTechnicians } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import type { Customer, RepairTicket } from '../lib/supabase';
+import { CustomerForm } from './CustomerForm';
+import { TicketForm } from './TicketForm';
+import { TicketsView } from './TicketsView';
+import { TicketLabel } from './TicketLabel';
 
 interface DashboardProps {
+  onBack: () => void;
   onLogout: () => void;
-  onNavigateToTracking: () => void;
+  onTrackCustomer: () => void;
 }
 
-export function Dashboard({ onLogout, onNavigateToTracking }: DashboardProps) {
+type DashboardView = 'tickets' | 'new-customer' | 'new-ticket' | 'label';
+
+export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
+  const [currentView, setCurrentView] = useState<DashboardView>('tickets');
+  const [tickets, setTickets] = useState<RepairTicket[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    onLogout();
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Load tickets with customer data
+      const { data: ticketsData, error: ticketsError } = await supabase
+        .from('repair_tickets')
+        .select(`
+          *,
+          customer:customers(*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (ticketsError) throw ticketsError;
+
+      // Load customers
+      const { data: customersData, error: customersError } = await supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (customersError) throw customersError;
+
+      setTickets(ticketsData || []);
+      setCustomers(customersData || []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCustomerCreated = (customer: Customer) => {
+    setCustomers(prev => [customer, ...prev]);
+    setCurrentView('new-ticket');
+  };
+
+  const handleTicketCreated = (ticket: RepairTicket) => {
+    setTickets(prev => [ticket, ...prev]);
+    setSelectedTicket(ticket);
+    setCurrentView('label');
+  };
+
+  const handleViewLabel = (ticket: RepairTicket) => {
+    setSelectedTicket(ticket);
+    setCurrentView('label');
+  };
+
+  const filteredTickets = tickets.filter(ticket => {
+    const matchesSearch = ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ticket.device_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (ticket.customer?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const PRIMARY = '#ffb400';
+  const SECONDARY = '#5d5d5d';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">Guardian Assist</h1>
-              <span className="text-sm text-gray-500">Repair Management Dashboard</span>
+    <>
+      {/* Load Montserrat from Google Fonts */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+
+      <div
+        className="min-h-screen flex"
+        style={{
+          fontFamily: 'Montserrat, sans-serif',
+          backgroundColor: '#f8f9fa',
+        }}
+      >
+        {/* Left Sidebar */}
+        <div
+          className="w-80 flex flex-col"
+          style={{ backgroundColor: PRIMARY }}
+        >
+          {/* Logo and Brand */}
+          <div className="p-8">
+            <div className="flex items-center gap-3 mb-8">
+              <img 
+                src="/Untitled-CG.png" 
+                alt="Guardian Assist Logo" 
+                className="w-12 h-12 rounded-xl bg-white/10 p-1"
+              />
+              <div>
+                <h1 className="text-xl font-bold text-white">Guardian Assist</h1>
+                <p className="text-sm text-white/80">Computer Repair Management</p>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
+          </div>
+
+          {/* Navigation Menu */}
+          <div className="flex-1 px-6">
+            <nav className="space-y-2">
               <button
-                onClick={onNavigateToTracking}
-                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                onClick={() => setCurrentView('tickets')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'tickets' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/5'
+                }`}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Track Customer
+                <Search size={20} />
+                <span>View Tickets</span>
               </button>
               <button
-                onClick={onLogout}
-                className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 hover:shadow-md transition-all duration-200"
+                onClick={() => setCurrentView('new-customer')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'new-customer' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/5'
+                }`}
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                <Plus size={20} />
+                <span>New Customer</span>
               </button>
+              <button
+                onClick={() => setCurrentView('new-ticket')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'new-ticket' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/5'
+                }`}
+              >
+                <Plus size={20} />
+                <span>New Ticket</span>
+              </button>
+              <button
+                onClick={onTrackCustomer}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors font-medium"
+              >
+                <Search size={20} />
+                <span>Track Customer</span>
+              </button>
+            </nav>
+          </div>
+
+          {/* Footer */}
+          <div className="p-6">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors font-medium"
+            >
+              <LogOut size={20} />
+              <span>Logout</span>
+            </button>
+            <p className="text-xs text-white/60 text-center mt-4">
+              © 2025 Guardian Assist. All rights reserved.
+            </p>
+          </div>
+        </div>
+
+        {/* Right Content Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="bg-white shadow-sm border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
+                  {currentView === 'tickets' && 'Repair Tickets'}
+                  {currentView === 'new-customer' && 'New Customer'}
+                  {currentView === 'new-ticket' && 'New Repair Ticket'}
+                  {currentView === 'label' && 'Ticket Label'}
+                </h2>
+                <p className="text-gray-600">
+                  {currentView === 'tickets' && 'Manage and track repair tickets'}
+                  {currentView === 'new-customer' && 'Add a new customer to the system'}
+                  {currentView === 'new-ticket' && 'Create a new repair ticket'}
+                  {currentView === 'label' && 'Print ticket label for device tracking'}
+                </p>
+              </div>
+              
+              {currentView === 'tickets' && (
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Search tickets..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none w-64"
+                      style={{ focusRingColor: PRIMARY }}
+                    />
+                  </div>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                    style={{ focusRingColor: PRIMARY }}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="received">Received</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="waiting-parts">Waiting Parts</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 p-6">
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: PRIMARY }}></div>
+                  <p className="text-gray-600">Loading...</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {currentView === 'tickets' && (
+                  <TicketsView 
+                    tickets={filteredTickets} 
+                    onViewLabel={handleViewLabel}
+                    onRefresh={loadData}
+                  />
+                )}
+                {currentView === 'new-customer' && (
+                  <CustomerForm onCustomerCreated={handleCustomerCreated} />
+                )}
+                {currentView === 'new-ticket' && (
+                  <TicketForm 
+                    customers={customers} 
+                    onTicketCreated={handleTicketCreated}
+                  />
+                )}
+                {currentView === 'label' && selectedTicket && (
+                  <TicketLabel 
+                    ticket={selectedTicket} 
+                    onBack={() => setCurrentView('tickets')}
+                  />
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DashboardHeader />
-        
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Active Tickets"
-            value={mockStats.activeTickets}
-            changeType="positive"
-            change="+12%"
-            icon={Ticket}
-            color="blue"
-          />
-          <StatCard
-            title="Completed Today"
-            value={mockStats.completedToday}
-            changeType="positive"
-            change="+5%"
-            icon={CheckCircle}
-            color="green"
-          />
-          <StatCard
-            title="Revenue (Month)"
-            value={`R${mockStats.monthlyRevenue.toLocaleString()}`}
-            changeType="positive"
-            change="+8%"
-            icon={DollarSign}
-            color="purple"
-          />
-          <StatCard
-            title="Avg. Repair Time"
-            value={`${mockStats.avgRepairTime} days`}
-            changeType="negative"
-            change="-15%"
-            icon={Clock}
-            color="orange"
-          />
-        </div>
-
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            <QuickActions />
-            <RevenueChart />
-            <TicketsOverview tickets={mockTickets} />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            <TechniciansPanel technicians={mockTechnicians} />
-            <InventoryAlert inventory={mockInventory} />
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   );
-}
+};
