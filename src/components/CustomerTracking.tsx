@@ -142,7 +142,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
               </button>
               <div className="flex items-center gap-3">
                 <img
-                  src="/Untitled-CG.png"
+                  src="/Untitled-CG2-01.png"
                   alt="Guardian Assist Logo"
                   className="w-10 h-10 rounded-lg"
                 />
