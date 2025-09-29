@@ -40,7 +40,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onTicketCreated, onB
       if (customerError) throw customerError;
 
       // Generate ticket number
-      const { data: ticketNumber } = await supabase.rpc('generate_ticket_number');
+      const { data: ticketNumber, error: ticketNumberError } = await supabase.rpc('generate_ticket_number');
+      
+      if (ticketNumberError) {
+        console.error('Error generating ticket number:', ticketNumberError);
+        throw new Error('Failed to generate ticket number');
+      }
 
       // Create repair ticket
       const { data: ticket, error: ticketError } = await supabase
