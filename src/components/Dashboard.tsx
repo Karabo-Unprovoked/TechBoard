@@ -118,30 +118,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
 
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-3">
-                <div className="text-center py-16">
-                  <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 inline-block">
-                    <div
-                      className="p-4 rounded-xl inline-block mb-6"
-                      style={{ background: 'rgba(255,180,0,0.12)' }}
-                    >
-                      <Plus size={48} style={{ color: PRIMARY }} />
-                    </div>
+            {/* Main Content Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+              {/* Create New Ticket Section */}
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div className="text-center">
+                  <div
+                    className="p-4 rounded-xl inline-block mb-6"
+                    style={{ background: 'rgba(255,180,0,0.12)' }}
+                  >
+                    <Plus size={48} style={{ color: PRIMARY }} />
+                  </div>
 
-                    <h2 className="text-2xl font-bold mb-4" style={{ color: SECONDARY }}>
-                      Ready to Create a New Repair Ticket?
-                    </h2>
+                  <h2 className="text-2xl font-bold mb-4" style={{ color: SECONDARY }}>
+                    Ready to Create a New Repair Ticket?
+                  </h2>
 
-                    <p className="mb-8 max-w-md" style={{ color: SECONDARY }}>
-                      Start by entering customer information and device details. 
-                      We'll generate a QR code label for easy tracking.
-                    </p>
+                  <p className="mb-8" style={{ color: SECONDARY }}>
+                    Start by entering customer information and device details. 
+                    We'll generate a QR code label for easy tracking.
+                  </p>
 
+                  <div className="space-y-4">
                     <button
                       onClick={onNewTicket}
-                      className="px-8 py-4 rounded-xl transition-colors font-semibold text-lg shadow-lg transform hover:-translate-y-0.5"
+                      className="w-full px-8 py-4 rounded-xl transition-colors font-semibold text-lg shadow-lg transform hover:-translate-y-0.5"
                       style={{
                         backgroundColor: PRIMARY,
                         color: '#1f1f1f',
@@ -151,125 +152,122 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
                       Create New Ticket
                     </button>
 
-                    <div className="mt-4">
-                      <button
-                        onClick={onViewTickets}
-                        className="px-8 py-4 rounded-xl transition-colors font-semibold text-lg shadow-lg transform hover:-translate-y-0.5"
-                        style={{
-                          backgroundColor: SECONDARY,
-                          color: '#ffffff',
-                          boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
-                        }}
-                      >
-                        View All Tickets
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-                    <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(34,197,94,0.08)' }}>
-                      <Monitor size={24} style={{ color: '#22c55e' }} />
-                    </div>
-                    <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
-                      Quick Intake
-                    </h3>
-                    <p className="text-sm" style={{ color: SECONDARY }}>
-                      Capture customer and device information in under 2 minutes
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-                    <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(139,92,246,0.08)' }}>
-                      <FileText size={24} style={{ color: '#8b5cf6' }} />
-                    </div>
-                    <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
-                      View Tickets
-                    </h3>
-                    <p className="text-sm" style={{ color: SECONDARY }}>
-                      Search and view all created repair tickets with detailed information
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-                    <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(255,165,0,0.08)' }}>
-                      <Plus size={24} style={{ color: 'rgb(255,165,0)' }} />
-                    </div>
-                    <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
-                      QR Code Labels
-                    </h3>
-                    <p className="text-sm" style={{ color: SECONDARY }}>
-                      Automatically generate printable labels with QR codes for tracking
-                    </p>
+                    <button
+                      onClick={onViewTickets}
+                      className="w-full px-8 py-4 rounded-xl transition-colors font-semibold text-lg shadow-lg transform hover:-translate-y-0.5"
+                      style={{
+                        backgroundColor: SECONDARY,
+                        color: '#ffffff',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      View All Tickets
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Sidebar - Recent Tickets */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Clock size={20} style={{ color: PRIMARY }} />
-                    <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>
-                      Recent Tickets
-                    </h3>
-                  </div>
+              {/* Recent Tickets Section */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <Clock size={20} style={{ color: PRIMARY }} />
+                  <h3 className="text-xl font-semibold" style={{ color: SECONDARY }}>
+                    Recent Tickets
+                  </h3>
+                </div>
 
-                  {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-2" style={{ borderColor: PRIMARY }}></div>
-                      <p className="text-sm" style={{ color: SECONDARY }}>Loading...</p>
-                    </div>
-                  ) : recentTickets.length === 0 ? (
-                    <div className="text-center py-8">
-                      <FileText size={32} className="text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm" style={{ color: SECONDARY }}>No tickets yet</p>
-                      <p className="text-xs text-gray-500">Create your first ticket to get started</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {recentTickets.map((ticket) => (
-                        <div key={ticket.id} className="border border-gray-100 rounded-lg p-3 hover:bg-gray-50 transition-colors">
-                          <div className="flex items-start justify-between mb-2">
-                            <span className="font-medium text-sm" style={{ color: SECONDARY }}>
-                              {ticket.ticket_number}
-                            </span>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                              {ticket.status.replace('-', ' ')}
-                            </span>
+                {loading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-2" style={{ borderColor: PRIMARY }}></div>
+                    <p className="text-sm" style={{ color: SECONDARY }}>Loading...</p>
+                  </div>
+                ) : recentTickets.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText size={32} className="text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm" style={{ color: SECONDARY }}>No tickets yet</p>
+                    <p className="text-xs text-gray-500">Create your first ticket to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {recentTickets.map((ticket) => (
+                      <div key={ticket.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between mb-2">
+                          <span className="font-semibold text-sm" style={{ color: SECONDARY }}>
+                            {ticket.ticket_number}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                            {ticket.status.replace('-', ' ')}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <User size={14} />
+                            <span className="truncate">{ticket.customer.name}</span>
                           </div>
-                          
-                          <div className="space-y-1 text-xs text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <User size={12} />
-                              <span className="truncate">{ticket.customer.name}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Laptop size={12} />
-                              <span>{ticket.device_type}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar size={12} />
-                              <span>{formatDate(ticket.created_at)}</span>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <Laptop size={14} />
+                            <span>{ticket.device_type}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar size={14} />
+                            <span>{formatDate(ticket.created_at)}</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                  <button
-                    onClick={onViewTickets}
-                    className="w-full mt-4 py-2 px-4 rounded-lg transition-colors font-medium text-sm"
-                    style={{
-                      backgroundColor: SECONDARY,
-                      color: '#ffffff',
-                    }}
-                  >
-                    View All
-                  </button>
+                <button
+                  onClick={onViewTickets}
+                  className="w-full mt-6 py-3 px-4 rounded-lg transition-colors font-medium"
+                  style={{
+                    backgroundColor: SECONDARY,
+                    color: '#ffffff',
+                  }}
+                >
+                  View All Tickets
+                </button>
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+                <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(34,197,94,0.08)' }}>
+                  <Monitor size={24} style={{ color: '#22c55e' }} />
                 </div>
+                <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
+                  Quick Intake
+                </h3>
+                <p className="text-sm" style={{ color: SECONDARY }}>
+                  Capture customer and device information in under 2 minutes
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+                <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(139,92,246,0.08)' }}>
+                  <FileText size={24} style={{ color: '#8b5cf6' }} />
+                </div>
+                <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
+                  View Tickets
+                </h3>
+                <p className="text-sm" style={{ color: SECONDARY }}>
+                  Search and view all created repair tickets with detailed information
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+                <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(255,165,0,0.08)' }}>
+                  <Plus size={24} style={{ color: 'rgb(255,165,0)' }} />
+                </div>
+                <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
+                  QR Code Labels
+                </h3>
+                <p className="text-sm" style={{ color: SECONDARY }}>
+                  Automatically generate printable labels with QR codes for tracking
+                </p>
               </div>
             </div>
           </div>
