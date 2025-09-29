@@ -1,143 +1,101 @@
 import React from 'react';
-import { ArrowLeft, LogOut, User, Plus, FileText, Users, Package, Settings, DollarSign, Clock, CheckCircle, TrendingUp } from 'lucide-react';
+import { DashboardHeader } from './DashboardHeader';
 import { StatCard } from './StatCard';
 import { QuickActions } from './QuickActions';
 import { RevenueChart } from './RevenueChart';
 import { TicketsOverview } from './TicketsOverview';
 import { TechniciansPanel } from './TechniciansPanel';
 import { InventoryAlert } from './InventoryAlert';
-import { mockStats, mockTickets, mockTechnicians, mockInventory } from '../data/mockData';
+import { LogOut, ArrowLeft } from 'lucide-react';
 
 interface DashboardProps {
-  onBack: () => void;
   onLogout: () => void;
-  onTrackCustomer: () => void;
+  onNavigateToTracking: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
-  const handleLogout = async () => {
-    onLogout();
-  };
-
-  const PRIMARY = '#ffb400';
-  const SECONDARY = '#5d5d5d';
-
+export function Dashboard({ onLogout, onNavigateToTracking }: DashboardProps) {
   return (
-    <>
-      {/* Load Montserrat from Google Fonts */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-
-      <div
-        className="min-h-screen bg-gray-50"
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
-      >
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-100 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={onBack}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div className="flex items-center gap-3">
-                <img
-                  src="/Untitled-CG.png"
-                  alt="Guardian Assist Logo"
-                  className="w-10 h-10 rounded-lg"
-                />
-                <div>
-                  <h1 className="text-xl font-bold" style={{ color: SECONDARY }}>
-                    Guardian Assist Dashboard
-                  </h1>
-                  <p className="text-sm" style={{ color: SECONDARY }}>
-                    Computer Repair Management System
-                  </p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900">Guardian Assist</h1>
+              <span className="text-sm text-gray-500">Repair Management Dashboard</span>
             </div>
-            
-            <div className="flex items-center gap-2">
+            <div className="flex items-center space-x-4">
               <button
-                onClick={onTrackCustomer}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100"
-                style={{ color: SECONDARY }}
+                onClick={onNavigateToTracking}
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
               >
-                <FileText size={16} />
-                <span>Track Customer</span>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Track Customer
               </button>
               <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100"
-                style={{ color: SECONDARY }}
+                onClick={onLogout}
+                className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 hover:shadow-md transition-all duration-200"
               >
-                <LogOut size={16} />
-                <span>Logout</span>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
               </button>
             </div>
           </div>
-        </header>
-      
-        <main className="p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatCard
-                title="Total Revenue"
-                value={`$${mockStats.totalRevenue.toLocaleString()}`}
-                change="+12.5%"
-                changeType="positive"
-                icon={DollarSign}
-                color="green"
-              />
-              <StatCard
-                title="Active Tickets"
-                value={mockStats.pendingTickets}
-                change="+3 today"
-                changeType="positive"
-                icon={FileText}
-                color="blue"
-              />
-              <StatCard
-                title="Avg. Repair Time"
-                value={`${mockStats.averageRepairTime} days`}
-                change="-0.5 days"
-                changeType="positive"
-                icon={Clock}
-                color="orange"
-              />
-              <StatCard
-                title="Completed Today"
-                value={mockStats.completedTickets}
-                change="+8%"
-                changeType="positive"
-                icon={CheckCircle}
-                color="purple"
-              />
-            </div>
-          
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column */}
-              <div className="lg:col-span-2 space-y-6">
-                <TicketsOverview tickets={mockTickets} />
-                <RevenueChart />
-              </div>
-              
-              {/* Right Column */}
-              <div className="space-y-6">
-                <QuickActions />
-                <TechniciansPanel technicians={mockTechnicians} />
-                <InventoryAlert inventory={mockInventory} />
-              </div>
-            </div>
-          </div>
-        </main>
+        </div>
       </div>
-    </>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DashboardHeader />
+        
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Active Tickets"
+            value="24"
+            change="+12%"
+            trend="up"
+            icon="ticket"
+          />
+          <StatCard
+            title="Completed Today"
+            value="8"
+            change="+5%"
+            trend="up"
+            icon="check"
+          />
+          <StatCard
+            title="Revenue (Month)"
+            value="R15,420"
+            change="+8%"
+            trend="up"
+            icon="currency"
+          />
+          <StatCard
+            title="Avg. Repair Time"
+            value="2.3 days"
+            change="-15%"
+            trend="down"
+            icon="clock"
+          />
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-8">
+            <QuickActions />
+            <RevenueChart />
+            <TicketsOverview />
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-8">
+            <TechniciansPanel />
+            <InventoryAlert />
+          </div>
+        </div>
+      </div>
+    </div>
   );
-};
+}
