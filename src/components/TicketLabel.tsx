@@ -106,7 +106,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
           {/* Header */}
           <div className="text-center mb-6">
             <img 
-              src="/Untitled-CG2-01.png" 
+              src="/Untitled-CG.png" 
               alt="Guardian Assist Logo" 
               className="w-12 h-12 mx-auto mb-2"
             />
