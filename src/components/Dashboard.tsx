@@ -116,7 +116,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           <div className="p-8">
             <div className="flex items-center gap-3 mb-8">
               <img 
-                src="/Untitled-CG.png" 
+                src="/FinalWhite.png" 
                 alt="Guardian Assist Logo" 
                 className="w-12 h-12"
               />
