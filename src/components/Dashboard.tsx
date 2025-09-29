@@ -118,7 +118,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <img 
                 src="/Untitled-CG2-01.png" 
                 alt="Guardian Assist Logo" 
-                className="w-12 h-12 rounded-xl bg-white/10 p-1"
+                className="w-12 h-12"
               />
               <div>
                 <h1 className="text-xl font-bold text-white">Guardian Assist</h1>
