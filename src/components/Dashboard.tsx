@@ -26,7 +26,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    onLogout();
   };
 
   useEffect(() => {

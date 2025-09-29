@@ -100,7 +100,6 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    onLogout();
   };
 
   const formatDate = (dateString: string) => {

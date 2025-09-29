@@ -17,6 +17,7 @@ function App() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setIsAuthenticated(true);
+        setAppState('dashboard');
       }
       setLoading(false);
     };
@@ -27,6 +28,7 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         setIsAuthenticated(true);
+        setAppState('dashboard');
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
         setAppState('login');
@@ -36,7 +38,8 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
     setAppState('login');
   };

@@ -35,8 +35,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
       if (error) {
         setError(error.message);
       } else {
-        // Authentication state change will be handled by App component
-        onDashboard();
+        // Authentication state change will be handled by App component automatically
       }
     } catch (err) {
       setError('An unexpected error occurred');
