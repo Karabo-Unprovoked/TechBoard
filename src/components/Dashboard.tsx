@@ -6,7 +6,8 @@ import { RevenueChart } from './RevenueChart';
 import { TicketsOverview } from './TicketsOverview';
 import { TechniciansPanel } from './TechniciansPanel';
 import { InventoryAlert } from './InventoryAlert';
-import { LogOut, ArrowLeft } from 'lucide-react';
+import { LogOut, ArrowLeft, Ticket, CheckCircle, DollarSign, Clock } from 'lucide-react';
+import { mockStats, mockInventory, mockTickets, mockTechnicians } from '../data/mockData';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -52,31 +53,35 @@ export function Dashboard({ onLogout, onNavigateToTracking }: DashboardProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Active Tickets"
-            value="24"
+            value={mockStats.activeTickets}
+            changeType="positive"
             change="+12%"
-            trend="up"
-            icon="ticket"
+            icon={Ticket}
+            color="blue"
           />
           <StatCard
             title="Completed Today"
-            value="8"
+            value={mockStats.completedToday}
+            changeType="positive"
             change="+5%"
-            trend="up"
-            icon="check"
+            icon={CheckCircle}
+            color="green"
           />
           <StatCard
             title="Revenue (Month)"
-            value="R15,420"
+            value={`R${mockStats.monthlyRevenue.toLocaleString()}`}
+            changeType="positive"
             change="+8%"
-            trend="up"
-            icon="currency"
+            icon={DollarSign}
+            color="purple"
           />
           <StatCard
             title="Avg. Repair Time"
-            value="2.3 days"
+            value={`${mockStats.avgRepairTime} days`}
+            changeType="negative"
             change="-15%"
-            trend="down"
-            icon="clock"
+            icon={Clock}
+            color="orange"
           />
         </div>
 
@@ -86,13 +91,13 @@ export function Dashboard({ onLogout, onNavigateToTracking }: DashboardProps) {
           <div className="lg:col-span-2 space-y-8">
             <QuickActions />
             <RevenueChart />
-            <TicketsOverview />
+            <TicketsOverview tickets={mockTickets} />
           </div>
 
           {/* Right Column */}
           <div className="space-y-8">
-            <TechniciansPanel />
-            <InventoryAlert />
+            <TechniciansPanel technicians={mockTechnicians} />
+            <InventoryAlert inventory={mockInventory} />
           </div>
         </div>
       </div>
