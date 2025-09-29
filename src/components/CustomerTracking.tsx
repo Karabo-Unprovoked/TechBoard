@@ -301,7 +301,6 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                     </div>
                   </div>
                 </div>
-                </h3>
                 {tickets[0].issue_description && (
                   <div>
                     <h4 className="text-lg font-semibold mb-2" style={{ color: SECONDARY }}>
