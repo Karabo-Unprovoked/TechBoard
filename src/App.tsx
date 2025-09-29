@@ -63,7 +63,7 @@ function App() {
 
   switch (appState) {
     case 'login':
-      return <LoginForm onLogin={handleLogin} />;
+      return <LoginForm onLogin={handleLogin} onTrackCustomer={handleTrackCustomer} />;
     
     case 'dashboard':
       return (

@@ -148,7 +148,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onTrackCustomer, onLogout 
                   <div className="space-y-4">
                     <button
                       onClick={onTrackCustomer}
-                      className="w-full px-8 py-4 rounded-xl transition-colors font-semibold text-lg shadow-lg transform hover:-translate-y-0.5"
+                      className="w-full px-8 py-4 rounded-xl transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                       style={{
                         backgroundColor: PRIMARY,
                         color: '#1f1f1f',
@@ -215,7 +215,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onTrackCustomer, onLogout 
 
                 <button
                   onClick={onTrackCustomer}
-                  className="w-full mt-6 py-3 px-4 rounded-lg transition-colors font-medium"
+                  className="w-full mt-6 py-3 px-4 rounded-lg transition-all duration-200 font-medium hover:opacity-90"
                   style={{
                     backgroundColor: SECONDARY,
                     color: '#ffffff',

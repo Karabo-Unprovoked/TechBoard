@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase';
 
 interface LoginFormProps {
   onLogin: () => void;
+  onTrackCustomer: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onTrackCustomer }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -114,18 +115,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           {/* Navigation Menu */}
           <div className="flex-1 px-6">
             <nav className="space-y-2">
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white">
+              <button
+                onClick={onTrackCustomer}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
                 <Search size={20} />
                 <span className="font-medium">Track Customer</span>
-              </div>
+              </button>
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors cursor-pointer">
                 <User size={20} />
                 <span className="font-medium">Log in</span>
               </div>
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors cursor-pointer">
+              <button
+                onClick={() => window.open('mailto:support@guardianassist.co.za', '_blank')}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors"
+              >
                 <HelpCircle size={20} />
                 <span className="font-medium">Help centre</span>
-              </div>
+              </button>
             </nav>
           </div>
 
