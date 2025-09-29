@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { LoginForm } from './components/LoginForm';
 import { Dashboard } from './components/Dashboard';
-import { CustomerForm } from './components/CustomerForm';
-import { TicketsView } from './components/TicketsView';
-import { TicketLabel } from './components/TicketLabel';
+import { CustomerTracking } from './components/CustomerTracking';
 import { supabase } from './lib/supabase';
-import type { Customer, RepairTicket } from './lib/supabase';
 
-type AppState = 'login' | 'dashboard' | 'new-ticket' | 'view-tickets' | 'ticket-created';
+type AppState = 'login' | 'dashboard' | 'track-customer';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('login');
-  const [currentTicket, setCurrentTicket] = useState<(RepairTicket & { customer: Customer }) | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +28,6 @@ function App() {
         setAppState('dashboard');
       } else if (event === 'SIGNED_OUT') {
         setAppState('login');
-        setCurrentTicket(null);
       }
     });
 
@@ -45,32 +40,14 @@ function App() {
 
   const handleLogout = () => {
     setAppState('login');
-    setCurrentTicket(null);
   };
 
-  const handleNewTicket = () => {
-    setAppState('new-ticket');
-    setCurrentTicket(null);
-  };
-
-  const handleViewTickets = () => {
-    setAppState('view-tickets');
-    setCurrentTicket(null);
-  };
-
-  const handleTicketCreated = (ticket: RepairTicket & { customer: Customer }) => {
-    setCurrentTicket(ticket);
-    setAppState('ticket-created');
-  };
-
-  const handleViewTicket = (ticket: RepairTicket & { customer: Customer }) => {
-    setCurrentTicket(ticket);
-    setAppState('ticket-created');
+  const handleTrackCustomer = () => {
+    setAppState('track-customer');
   };
 
   const handleBackToDashboard = () => {
     setAppState('dashboard');
-    setCurrentTicket(null);
   };
 
   if (loading) {
@@ -91,36 +68,17 @@ function App() {
     case 'dashboard':
       return (
         <Dashboard 
-          onNewTicket={handleNewTicket}
-          onViewTickets={handleViewTickets}
+          onTrackCustomer={handleTrackCustomer}
           onLogout={handleLogout}
         />
       );
     
-    case 'new-ticket':
+    case 'track-customer':
       return (
-        <CustomerForm 
-          onTicketCreated={handleTicketCreated}
+        <CustomerTracking 
           onBack={handleBackToDashboard}
         />
       );
-    
-    case 'view-tickets':
-      return (
-        <TicketsView 
-          onBack={handleBackToDashboard}
-          onViewTicket={handleViewTicket}
-        />
-      );
-    
-    case 'ticket-created':
-      return currentTicket ? (
-        <TicketLabel 
-          ticket={currentTicket}
-          onBack={handleBackToDashboard}
-          onNewTicket={handleNewTicket}
-        />
-      ) : null;
     
     default:
       return null;

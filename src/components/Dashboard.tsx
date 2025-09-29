@@ -1,15 +1,14 @@
 import React from 'react';
-import { Plus, LogOut, FileText, Monitor, Clock, User, Laptop, Calendar } from 'lucide-react';
+import { Search, LogOut, Monitor, Clock, User, Laptop, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
 interface DashboardProps {
-  onNewTicket: () => void;
-  onViewTickets: () => void;
+  onTrackCustomer: () => void;
   onLogout: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets, onLogout }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onTrackCustomer, onLogout }) => {
   const [recentTickets, setRecentTickets] = React.useState<(RepairTicket & { customer: Customer })[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -134,21 +133,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
                     className="p-4 rounded-xl inline-block mb-6"
                     style={{ background: 'rgba(255,180,0,0.12)' }}
                   >
-                    <Plus size={48} style={{ color: PRIMARY }} />
+                    <Search size={48} style={{ color: PRIMARY }} />
                   </div>
 
                   <h2 className="text-2xl font-bold mb-4" style={{ color: SECONDARY }}>
-                    Ready to Create a New Repair Ticket?
+                    Ready to Track a Customer?
                   </h2>
 
                   <p className="mb-8" style={{ color: SECONDARY }}>
-                    Start by entering customer information and device details. 
-                    We'll generate a QR code label for easy tracking.
+                    Search for customer information and view their complete repair history.
+                    Track all tickets linked to a customer.
                   </p>
 
                   <div className="space-y-4">
                     <button
-                      onClick={onNewTicket}
+                      onClick={onTrackCustomer}
                       className="w-full px-8 py-4 rounded-xl transition-colors font-semibold text-lg shadow-lg transform hover:-translate-y-0.5"
                       style={{
                         backgroundColor: PRIMARY,
@@ -156,19 +155,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
                         boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
                       }}
                     >
-                      Create New Ticket
-                    </button>
-
-                    <button
-                      onClick={onViewTickets}
-                      className="w-full px-8 py-4 rounded-xl transition-colors font-semibold text-lg shadow-lg transform hover:-translate-y-0.5"
-                      style={{
-                        backgroundColor: SECONDARY,
-                        color: '#ffffff',
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
-                      }}
-                    >
-                      View All Tickets
+                      Track Customer
                     </button>
                   </div>
                 </div>
@@ -227,14 +214,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
                 )}
 
                 <button
-                  onClick={onViewTickets}
+                  onClick={onTrackCustomer}
                   className="w-full mt-6 py-3 px-4 rounded-lg transition-colors font-medium"
                   style={{
                     backgroundColor: SECONDARY,
                     color: '#ffffff',
                   }}
                 >
-                  View All Tickets
+                  Track Customer
                 </button>
               </div>
             </div>
@@ -243,37 +230,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
                 <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(34,197,94,0.08)' }}>
-                  <Monitor size={24} style={{ color: '#22c55e' }} />
+                  <Search size={24} style={{ color: '#22c55e' }} />
                 </div>
                 <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
-                  Quick Intake
+                  Customer Tracking
                 </h3>
                 <p className="text-sm" style={{ color: SECONDARY }}>
-                  Capture customer and device information in under 2 minutes
+                  Search and track customer repair history and ticket status
                 </p>
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
                 <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(139,92,246,0.08)' }}>
-                  <FileText size={24} style={{ color: '#8b5cf6' }} />
+                  <User size={24} style={{ color: '#8b5cf6' }} />
                 </div>
                 <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
-                  View Tickets
+                  Customer Information
                 </h3>
                 <p className="text-sm" style={{ color: SECONDARY }}>
-                  Search and view all created repair tickets with detailed information
+                  View detailed customer information and contact details
                 </p>
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
                 <div className="p-3 rounded-lg inline-block mb-4" style={{ background: 'rgba(255,165,0,0.08)' }}>
-                  <Plus size={24} style={{ color: 'rgb(255,165,0)' }} />
+                  <Monitor size={24} style={{ color: 'rgb(255,165,0)' }} />
                 </div>
                 <h3 className="font-semibold mb-2" style={{ color: SECONDARY }}>
-                  QR Code Labels
+                  Repair History
                 </h3>
                 <p className="text-sm" style={{ color: SECONDARY }}>
-                  Automatically generate printable labels with QR codes for tracking
+                  Complete repair history with status updates and device information
                 </p>
               </div>
             </div>

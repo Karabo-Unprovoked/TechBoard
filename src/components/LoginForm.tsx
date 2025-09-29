@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, AlertCircle, Eye, EyeOff, Plus, FileText, Users, Settings } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Eye, EyeOff, Search, User, HelpCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface LoginFormProps {
@@ -115,20 +115,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           <div className="flex-1 px-6">
             <nav className="space-y-2">
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white">
-                <Plus size={20} />
-                <span className="font-medium">Create Ticket</span>
+                <Search size={20} />
+                <span className="font-medium">Track Customer</span>
               </div>
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors cursor-pointer">
-                <FileText size={20} />
-                <span>View Tickets</span>
+                <User size={20} />
+                <span className="font-medium">Log in</span>
               </div>
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors cursor-pointer">
-                <Users size={20} />
-                <span>Customers</span>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors cursor-pointer">
-                <Settings size={20} />
-                <span>Settings</span>
+                <HelpCircle size={20} />
+                <span className="font-medium">Help centre</span>
               </div>
             </nav>
           </div>
