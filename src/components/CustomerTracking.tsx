@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock } from 'lucide-react';
+import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
 interface CustomerTrackingProps {
   onBack: () => void;
+  onLogout: () => void;
+  isAuthenticated: boolean;
 }
 
-export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) => {
+export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLogout, isAuthenticated }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [customer, setCustomer] = useState<Customer | null>(null);
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [error, setError] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
 
     setLoading(true);
     setError('');
-    setCustomer(null);
+    setTrackingNumber('');
     setTickets([]);
 
     // Check if Supabase is configured
@@ -31,34 +33,30 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
     }
 
     try {
-      // Search for customer by name, email, or phone
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
+      // Search for tickets by ticket number
+      const { data: ticketsData, error: ticketsError } = await supabase
+        .from('repair_tickets')
         .select('*')
-        .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
-        .limit(1)
-        .single();
+        .ilike('ticket_number', `%${searchTerm}%`)
+        .order('created_at', { ascending: false });
 
-      if (customerError) {
-        if (customerError.code === 'PGRST116') {
-          setError('No customer found with that information. Please check the details and try again.');
+      if (ticketsError) {
+        if (ticketsError.code === 'PGRST116') {
+          setError('No tickets found with that tracking number. Please check the number and try again.');
         } else {
-          throw customerError;
+          throw ticketsError;
         }
         setLoading(false);
         return;
       }
 
-      setCustomer(customerData);
-
-      // Fetch all tickets for this customer
-      const { data: ticketsData, error: ticketsError } = await supabase
-        .from('repair_tickets')
-        .select('*')
-        .eq('customer_id', customerData.id)
-        .order('created_at', { ascending: false });
-
-      if (ticketsError) throw ticketsError;
+      if (!ticketsData || ticketsData.length === 0) {
+        setError('No tickets found with that tracking number. Please check the number and try again.');
+        setLoading(false);
+        return;
+      }
+      
+      setTrackingNumber(searchTerm.toUpperCase());
       setTickets(ticketsData || []);
 
     } catch (err) {
@@ -72,16 +70,36 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'received':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-500 text-white';
       case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500 text-white';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500 text-white';
       case 'waiting-parts':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-500 text-white';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-500 text-white';
     }
+  };
+
+  const getStatusStep = (status: string) => {
+    switch (status) {
+      case 'received':
+        return 1;
+      case 'in-progress':
+        return 2;
+      case 'waiting-parts':
+        return 3;
+      case 'completed':
+        return 4;
+      default:
+        return 1;
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    onLogout();
   };
 
   const formatDate = (dateString: string) => {
@@ -138,6 +156,17 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
                 </div>
               </div>
             </div>
+            
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+                style={{ color: SECONDARY }}
+              >
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -154,10 +183,10 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
                   <Search size={48} style={{ color: PRIMARY }} />
                 </div>
                 <h2 className="text-2xl font-bold mb-4" style={{ color: SECONDARY }}>
-                  Enter tracking reference
+                  Track Your Device
                 </h2>
                 <p className="text-gray-600 mb-8">
-                  Search by customer name, email address, or phone number
+                  Enter your ticket number to track your device repair status
                 </p>
 
                 <form onSubmit={handleSearch} className="max-w-md mx-auto">
@@ -166,7 +195,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Enter customer details..."
+                      placeholder="Enter ticket number (e.g., TK-20250115-001)"
                       className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
                       required
@@ -190,122 +219,97 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
               </div>
             </div>
 
-            {/* Customer Information */}
-            {customer && (
+            {/* Tracking Results */}
+            {trackingNumber && tickets.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                <h3 className="text-xl font-semibold mb-6" style={{ color: SECONDARY }}>
-                  Customer Information
-                </h3>
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold mb-2" style={{ color: SECONDARY }}>
+                    {tickets[0].status === 'completed' ? 'Completed' : tickets[0].status.charAt(0).toUpperCase() + tickets[0].status.slice(1).replace('-', ' ')}
+                  </h3>
+                  <p className="text-xl font-semibold" style={{ color: PRIMARY }}>
+                    {trackingNumber}
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 flex items-center gap-2 mx-auto px-4 py-2 rounded-lg transition-colors"
+                    style={{ backgroundColor: SECONDARY, color: 'white' }}
+                  >
+                    <RefreshCw size={16} />
+                    Refresh
+                  </button>
+                </div>
+
+                {/* Status Progress */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-4">
+                    {['RECEIVED', 'IN PROGRESS', 'TESTING', 'COMPLETED'].map((step, index) => {
+                      const currentStep = getStatusStep(tickets[0].status);
+                      const isActive = index + 1 <= currentStep;
+                      const isCurrent = index + 1 === currentStep;
+                      
+                      return (
+                        <div key={step} className="flex flex-col items-center flex-1">
+                          <div 
+                            className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
+                              isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+                            }`}
+                          >
+                            {isActive && <span className="text-white">✓</span>}
+                          </div>
+                          <span className={`text-xs font-medium ${isCurrent ? 'text-green-600' : 'text-gray-500'}`}>
+                            {step}
+                          </span>
+                          {index < 3 && (
+                            <div className={`h-1 w-full mt-2 ${isActive ? 'bg-green-500' : 'bg-gray-200'}`} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Device Information */}
+                <h4 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                  Device Information
+                </h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="flex items-center gap-3">
-                    <User size={20} style={{ color: PRIMARY }} />
+                    <Laptop size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Customer Name</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>{customer.name}</p>
+                      <p className="text-sm text-gray-500">Device Type</p>
+                      <p className="font-semibold" style={{ color: SECONDARY }}>{tickets[0].device_type}</p>
                     </div>
                   </div>
 
-                  {customer.email && (
-                    <div className="flex items-center gap-3">
-                      <Mail size={20} style={{ color: PRIMARY }} />
-                      <div>
-                        <p className="text-sm text-gray-500">Email Address</p>
-                        <p className="font-semibold" style={{ color: SECONDARY }}>{customer.email}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {customer.phone && (
-                    <div className="flex items-center gap-3">
-                      <Phone size={20} style={{ color: PRIMARY }} />
-                      <div>
-                        <p className="text-sm text-gray-500">Phone Number</p>
-                        <p className="font-semibold" style={{ color: SECONDARY }}>{customer.phone}</p>
-                      </div>
+                  {(tickets[0].brand || tickets[0].model) && (
+                    <div>
+                      <p className="text-sm text-gray-500">Model</p>
+                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                        {[tickets[0].brand, tickets[0].model].filter(Boolean).join(' ')}
+                      </p>
                     </div>
                   )}
 
                   <div className="flex items-center gap-3">
                     <Calendar size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Customer Since</p>
+                      <p className="text-sm text-gray-500">Received Date</p>
                       <p className="font-semibold" style={{ color: SECONDARY }}>
-                        {formatDate(customer.created_at)}
+                        {formatDate(tickets[0].created_at)}
                       </p>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Repair Tickets */}
-            {customer && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold" style={{ color: SECONDARY }}>
-                    Repair History
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} found
-                  </span>
-                </div>
-
-                {tickets.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText size={48} className="text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600">No repair tickets found for this customer</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {tickets.map((ticket) => (
-                      <div key={ticket.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <h4 className="text-lg font-semibold mb-2" style={{ color: SECONDARY }}>
-                              {ticket.ticket_number}
-                            </h4>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
-                              {ticket.status.replace('-', ' ')}
-                            </span>
-                          </div>
-                          <div className="text-right text-sm text-gray-500">
-                            <div className="flex items-center gap-1 mb-1">
-                              <Clock size={14} />
-                              <span>{formatDate(ticket.created_at)}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div className="flex items-center gap-2">
-                            <Laptop size={16} style={{ color: PRIMARY }} />
-                            <div>
-                              <p className="text-sm text-gray-500">Device</p>
-                              <p className="font-medium" style={{ color: SECONDARY }}>
-                                {ticket.device_type}
-                              </p>
-                            </div>
-                          </div>
-
-                          {(ticket.brand || ticket.model) && (
-                            <div>
-                              <p className="text-sm text-gray-500">Model</p>
-                              <p className="font-medium" style={{ color: SECONDARY }}>
-                                {[ticket.brand, ticket.model].filter(Boolean).join(' ')}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {ticket.issue_description && (
-                          <div>
-                            <p className="text-sm text-gray-500 mb-1">Issue Description</p>
-                            <p className="text-gray-700">{ticket.issue_description}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                </h3>
+                {tickets[0].issue_description && (
+                  <div>
+                    <h4 className="text-lg font-semibold mb-2" style={{ color: SECONDARY }}>
+                      Issue Description
+                    </h4>
+                    <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
+                      {tickets[0].issue_description}
+                    </p>
                   </div>
                 )}
               </div>
@@ -314,7 +318,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack }) =>
             {/* Support Information */}
             <div className="text-center mt-8 text-sm text-gray-600">
               <p>
-                For any queries about your repair, contact us at{' '}
+                For any queries about your device repair, contact us at{' '}
                 <a href="mailto:support@guardianassist.co.za" className="font-medium" style={{ color: PRIMARY }}>
                   support@guardianassist.co.za
                 </a>{' '}

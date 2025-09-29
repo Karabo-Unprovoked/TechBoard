@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { LoginForm } from './components/LoginForm';
-import { Dashboard } from './components/Dashboard';
 import { CustomerTracking } from './components/CustomerTracking';
 import { supabase } from './lib/supabase';
 
-type AppState = 'login' | 'dashboard' | 'track-customer';
+type AppState = 'login' | 'track-customer';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('login');
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        setAppState('dashboard');
+        setIsAuthenticated(true);
       }
       setLoading(false);
     };
@@ -25,8 +25,9 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        setAppState('dashboard');
+        setIsAuthenticated(true);
       } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
         setAppState('login');
       }
     });
@@ -34,11 +35,8 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = () => {
-    setAppState('dashboard');
-  };
-
   const handleLogout = () => {
+    setIsAuthenticated(false);
     setAppState('login');
   };
 
@@ -46,8 +44,8 @@ function App() {
     setAppState('track-customer');
   };
 
-  const handleBackToDashboard = () => {
-    setAppState('dashboard');
+  const handleBackToLogin = () => {
+    setAppState('login');
   };
 
   if (loading) {
@@ -63,20 +61,14 @@ function App() {
 
   switch (appState) {
     case 'login':
-      return <LoginForm onLogin={handleLogin} onTrackCustomer={handleTrackCustomer} />;
-    
-    case 'dashboard':
-      return (
-        <Dashboard 
-          onTrackCustomer={handleTrackCustomer}
-          onLogout={handleLogout}
-        />
-      );
+      return <LoginForm onTrackCustomer={handleTrackCustomer} />;
     
     case 'track-customer':
       return (
         <CustomerTracking 
-          onBack={handleBackToDashboard}
+          onBack={handleBackToLogin}
+          onLogout={handleLogout}
+          isAuthenticated={isAuthenticated}
         />
       );
     

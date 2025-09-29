@@ -3,11 +3,10 @@ import { Mail, Lock, AlertCircle, Eye, EyeOff, Search, User, HelpCircle } from '
 import { supabase } from '../lib/supabase';
 
 interface LoginFormProps {
-  onLogin: () => void;
   onTrackCustomer: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onTrackCustomer }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +34,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onTrackCustomer }
       if (error) {
         setError(error.message);
       } else {
-        onLogin();
+        // Authentication state change will be handled by App component
+        onTrackCustomer();
       }
     } catch (err) {
       setError('An unexpected error occurred');
