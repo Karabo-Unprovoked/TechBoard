@@ -33,3 +33,4 @@ export type RepairTicket = {
   created_at: string;
   updated_at: string;
   customer?: Customer;
+}
