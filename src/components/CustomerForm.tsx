@@ -25,6 +25,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onTicketCreated, onB
     e.preventDefault();
     setLoading(true);
 
+    // Check if Supabase is configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      alert('Supabase is not configured. Please set up your database connection.');
+      setLoading(false);
+      return;
+    }
     try {
       // Create customer
       const { data: customer, error: customerError } = await supabase
@@ -44,14 +50,16 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onTicketCreated, onB
       
       if (ticketNumberError) {
         console.error('Error generating ticket number:', ticketNumberError);
-        throw new Error('Failed to generate ticket number');
+        // Fallback to manual ticket number generation
+        const fallbackNumber = `TK-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+        console.warn('Using fallback ticket number:', fallbackNumber);
       }
 
       // Create repair ticket
       const { data: ticket, error: ticketError } = await supabase
         .from('repair_tickets')
         .insert({
-          ticket_number: ticketNumber,
+          ticket_number: ticketNumber || `TK-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
           customer_id: customer.id,
           device_type: formData.deviceType,
           brand: formData.brand || null,

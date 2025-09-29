@@ -19,6 +19,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     setLoading(true);
     setError('');
 
+    // Check if Supabase is configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      setError('Supabase is not configured. Please set up your database connection.');
+      setLoading(false);
+      return;
+    }
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -42,6 +48,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     setLoading(true);
     setError('');
 
+    // Check if Supabase is configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      setError('Supabase is not configured. Please set up your database connection.');
+      setLoading(false);
+      return;
+    }
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -51,7 +63,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       if (error) {
         setError(error.message);
       } else {
-        setError('Check your email for the confirmation link');
+        setError('Account created successfully! You can now sign in.');
+        setIsSignUp(false);
       }
     } catch (err) {
       setError('An unexpected error occurred');

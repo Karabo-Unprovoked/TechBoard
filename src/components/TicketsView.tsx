@@ -19,6 +19,13 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ onBack, onViewTicket }
   }, []);
 
   const fetchTickets = async () => {
+    // Check if Supabase is configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      console.warn('Supabase not configured, skipping ticket fetch');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('repair_tickets')

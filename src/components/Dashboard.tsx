@@ -18,6 +18,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNewTicket, onViewTickets
   }, []);
 
   const fetchRecentTickets = async () => {
+    // Check if Supabase is configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      console.warn('Supabase not configured, skipping ticket fetch');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('repair_tickets')
