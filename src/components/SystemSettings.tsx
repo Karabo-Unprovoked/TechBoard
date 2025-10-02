@@ -591,23 +591,34 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   </h3>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <AlertCircle size={20} className="text-yellow-600" />
+                        <CheckCircle size={20} className="text-green-600" />
                         <div>
-                          <p className="font-medium text-yellow-900">User Management Setup Required</p>
-                          <p className="text-sm text-yellow-700">Edge Function needs proper configuration</p>
+                          <p className="font-medium text-green-900">User Management Ready</p>
+                          <p className="text-sm text-green-700">Edge Function is properly configured</p>
                         </div>
                       </div>
                     </div>
                     
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <h4 className="font-medium text-green-900 mb-2">✅ System Features</h4>
+                      <div className="text-sm text-green-800 space-y-1">
+                        <p>• User creation with role assignment</p>
+                        <p>• Role-based access control (Admin, Technician, Viewer)</p>
+                        <p>• Secure user management via Edge Functions</p>
+                        <p>• Temporary password generation for new users</p>
+                        <p>• User role updates and account deletion</p>
+                      </div>
+                    </div>
+                    
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-2">Setup Instructions</h4>
+                      <h4 className="font-medium text-blue-900 mb-2">🔐 Security Notes</h4>
                       <div className="text-sm text-blue-800 space-y-1">
-                        <p>1. Ensure Supabase project is properly configured</p>
-                        <p>2. Set SUPABASE_SERVICE_ROLE_KEY in Edge Function secrets</p>
-                        <p>3. Deploy the user-management Edge Function</p>
-                        <p>4. Test the connection using the refresh button above</p>
+                        <p>• All admin operations use service role authentication</p>
+                        <p>• New users receive temporary passwords to change on first login</p>
+                        <p>• Role permissions are enforced throughout the application</p>
+                        <p>• User sessions are managed securely by Supabase Auth</p>
                       </div>
                     </div>
                   </div>

@@ -18,12 +18,36 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'guardian-assist-v1.0'
+      }
     }
   }
 );
 
 // Export configuration status
 export const isSupabaseConfigured = isConfigured;
+
+// User role management
+export const getUserRole = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.user_metadata?.role || 'viewer';
+};
+
+export const hasPermission = async (requiredRole: 'admin' | 'technician' | 'viewer') => {
+  const userRole = await getUserRole();
+  
+  const roleHierarchy = {
+    'admin': 3,
+    'technician': 2,
+    'viewer': 1
+  };
+  
+  return roleHierarchy[userRole as keyof typeof roleHierarchy] >= roleHierarchy[requiredRole];
+};
+
 export type Customer = {
   id: string;
   name: string;
