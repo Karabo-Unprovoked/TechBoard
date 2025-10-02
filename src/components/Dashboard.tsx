@@ -502,7 +502,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         </div>
                       </div>
                     </div>
-                  </div>
                 )}
                 {currentView === 'tickets' && (
                   <TicketsView 
