@@ -8,6 +8,7 @@ import { TicketsView } from './TicketsView';
 import { TicketLabel } from './TicketLabel';
 import { TicketManagement } from './TicketManagement';
 import { StatCard } from './StatCard';
+import { SystemSettings } from './SystemSettings';
 
 interface DashboardProps {
   onBack: () => void;
