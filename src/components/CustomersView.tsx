@@ -102,17 +102,29 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   };
 
   const handleAdminConfirm = async (password: string) => {
-    const ADMIN_PASSWORD = 'admin123';
+    try {
+      const { data: setting, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'admin_password')
+        .maybeSingle();
 
-    if (password !== ADMIN_PASSWORD) {
-      onNotification('error', 'Incorrect admin password');
-      return;
-    }
+      if (error) throw error;
 
-    setShowAdminModal(false);
-    if (pendingDeleteCustomerId) {
-      await deleteCustomer(pendingDeleteCustomerId);
-      setPendingDeleteCustomerId(null);
+      const adminPassword = setting?.setting_value || 'admin123';
+
+      if (password !== adminPassword) {
+        onNotification('error', 'Incorrect admin password');
+        return;
+      }
+
+      setShowAdminModal(false);
+      if (pendingDeleteCustomerId) {
+        await deleteCustomer(pendingDeleteCustomerId);
+        setPendingDeleteCustomerId(null);
+      }
+    } catch (error: any) {
+      onNotification('error', 'Failed to verify password: ' + error.message);
     }
   };
 

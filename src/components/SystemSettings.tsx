@@ -25,6 +25,10 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<'admin' | 'technician' | 'viewer'>('technician');
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
   const [emailSettings, setEmailSettings] = useState<{
     smtp_host: string;
     smtp_port: number;
@@ -335,6 +339,60 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
       loadUsers();
     }
   }, [activeTab]);
+
+  const handleChangeAdminPassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      onNotification('error', 'All fields are required');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      onNotification('error', 'New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      onNotification('error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const { data: setting, error: fetchError } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'admin_password')
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      const storedPassword = setting?.setting_value || 'admin123';
+
+      if (currentPassword !== storedPassword) {
+        onNotification('error', 'Current password is incorrect');
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from('admin_settings')
+        .update({
+          setting_value: newPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq('setting_key', 'admin_password');
+
+      if (updateError) throw updateError;
+
+      onNotification('success', 'Admin password changed successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      onNotification('error', 'Failed to change password: ' + error.message);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
@@ -748,18 +806,70 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     </div>
                   </div>
 
-                  <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div className="flex items-start gap-3">
-                      <Shield size={20} className="text-yellow-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-yellow-900 mb-2">Admin Password</p>
-                        <p className="text-sm text-yellow-700 mb-2">
-                          When deleting customers with completed tickets, an admin password is required.
+                  <div className="mt-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-start gap-3 mb-4">
+                      <Shield size={20} className="text-gray-600 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 mb-1">Admin Password</p>
+                        <p className="text-sm text-gray-600">
+                          Required when deleting customers with completed tickets
                         </p>
-                        <div className="bg-white p-3 rounded border border-yellow-300">
-                          <p className="text-sm font-mono text-gray-900">Default Password: <span className="font-bold">admin123</span></p>
-                          <p className="text-xs text-gray-600 mt-1">Change this in the code: CustomersView.tsx (line 105)</p>
-                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Current Password
+                        </label>
+                        <input
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none"
+                          placeholder="Enter current password"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none"
+                          placeholder="Enter new password (min 6 characters)"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Confirm New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none"
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+
+                      <button
+                        onClick={handleChangeAdminPassword}
+                        disabled={changingPassword}
+                        className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium disabled:opacity-50"
+                      >
+                        {changingPassword ? 'Changing Password...' : 'Change Admin Password'}
+                      </button>
+
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs text-blue-800">
+                          💡 The default password is <span className="font-mono font-bold">admin123</span>.
+                          It's recommended to change this immediately after first login.
+                        </p>
                       </div>
                     </div>
                   </div>
