@@ -421,20 +421,142 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
             )}
 
             {activeTab === 'notifications' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
-                  Notification Settings
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+              <div className="space-y-6">
+                {/* Add New User */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    Add New User
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <p className="font-medium text-gray-900">Email Notifications</p>
-                      <p className="text-sm text-gray-600">Send email updates to customers</p>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                        style={{ focusRingColor: PRIMARY }}
+                        placeholder="user@example.com"
+                      />
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                      <select
+                        value={newUserRole}
+                        onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'technician' | 'viewer')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                        style={{ focusRingColor: PRIMARY }}
+                      >
+                        <option value="technician">Technician</option>
+                        <option value="admin">Admin</option>
+                        <option value="viewer">Viewer</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <button
+                        onClick={createUser}
+                        disabled={!newUserEmail.trim()}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Plus size={16} />
+                        <span>Add User</span>
+                      </button>
+                    </div>
                   </div>
+                  
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Role Permissions</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p><strong>Admin:</strong> Full system access, user management, settings</p>
+                      <p><strong>Technician:</strong> Create/edit tickets, customer management, email sending</p>
+                      <p><strong>Viewer:</strong> Read-only access to tickets and customer info</p>
+                    </div>
+                  </div>
+                </div>
 
+                {/* Current Users */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>
+                      Current Users
+                    </h3>
+                    <button
+                      onClick={loadUsers}
+                      disabled={loadingUsers}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      <User size={16} />
+                      <span>{loadingUsers ? 'Loading...' : 'Refresh'}</span>
+                    </button>
+                  </div>
+                  
+                  {loadingUsers ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: PRIMARY }}></div>
+                      <p className="text-gray-600">Loading users...</p>
+                    </div>
+                  ) : users.length > 0 ? (
+                    <div className="space-y-3">
+                      {users.map((user) => (
+                        <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-1">
+                              <span className="font-medium text-gray-900">{user.email}</span>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                                user.role === 'technician' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {user.role.toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Created: {new Date(user.created_at).toLocaleDateString()}
+                              {user.last_sign_in_at && (
+                                <span className="ml-4">
+                                  Last login: {new Date(user.last_sign_in_at).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={user.role}
+                              onChange={(e) => updateUserRole(user.id, e.target.value as 'admin' | 'technician' | 'viewer')}
+                              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
+                              style={{ focusRingColor: PRIMARY }}
+                            >
+                              <option value="admin">Admin</option>
+                              <option value="technician">Technician</option>
+                              <option value="viewer">Viewer</option>
+                            </select>
+                            
+                            <button
+                              onClick={() => deleteUser(user.id, user.email)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete User"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <User size={48} className="mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-600 mb-2">No users found</p>
+                      <p className="text-sm text-gray-500">
+                        User management requires proper Supabase configuration
+                      </p>
+                    </div>
+                  )}
+                </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900">Status Change Alerts</p>
@@ -443,6 +565,35 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     <input type="checkbox" defaultChecked className="rounded" />
                   </div>
 
+                {/* Configuration Status */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    Configuration Status
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <AlertCircle size={20} className="text-yellow-600" />
+                        <div>
+                          <p className="font-medium text-yellow-900">User Management Setup Required</p>
+                          <p className="text-sm text-yellow-700">Edge Function needs proper configuration</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">Setup Instructions</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p>1. Ensure Supabase project is properly configured</p>
+                        <p>2. Set SUPABASE_SERVICE_ROLE_KEY in Edge Function secrets</p>
+                        <p>3. Deploy the user-management Edge Function</p>
+                        <p>4. Test the connection using the refresh button above</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900">Completion Notifications</p>
