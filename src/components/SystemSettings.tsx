@@ -52,10 +52,47 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     loadUserRole();
   }, []);
 
+  const handleUpdateEmailPassword = async () => {
+    const passwordInput = document.getElementById('smtp-password') as HTMLInputElement;
+    const newPassword = passwordInput?.value;
+
+    if (!newPassword) {
+      alert('Please enter a new password');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to update the email password? This will affect all system emails.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('email_settings')
+        .update({
+          smtp_password: newPassword,
+          updated_at: new Date().toISOString(),
+          updated_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq('id', (await supabase.from('email_settings').select('id').single()).data?.id);
+
+      if (error) throw error;
+
+      alert('Email password updated successfully!');
+      passwordInput.value = '';
+    } catch (error: any) {
+      alert('Failed to update email password: ' + error.message);
+    }
+  };
+
   const handleTestEmail = async () => {
     if (!emailTest.testEmail) {
-      setEmailTest(prev => ({ 
-        ...prev, 
+      setEmailTest(prev => ({
+        ...prev,
         result: { success: false, message: 'Please enter a test email address' }
       }));
       return;
@@ -339,6 +376,63 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
                   </div>
                 </div>
+
+                {/* Email Password Configuration */}
+                {userRole === 'admin' && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                      Email Password Configuration
+                    </h3>
+
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle size={16} className="text-amber-600" />
+                        <h4 className="font-medium text-amber-900">Admin Only</h4>
+                      </div>
+                      <p className="text-sm text-amber-800">
+                        Update the SMTP password if your email account password has changed. This will update the credentials used to send all system emails.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Email Account (SMTP Username)
+                        </label>
+                        <input
+                          type="text"
+                          value="info@computerguardian.co.za"
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">This email account is used to send all system emails</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          New SMTP Password
+                        </label>
+                        <input
+                          type="password"
+                          id="smtp-password"
+                          placeholder="Enter new email password"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Enter the password for info@computerguardian.co.za</p>
+                      </div>
+
+                      <button
+                        onClick={handleUpdateEmailPassword}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Settings size={16} />
+                        <span>Update Email Password</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Email Testing */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

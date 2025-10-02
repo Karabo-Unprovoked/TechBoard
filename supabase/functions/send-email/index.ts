@@ -1,31 +1,55 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 }
 
-// SMTP configuration for computerguardian.co.za
-const SMTP_CONFIG = {
-  hostname: 'computerguardian.co.za',
-  port: 465,
-  username: 'info@computerguardian.co.za',
-  password: Deno.env.get('SMTP_PASSWORD') || 'your-email-password', // Set this in Supabase secrets
-  secure: true, // Use SSL
+// Get email settings from database
+async function getEmailSettings() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const supabase = createClient(supabaseUrl, supabaseKey)
+
+  const { data, error } = await supabase
+    .from('email_settings')
+    .select('*')
+    .maybeSingle()
+
+  if (error || !data) {
+    console.error('Error loading email settings:', error)
+    return {
+      hostname: 'computerguardian.co.za',
+      port: 465,
+      username: 'info@computerguardian.co.za',
+      password: Deno.env.get('SMTP_PASSWORD') || '',
+      secure: true,
+    }
+  }
+
+  return {
+    hostname: data.smtp_host,
+    port: data.smtp_port,
+    username: data.smtp_username,
+    password: data.smtp_password || Deno.env.get('SMTP_PASSWORD') || '',
+    secure: data.use_ssl,
+  }
 }
 
 // Simple SMTP client implementation
-async function sendSMTPEmail(to: string, subject: string, htmlContent: string, textContent: string) {
+async function sendSMTPEmail(to: string, subject: string, htmlContent: string, textContent: string, smtpConfig: any) {
   try {
     // Create a TCP connection to the SMTP server
     const conn = await Deno.connect({
-      hostname: SMTP_CONFIG.hostname,
-      port: SMTP_CONFIG.port,
+      hostname: smtpConfig.hostname,
+      port: smtpConfig.port,
     })
 
     // Upgrade to TLS/SSL
     const tlsConn = await Deno.startTls(conn, {
-      hostname: SMTP_CONFIG.hostname,
+      hostname: smtpConfig.hostname,
     })
 
     const encoder = new TextEncoder()
@@ -50,16 +74,16 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
     console.log('AUTH response:', response)
 
     // Send username (base64 encoded)
-    const username = btoa(SMTP_CONFIG.username)
+    const username = btoa(smtpConfig.username)
     response = await sendCommand(username)
     console.log('Username response:', response)
 
     // Send password (base64 encoded)
-    const password = btoa(SMTP_CONFIG.password)
+    const password = btoa(smtpConfig.password)
     response = await sendCommand(password)
     console.log('Password response:', response)
 
-    response = await sendCommand(`MAIL FROM:<${SMTP_CONFIG.username}>`)
+    response = await sendCommand(`MAIL FROM:<${smtpConfig.username}>`)
     console.log('MAIL FROM response:', response)
 
     response = await sendCommand(`RCPT TO:<${to}>`)
@@ -70,7 +94,7 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
 
     // Email headers and content
     const emailContent = [
-      `From: Guardian Assist <${SMTP_CONFIG.username}>`,
+      `From: Guardian Assist <${smtpConfig.username}>`,
       `To: ${to}`,
       `Subject: ${subject}`,
       'MIME-Version: 1.0',
@@ -112,10 +136,12 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
   }
 }
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -202,16 +228,19 @@ serve(async (req) => {
     // Convert HTML to plain text for the text version
     const textContent = content.replace(/<[^>]*>/g, '').replace(/\n\s*\n/g, '\n\n')
 
+    // Get email settings from database
+    const smtpConfig = await getEmailSettings()
+
     console.log('Sending email via SMTP:', {
       to: to,
-      from: SMTP_CONFIG.username,
+      from: smtpConfig.username,
       subject: subject,
-      server: `${SMTP_CONFIG.hostname}:${SMTP_CONFIG.port}`,
-      ssl: SMTP_CONFIG.secure
+      server: `${smtpConfig.hostname}:${smtpConfig.port}`,
+      ssl: smtpConfig.secure
     })
 
     // Send email via SMTP
-    const result = await sendSMTPEmail(to, subject, emailHtml, textContent)
+    const result = await sendSMTPEmail(to, subject, emailHtml, textContent, smtpConfig)
 
     if (result.success) {
       return new Response(
@@ -222,7 +251,7 @@ serve(async (req) => {
             to: to,
             subject: subject,
             timestamp: new Date().toISOString(),
-            server: `${SMTP_CONFIG.hostname}:${SMTP_CONFIG.port} (SSL)`
+            server: `${smtpConfig.hostname}:${smtpConfig.port} (SSL)`
           }
         }),
         {
