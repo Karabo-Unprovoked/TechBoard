@@ -71,6 +71,10 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         return 'bg-green-500 text-white';
       case 'waiting-parts':
         return 'bg-orange-500 text-white';
+      case 'unrepairable':
+        return 'bg-red-500 text-white';
+      case 'pending-customer-action':
+        return 'bg-purple-500 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -86,6 +90,10 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         return 3;
       case 'completed':
         return 4;
+      case 'unrepairable':
+        return 4; // Final status
+      case 'pending-customer-action':
+        return 2; // Customer needs to take action
       default:
         return 1;
     }
@@ -291,6 +299,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       {tickets[0].status === 'in-progress' && 'Our technicians are currently working on diagnosing and repairing your device.'}
                       {tickets[0].status === 'waiting-parts' && 'We are waiting for replacement parts to arrive. We will continue once parts are available.'}
                       {tickets[0].status === 'completed' && 'Your device repair is complete and ready for collection!'}
+                      {tickets[0].status === 'unrepairable' && 'Unfortunately, your device cannot be repaired. Please contact us for more details.'}
+                      {tickets[0].status === 'pending-customer-action' && 'We need additional information or approval from you to proceed with the repair.'}
                     </p>
                   </div>
                 </div>

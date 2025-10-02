@@ -20,6 +20,10 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, 
         return 'bg-green-100 text-green-800';
       case 'waiting-parts':
         return 'bg-orange-100 text-orange-800';
+      case 'unrepairable':
+        return 'bg-red-100 text-red-800';
+      case 'pending-customer-action':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -133,7 +137,19 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, 
                     <option value="in-progress">In Progress</option>
                     <option value="waiting-parts">Waiting Parts</option>
                     <option value="completed">Completed</option>
+                    <option value="unrepairable">Unrepairable</option>
+                    <option value="pending-customer-action">Pending Customer Action</option>
                   </select>
+                </div>
+              )}
+
+              {/* Repair Notes for unrepairable items */}
+              {ticket.status === 'unrepairable' && ticket.repair_notes && (
+                <div className="mb-4">
+                  <p className="text-xs font-medium text-red-600 mb-1">Reason:</p>
+                  <p className="text-sm text-gray-700 bg-red-50 p-2 rounded border-l-2 border-red-200">
+                    {ticket.repair_notes}
+                  </p>
                 </div>
               )}
 

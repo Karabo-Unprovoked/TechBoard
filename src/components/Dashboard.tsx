@@ -110,6 +110,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     inProgressTickets: tickets.filter(t => t.status === 'in-progress').length,
     completedTickets: tickets.filter(t => t.status === 'completed').length,
     waitingPartsTickets: tickets.filter(t => t.status === 'waiting-parts').length,
+    unrepairableTickets: tickets.filter(t => t.status === 'unrepairable').length,
+    pendingCustomerTickets: tickets.filter(t => t.status === 'pending-customer-action').length,
     totalCustomers: customers.length,
     todayTickets: tickets.filter(t => {
       const today = new Date().toDateString();
@@ -276,6 +278,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     <option value="in-progress">In Progress</option>
                     <option value="waiting-parts">Waiting Parts</option>
                     <option value="completed">Completed</option>
+                    <option value="unrepairable">Unrepairable</option>
+                    <option value="pending-customer-action">Pending Customer Action</option>
                   </select>
                 </div>
               )}
@@ -288,6 +292,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: PRIMARY }}></div>
+                    <option value="unrepairable">Unrepairable</option>
+                    <option value="pending-customer-action">Pending Customer Action</option>
                   <p className="text-gray-600">Loading...</p>
                 </div>
               </div>
@@ -369,6 +375,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                     <option value="in-progress">In Progress</option>
                                     <option value="waiting-parts">Waiting Parts</option>
                                     <option value="completed">Completed</option>
+                                    <option value="unrepairable">Unrepairable</option>
+                                    <option value="pending-customer-action">Pending Customer Action</option>
                                   </select>
                                   
                                   <div className="text-right">
@@ -444,6 +452,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                 <span className="text-sm text-gray-600">Completed</span>
                               </div>
                               <span className="font-medium">{stats.completedTickets}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Unrepairable</span>
+                              </div>
+                              <span className="font-medium">{stats.unrepairableTickets}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Pending Customer</span>
+                              </div>
+                              <span className="font-medium">{stats.pendingCustomerTickets}</span>
                             </div>
                           </div>
                         </div>

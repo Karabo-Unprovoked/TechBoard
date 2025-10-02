@@ -30,6 +30,7 @@ export type RepairTicket = {
   serial_number?: string;
   issue_description?: string;
   status: string;
+  repair_notes?: string;
   created_at: string;
   updated_at: string;
   customer?: Customer;
