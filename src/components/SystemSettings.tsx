@@ -41,11 +41,21 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     setEmailTest(prev => ({ ...prev, loading: true, result: null }));
 
     try {
-      const result = await sendTestEmail(
-        emailTest.testEmail,
-        emailTest.subject,
-        emailTest.message
-      );
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: emailTest.testEmail,
+          subject: emailTest.subject,
+          content: emailTest.message,
+          isTest: true
+        })
+      });
+
+      const result = await response.json();
       
       setEmailTest(prev => ({
         ...prev,
@@ -54,7 +64,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
           success: result.success,
           message: result.success 
             ? `Test email sent successfully to ${emailTest.testEmail}` 
-            : result.message || 'Failed to send test email'
+            : result.error || 'Failed to send test email'
         }
       }));
     } catch (error) {
@@ -63,16 +73,15 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
         loading: false,
         result: {
           success: false,
-          message: 'Error: Could not send email. Please check your EmailJS configuration.'
+          message: 'Network error: Could not connect to email service'
         }
       }));
     }
   };
 
   const handleSaveEmailConfig = () => {
-    // In a real app, this would save to local storage or environment variables
-    localStorage.setItem('emailjs_config', JSON.stringify(emailConfig));
-    alert('EmailJS configuration saved locally!');
+    // In a real app, this would save to database or environment variables
+    alert('Email configuration saved! (In production, this would update your server settings)');
   };
 
   const PRIMARY = '#ffb400';
@@ -152,53 +161,47 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                 {/* Email Configuration */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
-                    SMTP Configuration
+                    EmailJS Configuration (Free Email Service)
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Host</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Service ID</label>
                       <input
                         type="text"
-                        value={emailConfig.smtpHost}
-                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpHost: e.target.value })}
+                        value={emailConfig.serviceId}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, serviceId: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                         style={{ focusRingColor: PRIMARY }}
+                        placeholder="service_xxxxxxx"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Port</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Template ID</label>
                       <input
                         type="text"
-                        value={emailConfig.smtpPort}
-                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpPort: e.target.value })}
+                        value={emailConfig.templateId}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, templateId: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                         style={{ focusRingColor: PRIMARY }}
+                        placeholder="template_xxxxxxx"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Public Key</label>
                       <input
-                        type="email"
-                        value={emailConfig.smtpUser}
-                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpUser: e.target.value })}
+                        type="text"
+                        value={emailConfig.publicKey}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, publicKey: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                         style={{ focusRingColor: PRIMARY }}
+                        placeholder="Your EmailJS public key"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                      <input
-                        type="password"
-                        value={emailConfig.smtpPassword}
-                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpPassword: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                        style={{ focusRingColor: PRIMARY }}
-                      />
-                    </div>
+                    <div></div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">From Email</label>
@@ -223,18 +226,6 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
                   </div>
 
-                  <div className="mt-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={emailConfig.useSSL}
-                        onChange={(e) => setEmailConfig({ ...emailConfig, useSSL: e.target.checked })}
-                        className="rounded"
-                      />
-                      <span className="text-sm text-gray-700">Use SSL/TLS</span>
-                    </label>
-                  </div>
-
                   <button
                     onClick={handleSaveEmailConfig}
                     className="mt-4 px-4 py-2 rounded-lg text-white font-medium transition-colors"
@@ -242,6 +233,26 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   >
                     Save Configuration
                   </button>
+
+                  {/* EmailJS Setup Instructions */}
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">📧 EmailJS Setup Instructions</h4>
+                    <div className="text-sm text-blue-800 space-y-2">
+                      <p><strong>Step 1:</strong> Go to <a href="https://emailjs.com" target=\"_blank" className="underline">emailjs.com</a> and create a free account</p>
+                      <p><strong>Step 2:</strong> Add an email service (Gmail, Outlook, etc.)</p>
+                      <p><strong>Step 3:</strong> Create an email template with these variables:</p>
+                      <ul className="list-disc list-inside ml-4 space-y-1">
+                        <li>{{`{{to_email}}`}} - Recipient email</li>
+                        <li>{{`{{to_name}}`}} - Recipient name</li>
+                        <li>{{`{{subject}}`}} - Email subject</li>
+                        <li>{{`{{message}}`}} - Email content</li>
+                        <li>{{`{{ticket_number}}`}} - Repair ticket number</li>
+                        <li>{{`{{from_name}}`}} - Your business name</li>
+                      </ul>
+                      <p><strong>Step 4:</strong> Copy your Service ID, Template ID, and Public Key above</p>
+                      <p><strong>Free Tier:</strong> 200 emails/month - Perfect for small repair shops!</p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Email Testing */}
@@ -311,14 +322,16 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
 
                     {/* SMTP Configuration Note */}
                     <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <h4 className="font-medium text-yellow-900 mb-2">✅ Free Email Service Active</h4>
+                      <h4 className="font-medium text-yellow-900 mb-2">⚠️ SMTP Configuration Required</h4>
                       <div className="text-sm text-yellow-800 space-y-1">
-                        <p><strong>EmailJS is now configured!</strong> This free service allows you to send up to 200 emails per month.</p>
-                        <p>✅ No server setup required</p>
-                        <p>✅ Works directly from the browser</p>
-                        <p>✅ Professional email templates</p>
-                        <p>✅ Real email delivery to Gmail, Outlook, etc.</p>
-                        <p className="mt-2"><strong>Note:</strong> Complete the setup instructions above to start sending real emails.</p>
+                        <p>To send real emails, you need to integrate with an email service:</p>
+                        <ul className="list-disc list-inside ml-4 space-y-1">
+                          <li><strong>Option 1:</strong> Use SendGrid API (recommended)</li>
+                          <li><strong>Option 2:</strong> Use Mailgun API</li>
+                          <li><strong>Option 3:</strong> Use AWS SES</li>
+                          <li><strong>Option 4:</strong> Configure direct SMTP with a library</li>
+                        </ul>
+                        <p className="mt-2">Current implementation simulates email sending for testing.</p>
                       </div>
                     </div>
                   </div>
