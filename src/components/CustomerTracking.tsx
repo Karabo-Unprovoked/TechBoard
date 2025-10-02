@@ -26,13 +26,6 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
     setTrackingNumber('');
     setTickets([]);
 
-    // Check if Supabase is configured
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-      setError('Database not configured. Please set up your backend connection.');
-      setLoading(false);
-      return;
-    }
-
     try {
       // Search for tickets by ticket number
       const { data: ticketsData, error: ticketsError } = await supabase
