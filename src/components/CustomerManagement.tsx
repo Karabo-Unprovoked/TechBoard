@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash } from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
@@ -20,9 +20,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [customerTickets, setCustomerTickets] = useState<RepairTicket[]>([]);
 
   const [editData, setEditData] = useState({
-    name: customer.name,
+    first_name: customer.first_name,
+    last_name: customer.last_name,
     email: customer.email || '',
-    phone: customer.phone || ''
+    phone: customer.phone || '',
+    gender: customer.gender || '',
+    referral_source: customer.referral_source || ''
   });
 
   useEffect(() => {
@@ -140,9 +143,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   onClick={() => {
                     setIsEditing(false);
                     setEditData({
-                      name: customer.name,
+                      first_name: customer.first_name,
+                      last_name: customer.last_name,
                       email: customer.email || '',
-                      phone: customer.phone || ''
+                      phone: customer.phone || '',
+                      gender: customer.gender || '',
+                      referral_source: customer.referral_source || ''
                     });
                   }}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
@@ -175,19 +181,39 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Name</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
                   {isEditing ? (
                     <input
                       type="text"
-                      value={editData.name}
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                      value={editData.first_name}
+                      onChange={(e) => setEditData({ ...editData, first_name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
+                      required
                     />
                   ) : (
                     <div className="flex items-center gap-2">
                       <User size={16} className="text-gray-400" />
-                      <span className="text-gray-900">{customer.name}</span>
+                      <span className="text-gray-900">{customer.first_name}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.last_name}
+                      onChange={(e) => setEditData({ ...editData, last_name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      required
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-gray-400" />
+                      <span className="text-gray-900">{customer.last_name}</span>
                     </div>
                   )}
                 </div>
@@ -226,6 +252,54 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     <div className="flex items-center gap-2">
                       <Phone size={16} className="text-gray-400" />
                       <span className="text-gray-900">{customer.phone || 'Not provided'}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Gender</label>
+                  {isEditing ? (
+                    <select
+                      value={editData.gender}
+                      onChange={(e) => setEditData({ ...editData, gender: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                    >
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="text-gray-400" />
+                      <span className="text-gray-900">{customer.gender || 'Not specified'}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">How did you know about us?</label>
+                  {isEditing ? (
+                    <select
+                      value={editData.referral_source}
+                      onChange={(e) => setEditData({ ...editData, referral_source: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                    >
+                      <option value="">Select source</option>
+                      <option value="Friend/Family">Friend/Family</option>
+                      <option value="Google Search">Google Search</option>
+                      <option value="Social Media">Social Media</option>
+                      <option value="Advertisement">Advertisement</option>
+                      <option value="Walk-in">Walk-in</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} className="text-gray-400" />
+                      <span className="text-gray-900">{customer.referral_source || 'Not specified'}</span>
                     </div>
                   )}
                 </div>
