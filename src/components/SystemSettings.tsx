@@ -69,25 +69,38 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     }
   };
 
-  // Check email connection by sending a test
+  // Check email connection by testing SMTP authentication
   const checkEmailConnection = async () => {
     setEmailStatus(prev => ({ ...prev, checking: true, error: null }));
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-email', {
+      const { data, error: invokeError } = await supabase.functions.invoke('send-email', {
         body: {
           to: 'test@test.com',
           subject: 'Connection Test',
-          content: 'Testing connection',
+          content: 'Testing SMTP authentication',
           isTest: true
         }
       });
 
+      if (invokeError) {
+        setEmailStatus({
+          connected: false,
+          checking: false,
+          lastChecked: new Date(),
+          error: invokeError.message || 'Edge function error'
+        });
+        return;
+      }
+
+      const isConnected = data?.success === true;
+      const errorMsg = data?.error || (data?.success === false ? 'SMTP authentication failed' : null);
+
       setEmailStatus({
-        connected: data?.success || false,
+        connected: isConnected,
         checking: false,
         lastChecked: new Date(),
-        error: data?.success ? null : (data?.error || 'Connection failed')
+        error: errorMsg
       });
     } catch (error: any) {
       setEmailStatus({
