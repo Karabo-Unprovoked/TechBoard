@@ -6,9 +6,10 @@ interface TicketsViewProps {
   tickets: RepairTicket[];
   onViewLabel: (ticket: RepairTicket) => void;
   onRefresh: () => void;
+  onUpdateStatus?: (ticketId: string, newStatus: string) => void;
 }
 
-export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, onRefresh }) => {
+export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, onRefresh, onUpdateStatus }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'received':
@@ -113,6 +114,26 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, 
                   <p className="text-sm text-gray-700 line-clamp-2">
                     {ticket.issue_description}
                   </p>
+                </div>
+              )}
+
+              {/* Status Update */}
+              {onUpdateStatus && (
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    Update Status
+                  </label>
+                  <select
+                    value={ticket.status}
+                    onChange={(e) => onUpdateStatus(ticket.id, e.target.value)}
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
+                    style={{ focusRingColor: PRIMARY }}
+                  >
+                    <option value="received">Received</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="waiting-parts">Waiting Parts</option>
+                    <option value="completed">Completed</option>
+                  </select>
                 </div>
               )}
 

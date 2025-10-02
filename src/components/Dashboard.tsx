@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, TrendingUp, DollarSign, Package } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
 import { TicketsView } from './TicketsView';
 import { TicketLabel } from './TicketLabel';
+import { StatCard } from './StatCard';
 
 interface DashboardProps {
   onBack: () => void;
@@ -13,10 +14,10 @@ interface DashboardProps {
   onTrackCustomer: () => void;
 }
 
-type DashboardView = 'tickets' | 'new-customer' | 'new-ticket' | 'label';
+type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
-  const [currentView, setCurrentView] = useState<DashboardView>('tickets');
+  const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +80,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     setCurrentView('label');
   };
 
+  const updateTicketStatus = async (ticketId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('repair_tickets')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTickets(prev => prev.map(ticket => 
+        ticket.id === ticketId 
+          ? { ...ticket, status: newStatus, updated_at: new Date().toISOString() }
+          : ticket
+      ));
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
+    }
+  };
+
+  // Calculate dashboard stats
+  const stats = {
+    totalTickets: tickets.length,
+    pendingTickets: tickets.filter(t => t.status === 'received').length,
+    inProgressTickets: tickets.filter(t => t.status === 'in-progress').length,
+    completedTickets: tickets.filter(t => t.status === 'completed').length,
+    waitingPartsTickets: tickets.filter(t => t.status === 'waiting-parts').length,
+    totalCustomers: customers.length,
+    todayTickets: tickets.filter(t => {
+      const today = new Date().toDateString();
+      return new Date(t.created_at).toDateString() === today;
+    }).length,
+    weeklyRevenue: tickets.filter(t => t.status === 'completed').length * 150 // Mock calculation
+  };
+
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ticket.device_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -131,27 +170,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           <div className="flex-1 px-6">
             <nav className="space-y-2">
               <button
-                onClick={() => setCurrentView('tickets')}
+                onClick={() => setCurrentView('dashboard')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'tickets' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/5'
+                  currentView === 'dashboard' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Search size={20} />
+                <BarChart3 size={20} />
                 <span>Dashboard</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('tickets')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'tickets' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Wrench size={20} />
+                <span>All Tickets</span>
               </button>
               <button
                 onClick={() => setCurrentView('new-customer')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'new-customer' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/5'
+                  currentView === 'new-customer' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Plus size={20} />
+                <Users size={20} />
                 <span>New Customer</span>
               </button>
               <button
                 onClick={() => setCurrentView('new-ticket')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'new-ticket' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/5'
+                  currentView === 'new-ticket' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <Plus size={20} />
@@ -159,7 +207,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               </button>
               <button
                 onClick={onTrackCustomer}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors font-medium"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors font-medium"
               >
                 <Search size={20} />
                 <span>Track Customer</span>
@@ -189,12 +237,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
+                  {currentView === 'dashboard' && 'Repair Operations Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'new-customer' && 'New Customer'}
                   {currentView === 'new-ticket' && 'New Repair Ticket'}
                   {currentView === 'label' && 'Ticket Label'}
                 </h2>
                 <p className="text-gray-600">
+                  {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
                   {currentView === 'tickets' && 'Manage and track repair tickets'}
                   {currentView === 'new-customer' && 'Add a new customer to the system'}
                   {currentView === 'new-ticket' && 'Create a new repair ticket'}
@@ -243,11 +293,218 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               </div>
             ) : (
               <>
+                {currentView === 'dashboard' && (
+                  <div className="space-y-6">
+                    {/* Stats Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <StatCard
+                        title="Total Tickets"
+                        value={stats.totalTickets}
+                        change={`+${stats.todayTickets} today`}
+                        changeType="positive"
+                        icon={Wrench}
+                        color="blue"
+                      />
+                      <StatCard
+                        title="In Progress"
+                        value={stats.inProgressTickets}
+                        change={`${Math.round((stats.inProgressTickets / stats.totalTickets) * 100)}% of total`}
+                        changeType="neutral"
+                        icon={Clock}
+                        color="orange"
+                      />
+                      <StatCard
+                        title="Completed"
+                        value={stats.completedTickets}
+                        change={`${Math.round((stats.completedTickets / stats.totalTickets) * 100)}% success rate`}
+                        changeType="positive"
+                        icon={CheckCircle}
+                        color="green"
+                      />
+                      <StatCard
+                        title="Weekly Revenue"
+                        value={`R${stats.weeklyRevenue.toLocaleString()}`}
+                        change="+12.5% from last week"
+                        changeType="positive"
+                    {/* Quick Actions */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-2">
+                        {/* Recent Tickets with Status Updates */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                          <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900">Recent Tickets</h3>
+                            <button
+                              onClick={() => setCurrentView('tickets')}
+                              className="text-sm font-medium hover:underline"
+                              style={{ color: PRIMARY }}
+                            >
+                              View All
+                            </button>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            {tickets.slice(0, 5).map((ticket) => (
+                              <div key={ticket.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-3">
+                                    <span className="font-medium text-gray-900">{ticket.ticket_number}</span>
+                                    <span className="text-sm text-gray-600">
+                                      {ticket.customer?.name} - {ticket.device_type}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() => handleViewLabel(ticket)}
+                                    className="p-1 rounded hover:bg-gray-200 transition-colors"
+                                    style={{ color: PRIMARY }}
+                                  >
+                                    <Eye size={16} />
+                                  </button>
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                  <select
+                                    value={ticket.status}
+                                    onChange={(e) => updateTicketStatus(ticket.id, e.target.value)}
+                                    className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
+                                    style={{ focusRingColor: PRIMARY }}
+                                  >
+                                    <option value="received">Received</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="waiting-parts">Waiting Parts</option>
+                                    <option value="completed">Completed</option>
+                                  </select>
+                                  
+                                  <div className="text-right">
+                                    <p className="text-xs text-gray-500">
+                                      {new Date(ticket.created_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                        icon={DollarSign}
+                      {/* Quick Actions Panel */}
+                      <div className="space-y-6">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                          <div className="space-y-3">
+                            <button
+                              onClick={() => setCurrentView('new-ticket')}
+                              className="w-full flex items-center gap-3 p-3 rounded-lg text-white font-medium transition-colors"
+                              style={{ backgroundColor: PRIMARY }}
+                            >
+                              <Plus size={18} />
+                              <span>New Ticket</span>
+                            </button>
+                            <button
+                              onClick={() => setCurrentView('new-customer')}
+                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                            >
+                              <Users size={18} />
+                              <span>Add Customer</span>
+                            </button>
+                            <button
+                              onClick={onTrackCustomer}
+                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+                            >
+                              <Search size={18} />
+                              <span>Track Device</span>
+                            </button>
+                          </div>
+                        </div>
+                        color="purple"
+                        {/* Status Overview */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Overview</h3>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Received</span>
+                              </div>
+                              <span className="font-medium">{stats.pendingTickets}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">In Progress</span>
+                              </div>
+                              <span className="font-medium">{stats.inProgressTickets}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Waiting Parts</span>
+                              </div>
+                              <span className="font-medium">{stats.waitingPartsTickets}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Completed</span>
+                              </div>
+                              <span className="font-medium">{stats.completedTickets}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      />
+                    {/* Performance Metrics */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <TrendingUp className="text-green-600" size={20} />
+                          <h3 className="text-lg font-semibold text-gray-900">Performance Trends</h3>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Average Repair Time</span>
+                            <span className="font-medium">2.3 days</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Customer Satisfaction</span>
+                            <span className="font-medium">4.8/5.0</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">First-time Fix Rate</span>
+                            <span className="font-medium">87%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Package className="text-orange-600" size={20} />
+                          <h3 className="text-lg font-semibold text-gray-900">Inventory Alerts</h3>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
+                            <span className="text-sm text-gray-700">Laptop Screens (15.6")</span>
+                            <span className="text-sm font-medium text-orange-600">Low Stock</span>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                            <span className="text-sm text-gray-700">Hard Drives (1TB)</span>
+                            <span className="text-sm font-medium text-red-600">Critical</span>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                            <span className="text-sm text-gray-700">RAM (8GB DDR4)</span>
+                            <span className="text-sm font-medium text-green-600">In Stock</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {currentView === 'tickets' && (
                   <TicketsView 
                     tickets={filteredTickets} 
                     onViewLabel={handleViewLabel}
                     onRefresh={loadData}
+                    onUpdateStatus={updateTicketStatus}
                   />
                 )}
                 {currentView === 'new-customer' && (
