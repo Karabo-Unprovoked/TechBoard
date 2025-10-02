@@ -30,16 +30,16 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
       // Search for tickets by ticket number
       const { data: ticketsData, error: ticketsError } = await supabase
         .from('repair_tickets')
-        .select('*')
+        .select(`
+          *,
+          customer:customers(name)
+        `)
         .ilike('ticket_number', `%${searchTerm}%`)
         .order('created_at', { ascending: false });
 
       if (ticketsError) {
-        if (ticketsError.code === 'PGRST116') {
-          setError('No tickets found with that tracking number. Please check the number and try again.');
-        } else {
-          throw ticketsError;
-        }
+        console.error('Database error:', ticketsError);
+        setError('Unable to connect to tracking system. Please try again later.');
         setLoading(false);
         return;
       }
