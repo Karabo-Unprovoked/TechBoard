@@ -21,6 +21,8 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [nextCustomerNumber, setNextCustomerNumber] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [existingCustomerId, setExistingCustomerId] = useState<string | null>(null);
 
   const generateCustomerNumber = async () => {
     const { count } = await supabase
@@ -35,6 +37,42 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
     generateCustomerNumber().then(setNextCustomerNumber);
   }, []);
 
+  const checkEmailExists = async () => {
+    if (!formData.email) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data: existingCustomer, error: checkError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('email', formData.email)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingCustomer) {
+        setEditMode(true);
+        setExistingCustomerId(existingCustomer.id);
+        setFormData({
+          first_name: existingCustomer.first_name || '',
+          last_name: existingCustomer.last_name || '',
+          name: existingCustomer.name || '',
+          email: existingCustomer.email || '',
+          phone: existingCustomer.phone || '',
+          gender: existingCustomer.gender || '',
+          referral_source: existingCustomer.referral_source || ''
+        });
+        setSuccessMessage(`Customer found! You can now update their information.`);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to check email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -42,39 +80,35 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
     setSuccessMessage('');
 
     try {
-      if (formData.email) {
-        const { data: existingCustomer, error: checkError } = await supabase
+      if (editMode && existingCustomerId) {
+        const customerData = {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          name: `${formData.first_name} ${formData.last_name}`.trim(),
+          phone: formData.phone,
+          gender: formData.gender,
+          referral_source: formData.referral_source
+        };
+
+        const { data, error } = await supabase
           .from('customers')
-          .select('*')
-          .eq('email', formData.email)
-          .maybeSingle();
+          .update(customerData)
+          .eq('id', existingCustomerId)
+          .select()
+          .single();
 
-        console.log('Email check:', { email: formData.email, existingCustomer, checkError });
+        if (error) throw error;
 
-        if (existingCustomer) {
-          const customerData = {
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            name: `${formData.first_name} ${formData.last_name}`.trim(),
-            phone: formData.phone || existingCustomer.phone,
-            gender: formData.gender || existingCustomer.gender,
-            referral_source: formData.referral_source || existingCustomer.referral_source
-          };
+        setSuccessMessage(`Customer information updated successfully!`);
+        onCustomerCreated(data);
 
-          const { data, error } = await supabase
-            .from('customers')
-            .update(customerData)
-            .eq('id', existingCustomer.id)
-            .select()
-            .single();
-
-          if (error) throw error;
-
-          setSuccessMessage(`Customer with email ${formData.email} already exists. Information updated.`);
-          onCustomerCreated(data);
+        setTimeout(() => {
           setFormData({ first_name: '', last_name: '', name: '', email: '', phone: '', gender: '', referral_source: '' });
-          return;
-        }
+          setEditMode(false);
+          setExistingCustomerId(null);
+          setSuccessMessage('');
+        }, 2000);
+        return;
       }
 
       const customerNumber = await generateCustomerNumber();
@@ -99,10 +133,18 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       const newCustomerNumber = await generateCustomerNumber();
       setNextCustomerNumber(newCustomerNumber);
     } catch (err: any) {
-      setError(err.message || 'Failed to create customer');
+      setError(err.message || 'Failed to save customer');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setExistingCustomerId(null);
+    setFormData({ first_name: '', last_name: '', name: '', email: '', phone: '', gender: '', referral_source: '' });
+    setSuccessMessage('');
+    setError('');
   };
 
   const PRIMARY = '#ffb400';
@@ -110,12 +152,20 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        {nextCustomerNumber && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="text-sm text-blue-600 font-medium">
-              Next Customer Number: <span className="text-lg font-bold text-blue-800">{nextCustomerNumber}</span>
+        {editMode ? (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+            <div className="text-sm text-yellow-800 font-medium">
+              Edit Mode: Update existing customer information
             </div>
           </div>
+        ) : (
+          nextCustomerNumber && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm text-blue-600 font-medium">
+                Next Customer Number: <span className="text-lg font-bold text-blue-800">{nextCustomerNumber}</span>
+              </div>
+            </div>
+          )
         )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -161,16 +211,29 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 Email Address
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                  style={{ focusRingColor: PRIMARY }}
-                  placeholder="Enter email address"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                    style={{ focusRingColor: PRIMARY }}
+                    placeholder="Enter email address"
+                    disabled={editMode}
+                  />
+                </div>
+                {!editMode && formData.email && (
+                  <button
+                    type="button"
+                    onClick={checkEmailExists}
+                    disabled={loading}
+                    className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                  >
+                    Check
+                  </button>
+                )}
               </div>
             </div>
 
@@ -246,14 +309,25 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors disabled:opacity-50"
-            style={{ backgroundColor: PRIMARY }}
-          >
-            {loading ? 'Creating Customer...' : 'Create Customer'}
-          </button>
+          <div className="flex gap-4">
+            {editMode && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="flex-1 py-3 px-4 rounded-lg font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="py-3 px-4 rounded-lg font-semibold text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: PRIMARY, width: editMode ? '50%' : '100%' }}
+            >
+              {loading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Customer' : 'Create Customer')}
+            </button>
+          </div>
         </form>
       </div>
     </div>
