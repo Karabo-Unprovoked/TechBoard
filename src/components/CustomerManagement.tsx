@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash } from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
