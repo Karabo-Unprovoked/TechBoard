@@ -15,7 +15,7 @@ interface DashboardProps {
   onTrackCustomer: () => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket';
+type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'settings';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
@@ -220,6 +220,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <Search size={20} />
                 <span>Track Customer</span>
               </button>
+              <button
+                onClick={() => setCurrentView('settings')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'settings' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Settings size={20} />
+                <span>Settings</span>
+              </button>
             </nav>
           </div>
 
@@ -251,6 +260,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'new-ticket' && 'New Repair Ticket'}
                   {currentView === 'label' && 'Ticket Label'}
                   {currentView === 'manage-ticket' && 'Manage Ticket'}
+                  {currentView === 'settings' && 'System Settings'}
                 </h2>
                 <p className="text-gray-600">
                   {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
@@ -259,6 +269,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'new-ticket' && 'Create a new repair ticket'}
                   {currentView === 'label' && 'Print ticket label for device tracking'}
                   {currentView === 'manage-ticket' && 'Complete ticket management and communication'}
+                  {currentView === 'settings' && 'Configure system settings and test functionality'}
                 </p>
               </div>
               
@@ -515,6 +526,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       setSelectedTicket(updatedTicket);
                     }}
                   />
+                )}
+                {currentView === 'settings' && (
+                  <SystemSettings onBack={() => setCurrentView('dashboard')} />
                 )}
               </>
             )}

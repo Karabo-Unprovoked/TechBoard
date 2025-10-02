@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { to, subject, content, ticketNumber } = await req.json()
+    const { to, subject, content, ticketNumber, isTest } = await req.json()
 
     // SMTP configuration for computerguardian.co.za
     const smtpConfig = {
@@ -24,7 +24,44 @@ serve(async (req) => {
     }
 
     // Create email content with professional template
-    const emailHtml = `
+    const emailHtml = isTest ? `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #ffb400; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; }
+          .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #666; }
+          .test-badge { background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; display: inline-block; margin: 10px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Guardian Assist</h1>
+            <p>Computer Repair Services</p>
+          </div>
+          <div class="content">
+            <div class="test-badge">✅ TEST EMAIL</div>
+            <h2>Email Configuration Test</h2>
+            <div style="white-space: pre-line;">${content}</div>
+            <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 4px;">
+              <p><strong>✅ Success!</strong> Your SMTP configuration is working correctly.</p>
+              <p>Server: computerguardian.co.za:465 (SSL)</p>
+              <p>From: info@computerguardian.co.za</p>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2025 Guardian Assist. All rights reserved.</p>
+            <p>This is a test email from your repair management system.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    ` : `
       <!DOCTYPE html>
       <html>
       <head>
