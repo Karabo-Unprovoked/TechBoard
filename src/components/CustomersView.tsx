@@ -1,20 +1,133 @@
 import React, { useState } from 'react';
-import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
+import { AdminPasswordModal } from './AdminPasswordModal';
+import type { NotificationType } from './Notification';
 
 interface CustomersViewProps {
   customers: Customer[];
   onViewCustomer: (customer: Customer) => void;
   onRefresh: () => void;
+  onNotification: (type: NotificationType, message: string) => void;
 }
 
 export const CustomersView: React.FC<CustomersViewProps> = ({
   customers,
   onViewCustomer,
-  onRefresh
+  onRefresh,
+  onNotification
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'customer_number'>('date');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [pendingDeleteCustomerId, setPendingDeleteCustomerId] = useState<string | null>(null);
+
+  const handleDeleteClick = async (customerId: string) => {
+    const { data: tickets } = await supabase
+      .from('repair_tickets')
+      .select('*')
+      .eq('customer_id', customerId);
+
+    if (tickets && tickets.length > 0) {
+      const hasActiveTickets = tickets.some(
+        (t) => !['completed', 'cancelled'].includes(t.status)
+      );
+
+      if (hasActiveTickets) {
+        onNotification(
+          'warning',
+          'Cannot delete customer with active tickets. Only customers with completed or no tickets can be deleted.'
+        );
+        setDeleteConfirm(null);
+        return;
+      }
+
+      setPendingDeleteCustomerId(customerId);
+      setShowAdminModal(true);
+      setDeleteConfirm(null);
+    } else {
+      await deleteCustomer(customerId);
+    }
+  };
+
+  const deleteCustomer = async (customerId: string) => {
+    setDeleting(true);
+    try {
+      const customer = customers.find((c) => c.id === customerId);
+      if (!customer) throw new Error('Customer not found');
+
+      const { data: tickets } = await supabase
+        .from('repair_tickets')
+        .select('*')
+        .eq('customer_id', customerId)
+        .in('status', ['completed', 'cancelled']);
+
+      const { data: session } = await supabase.auth.getSession();
+
+      await supabase.from('deleted_customers').insert({
+        customer_id: customer.id,
+        customer_number: customer.customer_number,
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        gender: customer.gender,
+        referral_source: customer.referral_source,
+        original_created_at: customer.created_at,
+        deleted_by: session?.session?.user?.id,
+        tickets_data: tickets || []
+      });
+
+      if (tickets && tickets.length > 0) {
+        await supabase
+          .from('repair_tickets')
+          .delete()
+          .eq('customer_id', customerId);
+      }
+
+      await supabase.from('customers').delete().eq('id', customerId);
+
+      onNotification('success', 'Customer moved to recycle bin. Can be restored within 30 days.');
+      onRefresh();
+      setDeleteConfirm(null);
+    } catch (error: any) {
+      onNotification('error', 'Failed to delete customer: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleAdminConfirm = async (password: string) => {
+    try {
+      const { data: setting, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'admin_password')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const adminPassword = setting?.setting_value || 'admin123';
+
+      if (password !== adminPassword) {
+        onNotification('error', 'Incorrect admin password');
+        return;
+      }
+
+      setShowAdminModal(false);
+      if (pendingDeleteCustomerId) {
+        await deleteCustomer(pendingDeleteCustomerId);
+        setPendingDeleteCustomerId(null);
+      }
+    } catch (error: any) {
+      onNotification('error', 'Failed to verify password: ' + error.message);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -121,6 +234,32 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   >
                     <Eye size={18} />
                   </button>
+                  {deleteConfirm === customer.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeleteClick(customer.id)}
+                        disabled={deleting}
+                        className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(null)}
+                        disabled={deleting}
+                        className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setDeleteConfirm(customer.id)}
+                      className="p-2 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+                      title="Delete Customer"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -166,6 +305,17 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           ))}
         </div>
       )}
+
+      <AdminPasswordModal
+        isOpen={showAdminModal}
+        onClose={() => {
+          setShowAdminModal(false);
+          setPendingDeleteCustomerId(null);
+        }}
+        onConfirm={handleAdminConfirm}
+        title="Admin Authorization Required"
+        message="This customer has completed tickets. Admin password is required to proceed with deletion."
+      />
     </div>
   );
 };

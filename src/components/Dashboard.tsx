@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
@@ -11,16 +11,19 @@ import { StatCard } from './StatCard';
 import { SystemSettings } from './SystemSettings';
 import { CustomersView } from './CustomersView';
 import { CustomerManagement } from './CustomerManagement';
+import { UserProfile } from './UserProfile';
+import type { NotificationType } from './Notification';
 
 interface DashboardProps {
   onBack: () => void;
   onLogout: () => void;
   onTrackCustomer: () => void;
+  onNotification: (type: NotificationType, message: string) => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings';
+type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile';
 
-export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer, onNotification }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -241,6 +244,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <Settings size={20} />
                 <span>Settings</span>
               </button>
+              <button
+                onClick={() => setCurrentView('profile')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'profile' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <User size={20} />
+                <span>My Profile</span>
+              </button>
             </nav>
           </div>
 
@@ -266,7 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
-                  {currentView === 'dashboard' && 'Repair Operations Dashboard'}
+                  {currentView === 'dashboard' && 'Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'customers' && 'Customer Management'}
                   {currentView === 'new-customer' && 'New Customer'}
@@ -275,6 +287,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'manage-ticket' && 'Manage Ticket'}
                   {currentView === 'manage-customer' && 'Manage Customer'}
                   {currentView === 'settings' && 'System Settings'}
+                  {currentView === 'profile' && 'My Profile'}
                 </h2>
                 <p className="text-gray-600">
                   {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
@@ -286,6 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'manage-ticket' && 'Complete ticket management and communication'}
                   {currentView === 'manage-customer' && 'View customer details and repair history'}
                   {currentView === 'settings' && 'Configure system settings and test functionality'}
+                  {currentView === 'profile' && 'Manage your account details and security settings'}
                 </p>
               </div>
               
@@ -327,8 +341,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: PRIMARY }}></div>
-                    <option value="unrepairable">Unrepairable</option>
-                    <option value="pending-customer-action">Pending Customer Action</option>
                   <p className="text-gray-600">Loading...</p>
                 </div>
               </div>
@@ -557,10 +569,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'customers' && (
-                  <CustomersView 
-                    customers={customers} 
+                  <CustomersView
+                    customers={customers}
                     onViewCustomer={handleViewCustomer}
                     onRefresh={loadData}
+                    onNotification={onNotification}
                   />
                 )}
                 {currentView === 'new-customer' && (
@@ -599,7 +612,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'settings' && (
-                  <SystemSettings onBack={() => setCurrentView('dashboard')} />
+                  <SystemSettings
+                    onBack={() => setCurrentView('dashboard')}
+                    onNotification={onNotification}
+                  />
+                )}
+                {currentView === 'profile' && (
+                  <UserProfile />
                 )}
               </>
             )}

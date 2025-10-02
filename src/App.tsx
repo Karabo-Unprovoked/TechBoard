@@ -3,6 +3,8 @@ import { LoginForm } from './components/LoginForm';
 import { CustomerTracking } from './components/CustomerTracking';
 import { Dashboard } from './components/Dashboard';
 import { supabase } from './lib/supabase';
+import { NotificationContainer } from './components/Notification';
+import type { NotificationType } from './components/Notification';
 
 type AppState = 'login' | 'track-customer' | 'dashboard';
 
@@ -10,6 +12,18 @@ function App() {
   const [appState, setAppState] = useState<AppState>('login');
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [notifications, setNotifications] = useState<
+    Array<{ id: string; type: NotificationType; message: string }>
+  >([]);
+
+  const showNotification = (type: NotificationType, message: string) => {
+    const id = Date.now().toString();
+    setNotifications((prev) => [...prev, { id, type, message }]);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
   useEffect(() => {
     // Check if user is already logged in
@@ -87,13 +101,20 @@ function App() {
         return null;
       }
       return (
-        <Dashboard 
-          onBack={handleBackToLogin}
-          onLogout={handleLogout}
-          onTrackCustomer={handleTrackCustomer}
-        />
+        <>
+          <Dashboard
+            onBack={handleBackToLogin}
+            onLogout={handleLogout}
+            onTrackCustomer={handleTrackCustomer}
+            onNotification={showNotification}
+          />
+          <NotificationContainer
+            notifications={notifications}
+            onRemove={removeNotification}
+          />
+        </>
       );
-    
+
     default:
       return null;
   }

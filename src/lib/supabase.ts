@@ -52,8 +52,12 @@ export type Customer = {
   id: string;
   customer_number: string;
   name: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   phone?: string;
+  gender?: string;
+  referral_source?: string;
   created_at: string;
 };
 
@@ -66,6 +70,7 @@ export type RepairTicket = {
   model?: string;
   serial_number?: string;
   issue_description?: string;
+  device_accessories?: string[];
   status: string;
   repair_notes?: string;
   priority?: string;

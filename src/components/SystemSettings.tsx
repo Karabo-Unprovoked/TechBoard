@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3 } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
+import { RecycleBin } from './RecycleBin';
 
 interface SystemSettingsProps {
   onBack: () => void;
+  onNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
 }
 
 interface User {
@@ -14,14 +16,39 @@ interface User {
   last_sign_in_at?: string;
 }
 
-export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users'>('email');
+export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotification }) => {
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle'>('email');
+  const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<'admin' | 'technician' | 'viewer'>('technician');
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [emailSettings, setEmailSettings] = useState<{
+    smtp_host: string;
+    smtp_port: number;
+    smtp_username: string;
+    smtp_password: string;
+    from_email: string;
+    use_ssl: boolean;
+    updated_at: string;
+  } | null>(null);
+  const [emailStatus, setEmailStatus] = useState<{
+    connected: boolean;
+    checking: boolean;
+    lastChecked: Date | null;
+    error: string | null;
+  }>({
+    connected: false,
+    checking: false,
+    lastChecked: null,
+    error: null
+  });
   const [emailTest, setEmailTest] = useState({
     testEmail: '',
     subject: 'Test Email from Guardian Assist - SMTP Configuration Test',
@@ -30,13 +57,75 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     result: null as { success: boolean; message: string } | null
   });
 
+  // Load email settings
+  const loadEmailSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('email_settings')
+        .select('*')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setEmailSettings(data);
+        checkEmailConnection();
+      }
+    } catch (error) {
+      console.error('Error loading email settings:', error);
+    }
+  };
+
+  // Check email connection by testing SMTP authentication
+  const checkEmailConnection = async () => {
+    setEmailStatus(prev => ({ ...prev, checking: true, error: null }));
+
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: 'test@test.com',
+          subject: 'Connection Test',
+          content: 'Testing SMTP authentication',
+          isTest: true
+        }
+      });
+
+      if (invokeError) {
+        setEmailStatus({
+          connected: false,
+          checking: false,
+          lastChecked: new Date(),
+          error: invokeError.message || 'Edge function error'
+        });
+        return;
+      }
+
+      const isConnected = data?.success === true;
+      const errorMsg = data?.error || (data?.success === false ? 'SMTP authentication failed' : null);
+
+      setEmailStatus({
+        connected: isConnected,
+        checking: false,
+        lastChecked: new Date(),
+        error: errorMsg
+      });
+    } catch (error: any) {
+      setEmailStatus({
+        connected: false,
+        checking: false,
+        lastChecked: new Date(),
+        error: error.message || 'Network error'
+      });
+    }
+  };
+
   // Load user role on component mount
   React.useEffect(() => {
     const loadUserRole = async () => {
       try {
         const role = await getUserRole();
         setUserRole(role as 'admin' | 'technician' | 'viewer');
-        
+
         // If not admin, default to email tab (which they can access)
         if (role !== 'admin' && activeTab === 'users') {
           setActiveTab('email');
@@ -50,12 +139,67 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     };
 
     loadUserRole();
+    loadEmailSettings();
   }, []);
+
+  const handleUpdateEmailPassword = async () => {
+    const passwordInput = document.getElementById('smtp-password') as HTMLInputElement;
+    const newPassword = passwordInput?.value;
+
+    if (!newPassword) {
+      alert('Please enter a new password');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to update the email password? This will affect all system emails.')) {
+      return;
+    }
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Get the email settings record
+      const { data: settings, error: fetchError } = await supabase
+        .from('email_settings')
+        .select('id')
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (!settings) throw new Error('Email settings not found');
+
+      // Update the password
+      const { error: updateError } = await supabase
+        .from('email_settings')
+        .update({
+          smtp_password: newPassword,
+          updated_at: new Date().toISOString(),
+          updated_by: user?.id
+        })
+        .eq('id', settings.id);
+
+      if (updateError) throw updateError;
+
+      alert('Email password updated successfully!');
+      passwordInput.value = '';
+
+      // Reload settings and check connection
+      await loadEmailSettings();
+    } catch (error: any) {
+      console.error('Update error:', error);
+      alert('Failed to update email password: ' + error.message);
+    }
+  };
 
   const handleTestEmail = async () => {
     if (!emailTest.testEmail) {
-      setEmailTest(prev => ({ 
-        ...prev, 
+      setEmailTest(prev => ({
+        ...prev,
         result: { success: false, message: 'Please enter a test email address' }
       }));
       return;
@@ -196,6 +340,60 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     }
   }, [activeTab]);
 
+  const handleChangeAdminPassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      onNotification('error', 'All fields are required');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      onNotification('error', 'New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      onNotification('error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const { data: setting, error: fetchError } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'admin_password')
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      const storedPassword = setting?.setting_value || 'admin123';
+
+      if (currentPassword !== storedPassword) {
+        onNotification('error', 'Current password is incorrect');
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from('admin_settings')
+        .update({
+          setting_value: newPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq('setting_key', 'admin_password');
+
+      if (updateError) throw updateError;
+
+      onNotification('success', 'Admin password changed successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      onNotification('error', 'Failed to change password: ' + error.message);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
 
@@ -205,7 +403,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'users', label: 'User Management', icon: User }
+    { id: 'users', label: 'User Management', icon: User },
+    { id: 'recycle', label: 'Recycle Bin', icon: Trash2 }
   ];
 
   const getAvailableTabs = () => {
@@ -215,7 +414,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
       case 'admin':
         return allTabs; // Admin can see everything
       case 'technician':
-        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security'); // No user management or security
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle'); // No user management, security, or recycle bin
       case 'viewer':
         return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
       default:
@@ -309,36 +508,148 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
           <div className="lg:col-span-3">
             {activeTab === 'email' && (
               <div className="space-y-6">
-                {/* SMTP Configuration Info */}
+                {/* Email Connection Status */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
-                    SMTP Email Configuration
-                  </h3>
-                  
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle size={16} className="text-green-600" />
-                      <h4 className="font-medium text-green-900">SMTP Server Configured</h4>
-                    </div>
-                    <div className="text-sm text-green-800 space-y-1">
-                      <p><strong>Server:</strong> computerguardian.co.za:465 (SSL)</p>
-                      <p><strong>From Email:</strong> info@computerguardian.co.za</p>
-                      <p><strong>Authentication:</strong> Configured</p>
-                      <p><strong>Status:</strong> Ready to send emails</p>
-                    </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>
+                      Email Connection Status
+                    </h3>
+                    <button
+                      onClick={checkEmailConnection}
+                      disabled={emailStatus.checking}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{
+                        backgroundColor: emailStatus.checking ? '#ccc' : PRIMARY,
+                        color: 'white'
+                      }}
+                    >
+                      {emailStatus.checking ? 'Checking...' : 'Test Connection'}
+                    </button>
                   </div>
 
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">📧 Email Features</h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p>• Professional email templates with company branding</p>
-                      <p>• Automatic customer notifications for status updates</p>
-                      <p>• Repair completion alerts</p>
-                      <p>• Quote requests and approvals</p>
-                      <p>• Secure SMTP delivery via computerguardian.co.za</p>
+                  <div className={`rounded-lg p-4 mb-4 border ${
+                    emailStatus.checking ? 'bg-gray-50 border-gray-200' :
+                    emailStatus.connected ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {emailStatus.checking ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                          <h4 className="font-medium text-gray-900">Checking Connection...</h4>
+                        </>
+                      ) : emailStatus.connected ? (
+                        <>
+                          <CheckCircle size={16} className="text-green-600" />
+                          <h4 className="font-medium text-green-900">Connected</h4>
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle size={16} className="text-red-600" />
+                          <h4 className="font-medium text-red-900">Not Connected</h4>
+                        </>
+                      )}
+                    </div>
+                    {emailStatus.error && (
+                      <p className="text-sm text-red-800 mt-2">
+                        <strong>Error:</strong> {emailStatus.error}
+                      </p>
+                    )}
+                    {emailStatus.lastChecked && (
+                      <p className="text-xs text-gray-600 mt-2">
+                        Last checked: {emailStatus.lastChecked.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+
+                  {emailSettings && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Current Configuration</h4>
+                      <div className="text-sm text-gray-700 space-y-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Server:</span>
+                          <span>{emailSettings.smtp_host}:{emailSettings.smtp_port}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">From Email:</span>
+                          <span>{emailSettings.from_email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Username:</span>
+                          <span>{emailSettings.smtp_username}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Password:</span>
+                          <span>{emailSettings.smtp_password ? '••••••••' : 'Not set'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Security:</span>
+                          <span>{emailSettings.use_ssl ? 'SSL/TLS' : 'None'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Last Updated:</span>
+                          <span>{new Date(emailSettings.updated_at).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Email Password Configuration */}
+                {userRole === 'admin' && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                      Email Password Configuration
+                    </h3>
+
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle size={16} className="text-amber-600" />
+                        <h4 className="font-medium text-amber-900">Admin Only</h4>
+                      </div>
+                      <p className="text-sm text-amber-800">
+                        Update the SMTP password if your email account password has changed. This will update the credentials used to send all system emails.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Email Account (SMTP Username)
+                        </label>
+                        <input
+                          type="text"
+                          value="info@computerguardian.co.za"
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">This email account is used to send all system emails</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          New SMTP Password
+                        </label>
+                        <input
+                          type="password"
+                          id="smtp-password"
+                          placeholder="Enter new email password"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Enter the password for info@computerguardian.co.za</p>
+                      </div>
+
+                      <button
+                        onClick={handleUpdateEmailPassword}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Settings size={16} />
+                        <span>Update Email Password</span>
+                      </button>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Email Testing */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -491,6 +802,74 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                       <div>
                         <p className="font-medium text-green-900">Authentication</p>
                         <p className="text-sm text-green-700">Supabase Auth enabled</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-start gap-3 mb-4">
+                      <Shield size={20} className="text-gray-600 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 mb-1">Admin Password</p>
+                        <p className="text-sm text-gray-600">
+                          Required when deleting customers with completed tickets
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Current Password
+                        </label>
+                        <input
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none"
+                          placeholder="Enter current password"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none"
+                          placeholder="Enter new password (min 6 characters)"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Confirm New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none"
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+
+                      <button
+                        onClick={handleChangeAdminPassword}
+                        disabled={changingPassword}
+                        className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium disabled:opacity-50"
+                      >
+                        {changingPassword ? 'Changing Password...' : 'Change Admin Password'}
+                      </button>
+
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs text-blue-800">
+                          💡 The default password is <span className="font-mono font-bold">admin123</span>.
+                          It's recommended to change this immediately after first login.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -727,9 +1106,71 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                 </div>
               </div>
             )}
+
+            {activeTab === 'recycle' && userRole === 'admin' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>Recycle Bin</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      View and restore deleted customers. Items are permanently deleted after 30 days.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowRecycleBin(true)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                  >
+                    Open Recycle Bin
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">ℹ️ How It Works</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>• Deleted customers are moved to the recycle bin instead of being permanently removed</p>
+                      <p>• Customer data and their completed tickets are preserved</p>
+                      <p>• Items can be restored within 30 days</p>
+                      <p>• After 30 days, items are automatically and permanently deleted</p>
+                      <p>• Admins can manually delete items permanently at any time</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 className="font-medium text-yellow-900 mb-2">⚠️ Important Notes</h4>
+                    <div className="text-sm text-yellow-800 space-y-1">
+                      <p>• Only customers with completed/cancelled tickets or no tickets can be deleted</p>
+                      <p>• Deleting customers with completed tickets requires admin password</p>
+                      <p>• Restoring a customer will also restore their associated tickets</p>
+                      <p>• Permanent deletion cannot be undone</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle size={20} className="text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-900">Automatic Cleanup</p>
+                        <p className="text-sm text-green-700">
+                          The system automatically removes items older than 30 days via edge function
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {showRecycleBin && (
+        <RecycleBin
+          onClose={() => setShowRecycleBin(false)}
+          onRefresh={() => {}}
+          onNotification={onNotification}
+        />
+      )}
     </>
   );
 };
