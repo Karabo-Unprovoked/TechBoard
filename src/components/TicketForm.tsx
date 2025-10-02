@@ -150,10 +150,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
                         <div className="font-medium text-gray-900">
                           {customer.first_name && customer.last_name ? `${customer.first_name} ${customer.last_name}` : customer.name}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {customer.customer_number}
-                          {customer.email && ` • ${customer.email}`}
-                          {customer.phone && ` • ${customer.phone}`}
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div>{customer.customer_number}</div>
+                          <div className="flex flex-wrap gap-x-2">
+                            {customer.email && <span>{customer.email}</span>}
+                            {customer.phone && <span>{customer.phone}</span>}
+                          </div>
+                          {customer.gender && <div>Gender: {customer.gender}</div>}
+                          {customer.referral_source && <div>Referral: {customer.referral_source}</div>}
                         </div>
                       </button>
                     ))}
@@ -162,13 +166,18 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
               </div>
             ) : (
               <div className="flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
-                <div>
+                <div className="flex-1">
                   <div className="font-medium text-gray-900">
                     {selectedCustomer?.first_name && selectedCustomer?.last_name ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}` : selectedCustomer?.name}
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {selectedCustomer?.customer_number}
-                    {selectedCustomer?.email && ` • ${selectedCustomer.email}`}
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <div>{selectedCustomer?.customer_number}</div>
+                    <div className="flex flex-wrap gap-x-2">
+                      {selectedCustomer?.email && <span>{selectedCustomer.email}</span>}
+                      {selectedCustomer?.phone && <span>{selectedCustomer.phone}</span>}
+                    </div>
+                    {selectedCustomer?.gender && <div>Gender: {selectedCustomer.gender}</div>}
+                    {selectedCustomer?.referral_source && <div>Referral: {selectedCustomer.referral_source}</div>}
                   </div>
                 </div>
                 <button

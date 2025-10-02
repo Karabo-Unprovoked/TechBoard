@@ -15,16 +15,20 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [nextCustomerNumber, setNextCustomerNumber] = useState('');
 
   const generateCustomerNumber = async () => {
-    // Get the count of existing customers to generate next number
     const { count } = await supabase
       .from('customers')
       .select('*', { count: 'exact', head: true });
-    
+
     const nextNumber = (count || 0) + 1;
     return `CG${nextNumber.toString().padStart(3, '0')}`;
   };
+
+  React.useEffect(() => {
+    generateCustomerNumber().then(setNextCustomerNumber);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +48,9 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
 
       onCustomerCreated(data);
       setFormData({ name: '', email: '', phone: '' });
+
+      const newCustomerNumber = await generateCustomerNumber();
+      setNextCustomerNumber(newCustomerNumber);
     } catch (err: any) {
       setError(err.message || 'Failed to create customer');
     } finally {
@@ -56,6 +63,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        {nextCustomerNumber && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="text-sm text-blue-600 font-medium">
+              Next Customer Number: <span className="text-lg font-bold text-blue-800">{nextCustomerNumber}</span>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
