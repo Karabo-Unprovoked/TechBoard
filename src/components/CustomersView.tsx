@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
 
 interface CustomersViewProps {
@@ -15,6 +16,38 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'customer_number'>('date');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    setDeleting(true);
+    try {
+      const { data: tickets } = await supabase
+        .from('repair_tickets')
+        .select('id')
+        .eq('customer_id', customerId);
+
+      if (tickets && tickets.length > 0) {
+        alert('Cannot delete customer with existing repair tickets. Please delete or reassign tickets first.');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customerId);
+
+      if (error) throw error;
+
+      onRefresh();
+      setDeleteConfirm(null);
+    } catch (error: any) {
+      alert('Failed to delete customer: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -121,6 +154,32 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   >
                     <Eye size={18} />
                   </button>
+                  {deleteConfirm === customer.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeleteCustomer(customer.id)}
+                        disabled={deleting}
+                        className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(null)}
+                        disabled={deleting}
+                        className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setDeleteConfirm(customer.id)}
+                      className="p-2 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+                      title="Delete Customer"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
                 </div>
               </div>
 

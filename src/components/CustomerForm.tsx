@@ -25,11 +25,19 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   const [existingCustomerId, setExistingCustomerId] = useState<string | null>(null);
 
   const generateCustomerNumber = async () => {
-    const { count } = await supabase
+    const { data: customers } = await supabase
       .from('customers')
-      .select('*', { count: 'exact', head: true });
+      .select('customer_number')
+      .order('customer_number', { ascending: false })
+      .limit(1);
 
-    const nextNumber = (count || 0) + 1;
+    if (!customers || customers.length === 0) {
+      return 'CG001';
+    }
+
+    const lastNumber = customers[0].customer_number;
+    const numberPart = parseInt(lastNumber.replace('CG', ''), 10);
+    const nextNumber = numberPart + 1;
     return `CG${nextNumber.toString().padStart(3, '0')}`;
   };
 
