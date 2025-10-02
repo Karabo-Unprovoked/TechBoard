@@ -13,6 +13,8 @@ async function getEmailSettings() {
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const supabase = createClient(supabaseUrl, supabaseKey)
 
+  console.log('Loading email settings from database...')
+  
   const { data, error } = await supabase
     .from('email_settings')
     .select('*')
@@ -28,6 +30,14 @@ async function getEmailSettings() {
       secure: true,
     }
   }
+
+  console.log('Email settings loaded from database:', {
+    host: data.smtp_host,
+    port: data.smtp_port,
+    username: data.smtp_username,
+    passwordSet: data.smtp_password ? 'Yes' : 'No',
+    passwordLength: data.smtp_password?.length || 0
+  })
 
   return {
     hostname: data.smtp_host,
@@ -80,6 +90,7 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
 
     // Send password (base64 encoded)
     const password = btoa(smtpConfig.password)
+    console.log('Sending password (length:', smtpConfig.password.length, ')')
     response = await sendCommand(password)
     console.log('Password response:', response)
 
@@ -236,7 +247,9 @@ Deno.serve(async (req: Request) => {
       from: smtpConfig.username,
       subject: subject,
       server: `${smtpConfig.hostname}:${smtpConfig.port}`,
-      ssl: smtpConfig.secure
+      ssl: smtpConfig.secure,
+      passwordSet: smtpConfig.password ? 'Yes' : 'No',
+      passwordLength: smtpConfig.password?.length || 0
     })
 
     // Send email via SMTP
