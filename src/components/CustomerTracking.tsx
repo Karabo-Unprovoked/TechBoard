@@ -26,27 +26,20 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
     setTrackingNumber('');
     setTickets([]);
 
-    // Check if Supabase is configured
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-      setError('Database not configured. Please set up your backend connection.');
-      setLoading(false);
-      return;
-    }
-
     try {
       // Search for tickets by ticket number
       const { data: ticketsData, error: ticketsError } = await supabase
         .from('repair_tickets')
-        .select('*')
+        .select(`
+          *,
+          customer:customers(name)
+        `)
         .ilike('ticket_number', `%${searchTerm}%`)
         .order('created_at', { ascending: false });
 
       if (ticketsError) {
-        if (ticketsError.code === 'PGRST116') {
-          setError('No tickets found with that tracking number. Please check the number and try again.');
-        } else {
-          throw ticketsError;
-        }
+        console.error('Database error:', ticketsError);
+        setError('Unable to connect to tracking system. Please try again later.');
         setLoading(false);
         return;
       }
@@ -236,7 +229,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold mb-2" style={{ color: SECONDARY }}>
-                    {tickets[0].status === 'completed' ? 'Completed' : tickets[0].status.charAt(0).toUpperCase() + tickets[0].status.slice(1).replace('-', ' ')}
+                    Repair Status: {tickets[0].status === 'completed' ? 'Completed' : tickets[0].status.charAt(0).toUpperCase() + tickets[0].status.slice(1).replace('-', ' ')}
                   </h3>
                   <p className="text-xl font-semibold" style={{ color: PRIMARY }}>
                     {trackingNumber}
@@ -253,6 +246,9 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
                 {/* Status Progress */}
                 <div className="mb-8">
+                  <h4 className="text-lg font-semibold mb-4 text-center" style={{ color: SECONDARY }}>
+                    Repair Progress
+                  </h4>
                   <div className="flex justify-between items-center mb-4">
                     {['RECEIVED', 'IN PROGRESS', 'TESTING', 'COMPLETED'].map((step, index) => {
                       const currentStep = getStatusStep(tickets[0].status);
@@ -262,21 +258,40 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       return (
                         <div key={step} className="flex flex-col items-center flex-1">
                           <div 
-                            className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
-                              isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+                            className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 font-bold ${
+                              isActive ? 'text-white' : 'bg-gray-200 text-gray-500'
                             }`}
+                            style={{ backgroundColor: isActive ? PRIMARY : undefined }}
                           >
-                            {isActive && <span className="text-white">✓</span>}
+                            {isActive ? '✓' : index + 1}
                           </div>
-                          <span className={`text-xs font-medium ${isCurrent ? 'text-green-600' : 'text-gray-500'}`}>
+                          <span className={`text-sm font-medium text-center ${isCurrent ? 'font-bold' : 'text-gray-500'}`} style={{ color: isCurrent ? PRIMARY : undefined }}>
                             {step}
                           </span>
-                          {index < 3 && (
-                            <div className={`h-1 w-full mt-2 ${isActive ? 'bg-green-500' : 'bg-gray-200'}`} />
-                          )}
                         </div>
                       );
                     })}
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                    <div 
+                      className="h-2 rounded-full transition-all duration-500"
+                      style={{ 
+                        backgroundColor: PRIMARY,
+                        width: `${(getStatusStep(tickets[0].status) / 4) * 100}%`
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Status Description */}
+                  <div className="text-center p-4 rounded-lg" style={{ backgroundColor: 'rgba(255,180,0,0.1)' }}>
+                    <p className="text-sm" style={{ color: SECONDARY }}>
+                      {tickets[0].status === 'received' && 'Your device has been received and is in our queue for diagnosis.'}
+                      {tickets[0].status === 'in-progress' && 'Our technicians are currently working on diagnosing and repairing your device.'}
+                      {tickets[0].status === 'waiting-parts' && 'We are waiting for replacement parts to arrive. We will continue once parts are available.'}
+                      {tickets[0].status === 'completed' && 'Your device repair is complete and ready for collection!'}
+                    </p>
                   </div>
                 </div>
 
@@ -303,6 +318,15 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                     </div>
                   )}
 
+                  {tickets[0].serial_number && (
+                    <div>
+                      <p className="text-sm text-gray-500">Serial Number</p>
+                      <p className="font-semibold font-mono text-sm" style={{ color: SECONDARY }}>
+                        {tickets[0].serial_number}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-3">
                     <Calendar size={20} style={{ color: PRIMARY }} />
                     <div>
@@ -312,17 +336,55 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       </p>
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-3">
+                    <Clock size={20} style={{ color: PRIMARY }} />
+                    <div>
+                      <p className="text-sm text-gray-500">Last Updated</p>
+                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                        {formatDate(tickets[0].updated_at)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className={`w-5 h-5 rounded-full flex items-center justify-center ${getStatusColor(tickets[0].status)}`}
+                    />
+                    <div>
+                      <p className="text-sm text-gray-500">Current Status</p>
+                      <p className="font-semibold capitalize" style={{ color: SECONDARY }}>
+                        {tickets[0].status.replace('-', ' ')}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+
                 {tickets[0].issue_description && (
                   <div>
                     <h4 className="text-lg font-semibold mb-2" style={{ color: SECONDARY }}>
-                      Issue Description
+                      Reported Issue
                     </h4>
-                    <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                      {tickets[0].issue_description}
-                    </p>
+                    <div className="bg-gray-50 p-4 rounded-lg border-l-4" style={{ borderColor: PRIMARY }}>
+                      <p className="text-gray-700">
+                        {tickets[0].issue_description}
+                      </p>
+                    </div>
                   </div>
                 )}
+
+                {/* Estimated Timeline */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="text-lg font-semibold mb-2 text-blue-900">
+                    What to Expect
+                  </h4>
+                  <div className="space-y-2 text-sm text-blue-800">
+                    <p>• Most repairs are completed within 3-5 business days</p>
+                    <p>• You will be contacted if additional parts are needed</p>
+                    <p>• We will notify you when your device is ready for collection</p>
+                    <p>• All repairs come with a 30-day warranty</p>
+                  </div>
+                </div>
               </div>
             )}
 
