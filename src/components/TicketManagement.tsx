@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CreditCard as Edit3, Save, X, Plus, Mail, FileText, Calendar, DollarSign, AlertTriangle, Clock, User, Laptop, Hash, MessageSquare, Send, Paperclip, Download, Trash2, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { sendEmail } from '../lib/emailService';
 import type { RepairTicket, TicketNote, TicketEmail, Customer } from '../lib/supabase';
 
 interface TicketManagementProps {
@@ -134,25 +135,19 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
     setLoading(true);
     try {
-      // Call the Edge Function to send email
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: ticket.customer.email,
-          subject: emailData.subject,
-          content: emailData.content,
-          ticketNumber: ticket.ticket_number
-        })
+      // Send email using EmailJS
+      const result = await sendEmail({
+        to_email: ticket.customer.email,
+        to_name: ticket.customer.name,
+        subject: emailData.subject,
+        message: emailData.content,
+        ticket_number: ticket.ticket_number,
+        from_name: 'Guardian Assist',
+        from_email: 'info@computerguardian.co.za'
       });
-
-      const result = await response.json();
       
       if (!result.success) {
-        throw new Error(result.error || 'Failed to send email');
+        throw new Error(result.message || 'Failed to send email');
       }
 
       // Save email record to database
