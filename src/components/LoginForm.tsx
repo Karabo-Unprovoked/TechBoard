@@ -115,17 +115,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
           {/* Navigation Menu */}
           <div className="flex-1 px-6">
             <nav className="space-y-2">
-              <button
-                onClick={onTrackCustomer}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
-              >
-                <Search size={20} />
-                <span className="font-medium">Track Customer</span>
-              </button>
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors cursor-pointer">
                 <User size={20} />
                 <span className="font-medium">Log in</span>
               </div>
+              <button
+                onClick={onTrackCustomer}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors"
+              >
+                <Search size={20} />
+                <span className="font-medium">Track Customer</span>
+              </button>
               <button
                 onClick={() => window.open('mailto:support@guardianassist.co.za', '_blank')}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors"
