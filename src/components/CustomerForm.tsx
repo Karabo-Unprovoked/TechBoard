@@ -43,11 +43,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
 
     try {
       if (formData.email) {
-        const { data: existingCustomer } = await supabase
+        const { data: existingCustomer, error: checkError } = await supabase
           .from('customers')
           .select('*')
           .eq('email', formData.email)
           .maybeSingle();
+
+        console.log('Email check:', { email: formData.email, existingCustomer, checkError });
 
         if (existingCustomer) {
           const customerData = {
