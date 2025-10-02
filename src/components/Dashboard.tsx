@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
@@ -38,6 +38,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const loadData = async () => {
     setLoading(true);
     try {
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured) {
+        console.warn('Supabase not configured - using empty data');
+        setTickets([]);
+        setCustomers([]);
+        setLoading(false);
+        return;
+      }
+
       // Load tickets with customer data
       const { data: ticketsData, error: ticketsError } = await supabase
         .from('repair_tickets')
@@ -61,6 +70,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
       setCustomers(customersData || []);
     } catch (error) {
       console.error('Error loading data:', error);
+      // Set empty data on error to prevent crashes
+      setTickets([]);
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
@@ -321,6 +333,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <>
                 {currentView === 'dashboard' && (
                   <div className="space-y-6">
+                    {/* Supabase Configuration Warning */}
+                    {!isSupabaseConfigured && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle size={20} className="text-yellow-600" />
+                          <h4 className="font-medium text-yellow-900">Database Not Configured</h4>
+                        </div>
+                        <div className="text-sm text-yellow-800">
+                          <p className="mb-2">Supabase connection is not configured. To enable full functionality:</p>
+                          <ol className="list-decimal list-inside space-y-1 ml-4">
+                            <li>Click the "Supabase" button in the settings (top of preview)</li>
+                            <li>Follow the setup instructions to connect your database</li>
+                            <li>Restart the application after configuration</li>
+                          </ol>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Stats Overview */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       <StatCard
