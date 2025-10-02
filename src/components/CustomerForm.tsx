@@ -177,14 +177,21 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 Referral Source
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.referral_source}
                 onChange={(e) => setFormData({ ...formData, referral_source: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                 style={{ focusRingColor: PRIMARY }}
-                placeholder="How did you hear about us?"
-              />
+              >
+                <option value="">Select referral source</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Facebook">Facebook</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Word of Mouth">Word of Mouth</option>
+                <option value="Google">Google</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
           </div>
 
