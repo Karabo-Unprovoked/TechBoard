@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, AlertCircle } from 'lucide-react';
+import { User, Mail, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
 
@@ -19,6 +19,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [nextCustomerNumber, setNextCustomerNumber] = useState('');
 
   const generateCustomerNumber = async () => {
@@ -38,10 +39,44 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMessage('');
 
     try {
+      if (formData.email) {
+        const { data: existingCustomer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('email', formData.email)
+          .maybeSingle();
+
+        if (existingCustomer) {
+          const customerData = {
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            name: `${formData.first_name} ${formData.last_name}`.trim(),
+            phone: formData.phone || existingCustomer.phone,
+            gender: formData.gender || existingCustomer.gender,
+            referral_source: formData.referral_source || existingCustomer.referral_source
+          };
+
+          const { data, error } = await supabase
+            .from('customers')
+            .update(customerData)
+            .eq('id', existingCustomer.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          setSuccessMessage(`Customer with email ${formData.email} already exists. Information updated.`);
+          onCustomerCreated(data);
+          setFormData({ first_name: '', last_name: '', name: '', email: '', phone: '', gender: '', referral_source: '' });
+          return;
+        }
+      }
+
       const customerNumber = await generateCustomerNumber();
-      
+
       const customerData = {
         ...formData,
         name: `${formData.first_name} ${formData.last_name}`.trim() || formData.name,
@@ -199,6 +234,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
             <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg">
               <AlertCircle size={16} />
               <span className="text-sm">{error}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-3 rounded-lg">
+              <CheckCircle size={16} />
+              <span className="text-sm">{successMessage}</span>
             </div>
           )}
 
