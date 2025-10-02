@@ -94,6 +94,15 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
     response = await sendCommand(password)
     console.log('Password response:', response)
 
+    // Check if authentication succeeded (235 = Authentication successful)
+    if (!response.startsWith('235')) {
+      tlsConn.close()
+      return {
+        success: false,
+        message: `SMTP Authentication failed: ${response.trim()}`
+      }
+    }
+
     response = await sendCommand(`MAIL FROM:<${smtpConfig.username}>`)
     console.log('MAIL FROM response:', response)
 
