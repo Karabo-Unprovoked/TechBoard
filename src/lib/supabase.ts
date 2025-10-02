@@ -50,6 +50,7 @@ export const hasPermission = async (requiredRole: 'admin' | 'technician' | 'view
 
 export type Customer = {
   id: string;
+  customer_number: string;
   name: string;
   email?: string;
   phone?: string;

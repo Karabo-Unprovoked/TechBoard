@@ -16,15 +16,27 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const generateCustomerNumber = async () => {
+    // Get the count of existing customers to generate next number
+    const { count } = await supabase
+      .from('customers')
+      .select('*', { count: 'exact', head: true });
+    
+    const nextNumber = (count || 0) + 1;
+    return `CG${nextNumber.toString().padStart(3, '0')}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      const customerNumber = await generateCustomerNumber();
+      
       const { data, error } = await supabase
         .from('customers')
-        .insert([formData])
+        .insert([{ ...formData, customer_number: customerNumber }])
         .select()
         .single();
 

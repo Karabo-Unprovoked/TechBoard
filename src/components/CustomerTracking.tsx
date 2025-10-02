@@ -33,7 +33,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         .from('repair_tickets')
         .select(`
           *,
-          customer:customers(name)
+          customer:customers(customer_number, name)
         `)
         .ilike('ticket_number', `%${searchTerm}%`)
         .order('created_at', { ascending: false });
@@ -273,7 +273,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                         </p>
                       </div>
                     ))}
-                  </div>
+                  <span>{ticket.customer.customer_number} - {ticket.customer.name}</span>
                 </div>
               )}
 

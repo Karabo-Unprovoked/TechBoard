@@ -9,6 +9,8 @@ import { TicketLabel } from './TicketLabel';
 import { TicketManagement } from './TicketManagement';
 import { StatCard } from './StatCard';
 import { SystemSettings } from './SystemSettings';
+import { CustomersView } from './CustomersView';
+import { CustomerManagement } from './CustomerManagement';
 
 interface DashboardProps {
   onBack: () => void;
@@ -17,11 +19,13 @@ interface DashboardProps {
 }
 
 type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'settings';
+type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,6 +101,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const handleManageTicket = (ticket: RepairTicket) => {
     setSelectedTicket(ticket);
     setCurrentView('manage-ticket');
+  };
+
+  const handleViewCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCurrentView('manage-customer');
   };
 
   const updateTicketStatus = async (ticketId: string, newStatus: string) => {
@@ -209,6 +218,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span>All Tickets</span>
               </button>
               <button
+                onClick={() => setCurrentView('customers')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'customers' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Users size={20} />
+                <span>All Customers</span>
+              </button>
+              <button
                 onClick={() => setCurrentView('new-customer')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
                   currentView === 'new-customer' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -269,19 +287,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
                   {currentView === 'dashboard' && 'Repair Operations Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
+                  {currentView === 'customers' && 'Customer Management'}
                   {currentView === 'new-customer' && 'New Customer'}
                   {currentView === 'new-ticket' && 'New Repair Ticket'}
                   {currentView === 'label' && 'Ticket Label'}
                   {currentView === 'manage-ticket' && 'Manage Ticket'}
+                  {currentView === 'manage-customer' && 'Manage Customer'}
                   {currentView === 'settings' && 'System Settings'}
                 </h2>
                 <p className="text-gray-600">
                   {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
                   {currentView === 'tickets' && 'Manage and track repair tickets'}
+                  {currentView === 'customers' && 'View and manage customer information'}
                   {currentView === 'new-customer' && 'Add a new customer to the system'}
                   {currentView === 'new-ticket' && 'Create a new repair ticket'}
                   {currentView === 'label' && 'Print ticket label for device tracking'}
                   {currentView === 'manage-ticket' && 'Complete ticket management and communication'}
+                  {currentView === 'manage-customer' && 'View customer details and repair history'}
                   {currentView === 'settings' && 'Configure system settings and test functionality'}
                 </p>
               </div>
@@ -533,6 +555,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     onUpdateStatus={updateTicketStatus}
                   />
                 )}
+                {currentView === 'customers' && (
+                  <CustomersView 
+                    customers={customers} 
+                    onViewCustomer={handleViewCustomer}
+                    onRefresh={loadData}
+                  />
+                )}
                 {currentView === 'new-customer' && (
                   <CustomerForm onCustomerCreated={handleCustomerCreated} />
                 )}
@@ -555,6 +584,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     onTicketUpdated={(updatedTicket) => {
                       setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
                       setSelectedTicket(updatedTicket);
+                    }}
+                  />
+                )}
+                {currentView === 'manage-customer' && selectedCustomer && (
+                  <CustomerManagement 
+                    customer={selectedCustomer} 
+                    onBack={() => setCurrentView('customers')}
+                    onCustomerUpdated={(updatedCustomer) => {
+                      setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+                      setSelectedCustomer(updatedCustomer);
                     }}
                   />
                 )}

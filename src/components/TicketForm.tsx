@@ -86,7 +86,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
               <option value="">Select a customer</option>
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
-                  {customer.name} {customer.email && `(${customer.email})`}
+                  {customer.customer_number} - {customer.name} {customer.email && `(${customer.email})`}
                 </option>
               ))}
             </select>
