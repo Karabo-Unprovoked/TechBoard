@@ -1,5 +1,5 @@
-import React from 'react';
-import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search } from 'lucide-react';
 import type { Customer } from '../lib/supabase';
 
 interface CustomersViewProps {
@@ -8,11 +8,13 @@ interface CustomersViewProps {
   onRefresh: () => void;
 }
 
-export const CustomersView: React.FC<CustomersViewProps> = ({ 
-  customers, 
+export const CustomersView: React.FC<CustomersViewProps> = ({
+  customers,
   onViewCustomer,
   onRefresh
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'customer_number'>('date');
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -23,15 +25,35 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
     });
   };
 
-  const PRIMARY = '#ffb400';
+  const filteredCustomers = customers
+    .filter(customer => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        customer.name.toLowerCase().includes(searchLower) ||
+        customer.customer_number.toLowerCase().includes(searchLower) ||
+        customer.email?.toLowerCase().includes(searchLower) ||
+        customer.phone?.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      } else if (sortBy === 'customer_number') {
+        return a.customer_number.localeCompare(b.customer_number);
+      } else {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+  const PRIMARY = '#5d5d5d';
 
   return (
     <div className="space-y-6">
-      {/* Header with refresh button */}
-      <div className="flex items-center justify-between">
+      {/* Header with search and filter */}
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            {customers.length} Customer{customers.length !== 1 ? 's' : ''}
+            {filteredCustomers.length} Customer{filteredCustomers.length !== 1 ? 's' : ''}
           </h3>
           <p className="text-sm text-gray-600">Manage customer information and view repair history</p>
         </div>
@@ -44,18 +66,45 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
         </button>
       </div>
 
+      {/* Search and Sort Controls */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search by name, number, email, or phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+            style={{ focusRingColor: PRIMARY }}
+          />
+        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'customer_number')}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+          style={{ focusRingColor: PRIMARY }}
+        >
+          <option value="date">Sort by Date</option>
+          <option value="name">Sort by Name</option>
+          <option value="customer_number">Sort by Number</option>
+        </select>
+      </div>
+
       {/* Customers Grid */}
-      {customers.length === 0 ? (
+      {filteredCustomers.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             <User size={48} className="mx-auto" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No customers found</h3>
-          <p className="text-gray-600">Add a new customer to get started</p>
+          <p className="text-gray-600">
+            {searchTerm ? 'Try adjusting your search terms' : 'Add a new customer to get started'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {customers.map((customer) => (
+          {filteredCustomers.map((customer) => (
             <div key={customer.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
               {/* Customer Header */}
               <div className="flex items-center justify-between mb-4">
