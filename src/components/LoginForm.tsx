@@ -195,7 +195,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
 
               <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: SECONDARY }}>
+                  <label className="block text-sm font-bold mb-2" style={{ color: SECONDARY }}>
                     Email
                   </label>
                   <div className="relative">
@@ -213,7 +213,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: SECONDARY }}>
+                  <label className="block text-sm font-bold mb-2" style={{ color: SECONDARY }}>
                     Password
                   </label>
                   <div className="relative">

@@ -348,7 +348,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Test Email Address</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Test Email Address</label>
                       <input
                         type="email"
                         value={emailTest.testEmail}
@@ -360,7 +360,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Subject</label>
                       <input
                         type="text"
                         value={emailTest.subject}
@@ -371,7 +371,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Message</label>
                       <textarea
                         value={emailTest.message}
                         onChange={(e) => setEmailTest({ ...emailTest, message: e.target.value })}
@@ -558,7 +558,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
                       <input
                         type="email"
                         value={newUserEmail}
@@ -570,7 +570,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Role</label>
                       <select
                         value={newUserRole}
                         onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'technician' | 'viewer')}

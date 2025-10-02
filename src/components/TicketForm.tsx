@@ -73,7 +73,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Customer *
             </label>
             <select
@@ -93,7 +93,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Device Type *
             </label>
             <div className="relative">
@@ -116,7 +116,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
                 Brand
               </label>
               <input
@@ -130,7 +130,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
                 Model
               </label>
               <input
@@ -145,7 +145,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Serial Number
             </label>
             <div className="relative">
@@ -162,7 +162,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Issue Description *
             </label>
             <div className="relative">

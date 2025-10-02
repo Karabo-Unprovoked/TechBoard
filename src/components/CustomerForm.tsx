@@ -46,7 +46,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Customer Name *
             </label>
             <div className="relative">
@@ -64,7 +64,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Email Address
             </label>
             <div className="relative">
@@ -81,7 +81,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Phone Number
             </label>
             <div className="relative">
