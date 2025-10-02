@@ -313,6 +313,21 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                         <span className="text-sm">{emailTest.result.message}</span>
                       </div>
                     )}
+
+                    {/* SMTP Configuration Note */}
+                    <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <h4 className="font-medium text-yellow-900 mb-2">⚠️ SMTP Configuration Required</h4>
+                      <div className="text-sm text-yellow-800 space-y-1">
+                        <p>To send real emails, you need to integrate with an email service:</p>
+                        <ul className="list-disc list-inside ml-4 space-y-1">
+                          <li><strong>Option 1:</strong> Use SendGrid API (recommended)</li>
+                          <li><strong>Option 2:</strong> Use Mailgun API</li>
+                          <li><strong>Option 3:</strong> Use AWS SES</li>
+                          <li><strong>Option 4:</strong> Configure direct SMTP with a library</li>
+                        </ul>
+                        <p className="mt-2">Current implementation simulates email sending for testing.</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
