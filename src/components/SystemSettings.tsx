@@ -421,6 +421,32 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
             )}
 
             {activeTab === 'notifications' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                  Notification Settings
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">Status Change Alerts</p>
+                      <p className="text-sm text-gray-600">Notify when ticket status changes</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">Completion Notifications</p>
+                      <p className="text-sm text-gray-600">Alert customers when repairs are complete</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'users' && (
               <div className="space-y-6">
                 {/* Add New User */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -557,13 +583,6 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
                   )}
                 </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">Status Change Alerts</p>
-                      <p className="text-sm text-gray-600">Notify when ticket status changes</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
-                  </div>
 
                 {/* Configuration Status */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -591,15 +610,6 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                         <p>4. Test the connection using the refresh button above</p>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">Completion Notifications</p>
-                      <p className="text-sm text-gray-600">Alert customers when repairs are complete</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
                   </div>
                 </div>
               </div>
