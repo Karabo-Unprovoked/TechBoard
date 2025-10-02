@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Laptop, FileText, AlertCircle, Hash } from 'lucide-react';
+import { Laptop, FileText, AlertCircle, Hash, Search, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
@@ -20,6 +20,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
   const availableAccessories = [
     'Bag',
@@ -35,6 +37,29 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
     'CD/DVD Drive',
     'Other'
   ];
+
+  const filteredCustomers = customers.filter(customer => {
+    const searchLower = customerSearch.toLowerCase();
+    return (
+      customer.name.toLowerCase().includes(searchLower) ||
+      customer.customer_number.toLowerCase().includes(searchLower) ||
+      customer.email?.toLowerCase().includes(searchLower) ||
+      customer.phone?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const selectedCustomer = customers.find(c => c.id === formData.customer_id);
+
+  const handleSelectCustomer = (customer: Customer) => {
+    setFormData({ ...formData, customer_id: customer.id });
+    setCustomerSearch('');
+    setShowCustomerDropdown(false);
+  };
+
+  const handleClearCustomer = () => {
+    setFormData({ ...formData, customer_id: '' });
+    setCustomerSearch('');
+  };
 
   const generateTicketNumber = () => {
     const date = new Date();
@@ -89,24 +114,71 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <div className="relative">
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Customer *
             </label>
-            <select
-              value={formData.customer_id}
-              onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-              style={{ focusRingColor: PRIMARY }}
-              required
-            >
-              <option value="">Select a customer</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.customer_number} - {customer.first_name} {customer.last_name} {customer.email && `(${customer.email})`}
-                </option>
-              ))}
-            </select>
+
+            {!formData.customer_id ? (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    setShowCustomerDropdown(true);
+                  }}
+                  onFocus={() => setShowCustomerDropdown(true)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  style={{ focusRingColor: PRIMARY }}
+                  placeholder="Search by name, number, email, or phone..."
+                  required
+                />
+
+                {showCustomerDropdown && filteredCustomers.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredCustomers.map((customer) => (
+                      <button
+                        key={customer.id}
+                        type="button"
+                        onClick={() => handleSelectCustomer(customer)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {customer.name}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {customer.customer_number}
+                          {customer.email && ` • ${customer.email}`}
+                          {customer.phone && ` • ${customer.phone}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
+                <div>
+                  <div className="font-medium text-gray-900">
+                    {selectedCustomer?.name}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {selectedCustomer?.customer_number}
+                    {selectedCustomer?.email && ` • ${selectedCustomer.email}`}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearCustomer}
+                  className="p-1 hover:bg-gray-200 rounded transition-colors"
+                  title="Clear selection"
+                >
+                  <X size={18} className="text-gray-600" />
+                </button>
+              </div>
+            )}
           </div>
 
           <div>
