@@ -6,6 +6,7 @@ import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
 import { TicketsView } from './TicketsView';
 import { TicketLabel } from './TicketLabel';
+import { TicketManagement } from './TicketManagement';
 import { StatCard } from './StatCard';
 
 interface DashboardProps {
@@ -14,7 +15,7 @@ interface DashboardProps {
   onTrackCustomer: () => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label';
+type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
@@ -78,6 +79,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const handleViewLabel = (ticket: RepairTicket) => {
     setSelectedTicket(ticket);
     setCurrentView('label');
+  };
+
+  const handleManageTicket = (ticket: RepairTicket) => {
+    setSelectedTicket(ticket);
+    setCurrentView('manage-ticket');
   };
 
   const updateTicketStatus = async (ticketId: string, newStatus: string) => {
@@ -244,6 +250,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'new-customer' && 'New Customer'}
                   {currentView === 'new-ticket' && 'New Repair Ticket'}
                   {currentView === 'label' && 'Ticket Label'}
+                  {currentView === 'manage-ticket' && 'Manage Ticket'}
                 </h2>
                 <p className="text-gray-600">
                   {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
@@ -251,6 +258,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'new-customer' && 'Add a new customer to the system'}
                   {currentView === 'new-ticket' && 'Create a new repair ticket'}
                   {currentView === 'label' && 'Print ticket label for device tracking'}
+                  {currentView === 'manage-ticket' && 'Complete ticket management and communication'}
                 </p>
               </div>
               
@@ -478,6 +486,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   <TicketsView 
                     tickets={filteredTickets} 
                     onViewLabel={handleViewLabel}
+                    onManageTicket={handleManageTicket}
                     onRefresh={loadData}
                     onUpdateStatus={updateTicketStatus}
                   />
@@ -495,6 +504,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   <TicketLabel 
                     ticket={selectedTicket} 
                     onBack={() => setCurrentView('tickets')}
+                  />
+                )}
+                {currentView === 'manage-ticket' && selectedTicket && (
+                  <TicketManagement 
+                    ticket={selectedTicket} 
+                    onBack={() => setCurrentView('tickets')}
+                    onTicketUpdated={(updatedTicket) => {
+                      setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+                      setSelectedTicket(updatedTicket);
+                    }}
                   />
                 )}
               </>

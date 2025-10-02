@@ -1,15 +1,22 @@
 import React from 'react';
-import { Eye, RefreshCw, Calendar, User, Laptop, FileText } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Laptop, FileText, Settings } from 'lucide-react';
 import type { RepairTicket } from '../lib/supabase';
 
 interface TicketsViewProps {
   tickets: RepairTicket[];
   onViewLabel: (ticket: RepairTicket) => void;
+  onManageTicket?: (ticket: RepairTicket) => void;
   onRefresh: () => void;
   onUpdateStatus?: (ticketId: string, newStatus: string) => void;
 }
 
-export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, onRefresh, onUpdateStatus }) => {
+export const TicketsView: React.FC<TicketsViewProps> = ({ 
+  tickets, 
+  onViewLabel, 
+  onManageTicket,
+  onRefresh, 
+  onUpdateStatus 
+}) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'received':
@@ -81,14 +88,26 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, 
                     {ticket.status.replace('-', ' ').toUpperCase()}
                   </span>
                 </div>
-                <button
-                  onClick={() => onViewLabel(ticket)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  style={{ color: PRIMARY }}
-                  title="View Label"
-                >
-                  <Eye size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {onManageTicket && (
+                    <button
+                      onClick={() => onManageTicket(ticket)}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                      style={{ color: PRIMARY }}
+                      title="Manage Ticket"
+                    >
+                      <Settings size={18} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onViewLabel(ticket)}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    style={{ color: PRIMARY }}
+                    title="View Label"
+                  >
+                    <Eye size={18} />
+                  </button>
+                </div>
               </div>
 
               {/* Customer Info */}
