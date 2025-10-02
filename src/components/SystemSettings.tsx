@@ -77,19 +77,16 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
   const loadUsers = async () => {
     setLoadingUsers(true);
     try {
-      const { data, error } = await supabase.auth.admin.listUsers();
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { action: 'list' }
+      });
       if (error) throw error;
       
-      // Transform auth users to our User interface
-      const transformedUsers: User[] = data.users.map(user => ({
-        id: user.id,
-        email: user.email || '',
-        role: (user.user_metadata?.role || 'viewer') as 'admin' | 'technician' | 'viewer',
-        created_at: user.created_at,
-        last_sign_in_at: user.last_sign_in_at
-      }));
-      
-      setUsers(transformedUsers);
+      if (data.success) {
+        setUsers(data.users);
+      } else {
+        throw new Error(data.error);
+      }
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
@@ -101,21 +98,24 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     if (!newUserEmail.trim()) return;
     
     try {
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: newUserEmail,
-        password: 'TempPassword123!', // User will need to reset
-        email_confirm: true,
-        user_metadata: {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { 
+          action: 'create',
+          email: newUserEmail,
           role: newUserRole
         }
       });
       
       if (error) throw error;
       
-      setNewUserEmail('');
-      setNewUserRole('technician');
-      loadUsers();
-      alert(`User created successfully. Temporary password: TempPassword123!\nUser should change this on first login.`);
+      if (data.success) {
+        setNewUserEmail('');
+        setNewUserRole('technician');
+        loadUsers();
+        alert(`User created successfully. Temporary password: ${data.tempPassword}\nUser should change this on first login.`);
+      } else {
+        throw new Error(data.error);
+      }
     } catch (error: any) {
       alert('Error creating user: ' + error.message);
     }
@@ -123,13 +123,21 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
 
   const updateUserRole = async (userId: string, newRole: 'admin' | 'technician' | 'viewer') => {
     try {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        user_metadata: { role: newRole }
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { 
+          action: 'update',
+          userId,
+          role: newRole
+        }
       });
       
       if (error) throw error;
       
-      loadUsers();
+      if (data.success) {
+        loadUsers();
+      } else {
+        throw new Error(data.error);
+      }
     } catch (error: any) {
       alert('Error updating user role: ' + error.message);
     }
@@ -139,10 +147,20 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     if (!confirm(`Are you sure you want to delete user: ${userEmail}?`)) return;
     
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { 
+          action: 'delete',
+          userId
+        }
+      });
+      
       if (error) throw error;
       
-      loadUsers();
+      if (data.success) {
+        loadUsers();
+      } else {
+        throw new Error(data.error);
+      }
     } catch (error: any) {
       alert('Error deleting user: ' + error.message);
     }
