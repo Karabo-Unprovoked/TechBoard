@@ -137,7 +137,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 }`}
               >
                 <Search size={20} />
-                <span>View Tickets</span>
+                <span>Dashboard</span>
               </button>
               <button
                 onClick={() => setCurrentView('new-customer')}
