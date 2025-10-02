@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CreditCard as Edit3, Save, X, Plus, Mail, FileText, Calendar, DollarSign, AlertTriangle, Clock, User, Laptop, Hash, MessageSquare, Send, Paperclip, Download, Trash2, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { sendEmail } from '../lib/emailService';
 import type { RepairTicket, TicketNote, TicketEmail, Customer } from '../lib/supabase';
 
 interface TicketManagementProps {
@@ -135,23 +134,21 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
     setLoading(true);
     try {
-      // Send email using EmailJS
-      const result = await sendEmail({
-        to_email: ticket.customer.email,
-        to_name: ticket.customer.name,
-        subject: emailData.subject,
-        message: emailData.content,
-        ticket_number: ticket.ticket_number,
-        from_name: 'Guardian Assist',
-        from_email: 'info@computerguardian.co.za'
+      // Send email using Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: ticket.customer.email,
+          subject: emailData.subject,
+          content: emailData.content,
+          ticketNumber: ticket.ticket_number
+        }
       });
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to send email');
-      }
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
 
       // Save email record to database
-      const { data, error } = await supabase
+      const { data: emailRecord, error: emailError } = await supabase
         .from('ticket_emails')
         .insert([{
           ticket_id: ticket.id,
@@ -164,16 +161,16 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
         .select()
         .single();
 
-      if (error) throw error;
+      if (emailError) throw emailError;
 
-      setEmails(prev => [data, ...prev]);
+      setEmails(prev => [emailRecord, ...prev]);
       setShowEmailModal(false);
       setEmailData({ type: 'status_update', subject: '', content: '' });
       
       alert('Email sent successfully to ' + ticket.customer.email);
     } catch (error) {
       console.error('Error sending email:', error);
-      alert('Failed to send email: ' + error.message);
+      alert('Failed to send email: ' + (error as any).message);
     } finally {
       setLoading(false);
     }
