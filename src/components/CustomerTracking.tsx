@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw } from 'lucide-react';
+import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
@@ -360,34 +360,40 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   <div className="flex items-center gap-3">
                     <Laptop size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Device Type</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>{tickets[0].device_type}</p>
+                      <p className="text-sm font-bold text-gray-700">Device Type</p>
+                      <p className="text-gray-900">{tickets[0].device_type}</p>
                     </div>
                   </div>
 
                   {(tickets[0].brand || tickets[0].model) && (
-                    <div>
-                      <p className="text-sm text-gray-500">Model</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                    <div className="flex items-center gap-3">
+                      <Laptop size={20} style={{ color: PRIMARY }} />
+                      <div>
+                        <p className="text-sm font-bold text-gray-700">Model</p>
+                        <p className="text-gray-900">
                         {[tickets[0].brand, tickets[0].model].filter(Boolean).join(' ')}
-                      </p>
+                        </p>
+                      </div>
                     </div>
                   )}
 
                   {tickets[0].serial_number && (
-                    <div>
-                      <p className="text-sm text-gray-500">Serial Number</p>
-                      <p className="font-semibold font-mono text-sm" style={{ color: SECONDARY }}>
+                    <div className="flex items-center gap-3">
+                      <Hash size={20} style={{ color: PRIMARY }} />
+                      <div>
+                        <p className="text-sm font-bold text-gray-700">Serial Number</p>
+                        <p className="font-mono text-sm text-gray-900">
                         {tickets[0].serial_number}
-                      </p>
+                        </p>
+                      </div>
                     </div>
                   )}
 
                   <div className="flex items-center gap-3">
                     <Calendar size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Received Date</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                      <p className="text-sm font-bold text-gray-700">Received Date</p>
+                      <p className="text-gray-900">
                         {formatDate(tickets[0].created_at)}
                       </p>
                     </div>
@@ -396,8 +402,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   <div className="flex items-center gap-3">
                     <Clock size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Last Updated</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                      <p className="text-sm font-bold text-gray-700">Last Updated</p>
+                      <p className="text-gray-900">
                         {formatDate(tickets[0].updated_at)}
                       </p>
                     </div>
@@ -408,8 +414,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       className={`w-5 h-5 rounded-full flex items-center justify-center ${getStatusColor(tickets[0].status)}`}
                     />
                     <div>
-                      <p className="text-sm text-gray-500">Current Status</p>
-                      <p className="font-semibold capitalize" style={{ color: SECONDARY }}>
+                      <p className="text-sm font-bold text-gray-700">Current Status</p>
+                      <p className="capitalize text-gray-900">
                         {tickets[0].status.replace('-', ' ')}
                       </p>
                     </div>
@@ -442,6 +448,11 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Spacing between updates and device info */}
+            {customerNotes.length > 0 && (
+              <div className="mb-8"></div>
             )}
 
             {/* Support Information */}
