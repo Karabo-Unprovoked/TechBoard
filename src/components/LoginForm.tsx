@@ -33,7 +33,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
       });
 
       if (error) {
-        setError(error.message);
+        // Provide more helpful error messages
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials or create an account if you don\'t have one.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before signing in.');
+        } else {
+          setError(error.message);
+        }
       } else {
         // Authentication state change will be handled by App component automatically
       }
@@ -62,10 +69,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
       });
 
       if (error) {
-        setError(error.message);
+        // Provide more helpful error messages for sign up
+        if (error.message.includes('User already registered')) {
+          setError('An account with this email already exists. Please sign in instead.');
+        } else if (error.message.includes('Password should be at least')) {
+          setError('Password must be at least 6 characters long.');
+        } else {
+          setError(error.message);
+        }
       } else {
-        setError('Account created successfully! You can now sign in.');
+        setError('Account created successfully! You can now sign in with your credentials.');
         setIsSignUp(false);
+        // Clear the form
+        setEmail('');
+        setPassword('');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -167,6 +184,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
               <h3 className="text-xl font-semibold mb-6 text-center" style={{ color: SECONDARY }}>
                 {isSignUp ? 'Create Account' : 'Log in'}
               </h3>
+
+              {!isSignUp && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>First time user?</strong> Click "Register here" below to create your account.
+                  </p>
+                </div>
+              )}
 
               <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="space-y-6">
                 <div>

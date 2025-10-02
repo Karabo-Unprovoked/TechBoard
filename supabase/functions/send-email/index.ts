@@ -1,0 +1,260 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// SMTP configuration for computerguardian.co.za
+const SMTP_CONFIG = {
+  hostname: 'computerguardian.co.za',
+  port: 465,
+  username: 'info@computerguardian.co.za',
+  password: Deno.env.get('SMTP_PASSWORD') || 'your-email-password', // Set this in Supabase secrets
+  secure: true, // Use SSL
+}
+
+// Simple SMTP client implementation
+async function sendSMTPEmail(to: string, subject: string, htmlContent: string, textContent: string) {
+  try {
+    // Create a TCP connection to the SMTP server
+    const conn = await Deno.connect({
+      hostname: SMTP_CONFIG.hostname,
+      port: SMTP_CONFIG.port,
+    })
+
+    // Upgrade to TLS/SSL
+    const tlsConn = await Deno.startTls(conn, {
+      hostname: SMTP_CONFIG.hostname,
+    })
+
+    const encoder = new TextEncoder()
+    const decoder = new TextDecoder()
+
+    // Helper function to send command and read response
+    async function sendCommand(command: string): Promise<string> {
+      await tlsConn.write(encoder.encode(command + '\r\n'))
+      const buffer = new Uint8Array(1024)
+      const bytesRead = await tlsConn.read(buffer)
+      return decoder.decode(buffer.subarray(0, bytesRead || 0))
+    }
+
+    // SMTP conversation
+    let response = await sendCommand('')
+    console.log('Initial response:', response)
+
+    response = await sendCommand('EHLO computerguardian.co.za')
+    console.log('EHLO response:', response)
+
+    response = await sendCommand('AUTH LOGIN')
+    console.log('AUTH response:', response)
+
+    // Send username (base64 encoded)
+    const username = btoa(SMTP_CONFIG.username)
+    response = await sendCommand(username)
+    console.log('Username response:', response)
+
+    // Send password (base64 encoded)
+    const password = btoa(SMTP_CONFIG.password)
+    response = await sendCommand(password)
+    console.log('Password response:', response)
+
+    response = await sendCommand(`MAIL FROM:<${SMTP_CONFIG.username}>`)
+    console.log('MAIL FROM response:', response)
+
+    response = await sendCommand(`RCPT TO:<${to}>`)
+    console.log('RCPT TO response:', response)
+
+    response = await sendCommand('DATA')
+    console.log('DATA response:', response)
+
+    // Email headers and content
+    const emailContent = [
+      `From: Guardian Assist <${SMTP_CONFIG.username}>`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: multipart/alternative; boundary="boundary123"',
+      '',
+      '--boundary123',
+      'Content-Type: text/plain; charset=UTF-8',
+      '',
+      textContent,
+      '',
+      '--boundary123',
+      'Content-Type: text/html; charset=UTF-8',
+      '',
+      htmlContent,
+      '',
+      '--boundary123--',
+      '.',
+    ].join('\r\n')
+
+    response = await sendCommand(emailContent)
+    console.log('Email content response:', response)
+
+    response = await sendCommand('QUIT')
+    console.log('QUIT response:', response)
+
+    tlsConn.close()
+
+    return {
+      success: true,
+      message: 'Email sent successfully via SMTP'
+    }
+
+  } catch (error) {
+    console.error('SMTP Error:', error)
+    return {
+      success: false,
+      message: `SMTP Error: ${error.message}`
+    }
+  }
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const { to, subject, content, ticketNumber, isTest } = await req.json()
+
+    // Create email content with professional template
+    const emailHtml = isTest ? `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #ffb400; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; }
+          .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #666; }
+          .test-badge { background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; display: inline-block; margin: 10px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Guardian Assist</h1>
+            <p>Computer Repair Services</p>
+          </div>
+          <div class="content">
+            <div class="test-badge">✅ TEST EMAIL</div>
+            <h2>Email Configuration Test</h2>
+            <div style="white-space: pre-line;">${content}</div>
+            <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 4px;">
+              <p><strong>✅ Success!</strong> Your SMTP configuration is working correctly.</p>
+              <p>Server: computerguardian.co.za:465 (SSL)</p>
+              <p>From: info@computerguardian.co.za</p>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2025 Guardian Assist. All rights reserved.</p>
+            <p>This is a test email from your repair management system.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    ` : `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #ffb400; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; }
+          .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #666; }
+          .ticket-number { background: #ffb400; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; display: inline-block; margin: 10px 0; }
+          .contact-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Guardian Assist</h1>
+            <p>Computer Repair Services</p>
+          </div>
+          <div class="content">
+            ${ticketNumber ? `<div class="ticket-number">Ticket: ${ticketNumber}</div>` : ''}
+            <div style="white-space: pre-line;">${content}</div>
+            <div class="contact-info">
+              <p><strong>Need assistance?</strong></p>
+              <p>📧 Email: info@computerguardian.co.za</p>
+              <p>📞 Phone: +27 86 120 3203</p>
+              <p>🌐 Website: computerguardian.co.za</p>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2025 Guardian Assist. All rights reserved.</p>
+            <p>This email was sent regarding your computer repair service.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+
+    // Convert HTML to plain text for the text version
+    const textContent = content.replace(/<[^>]*>/g, '').replace(/\n\s*\n/g, '\n\n')
+
+    console.log('Sending email via SMTP:', {
+      to: to,
+      from: SMTP_CONFIG.username,
+      subject: subject,
+      server: `${SMTP_CONFIG.hostname}:${SMTP_CONFIG.port}`,
+      ssl: SMTP_CONFIG.secure
+    })
+
+    // Send email via SMTP
+    const result = await sendSMTPEmail(to, subject, emailHtml, textContent)
+
+    if (result.success) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Email sent successfully via SMTP',
+          details: {
+            to: to,
+            subject: subject,
+            timestamp: new Date().toISOString(),
+            server: `${SMTP_CONFIG.hostname}:${SMTP_CONFIG.port} (SSL)`
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    } else {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: result.message
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        },
+      )
+    }
+
+  } catch (error) {
+    console.error('Email sending error:', error)
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    )
+  }
+})

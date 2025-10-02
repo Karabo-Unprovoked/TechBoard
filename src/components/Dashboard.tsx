@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, TrendingUp, DollarSign, Package } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
 import { TicketsView } from './TicketsView';
 import { TicketLabel } from './TicketLabel';
+import { TicketManagement } from './TicketManagement';
 import { StatCard } from './StatCard';
+import { SystemSettings } from './SystemSettings';
 
 interface DashboardProps {
   onBack: () => void;
@@ -14,7 +16,7 @@ interface DashboardProps {
   onTrackCustomer: () => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label';
+type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'settings';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
@@ -80,6 +82,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     setCurrentView('label');
   };
 
+  const handleManageTicket = (ticket: RepairTicket) => {
+    setSelectedTicket(ticket);
+    setCurrentView('manage-ticket');
+  };
+
   const updateTicketStatus = async (ticketId: string, newStatus: string) => {
     try {
       const { error } = await supabase
@@ -110,6 +117,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     inProgressTickets: tickets.filter(t => t.status === 'in-progress').length,
     completedTickets: tickets.filter(t => t.status === 'completed').length,
     waitingPartsTickets: tickets.filter(t => t.status === 'waiting-parts').length,
+    unrepairableTickets: tickets.filter(t => t.status === 'unrepairable').length,
+    pendingCustomerTickets: tickets.filter(t => t.status === 'pending-customer-action').length,
     totalCustomers: customers.length,
     todayTickets: tickets.filter(t => {
       const today = new Date().toDateString();
@@ -212,6 +221,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <Search size={20} />
                 <span>Track Customer</span>
               </button>
+              <button
+                onClick={() => setCurrentView('settings')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  currentView === 'settings' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Settings size={20} />
+                <span>Settings</span>
+              </button>
             </nav>
           </div>
 
@@ -242,6 +260,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'new-customer' && 'New Customer'}
                   {currentView === 'new-ticket' && 'New Repair Ticket'}
                   {currentView === 'label' && 'Ticket Label'}
+                  {currentView === 'manage-ticket' && 'Manage Ticket'}
+                  {currentView === 'settings' && 'System Settings'}
                 </h2>
                 <p className="text-gray-600">
                   {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
@@ -249,6 +269,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'new-customer' && 'Add a new customer to the system'}
                   {currentView === 'new-ticket' && 'Create a new repair ticket'}
                   {currentView === 'label' && 'Print ticket label for device tracking'}
+                  {currentView === 'manage-ticket' && 'Complete ticket management and communication'}
+                  {currentView === 'settings' && 'Configure system settings and test functionality'}
                 </p>
               </div>
               
@@ -276,6 +298,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     <option value="in-progress">In Progress</option>
                     <option value="waiting-parts">Waiting Parts</option>
                     <option value="completed">Completed</option>
+                    <option value="unrepairable">Unrepairable</option>
+                    <option value="pending-customer-action">Pending Customer Action</option>
                   </select>
                 </div>
               )}
@@ -288,6 +312,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: PRIMARY }}></div>
+                    <option value="unrepairable">Unrepairable</option>
+                    <option value="pending-customer-action">Pending Customer Action</option>
                   <p className="text-gray-600">Loading...</p>
                 </div>
               </div>
@@ -320,14 +346,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         changeType="positive"
                         icon={CheckCircle}
                         color="green"
-                      />
-                      <StatCard
-                        title="Weekly Revenue"
-                        value={`R${stats.weeklyRevenue.toLocaleString()}`}
-                        change="+12.5% from last week"
-                        changeType="positive"
-                        icon={DollarSign}
-                        color="purple"
                       />
                     </div>
 
@@ -377,6 +395,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                     <option value="in-progress">In Progress</option>
                                     <option value="waiting-parts">Waiting Parts</option>
                                     <option value="completed">Completed</option>
+                                    <option value="unrepairable">Unrepairable</option>
+                                    <option value="pending-customer-action">Pending Customer Action</option>
                                   </select>
                                   
                                   <div className="text-right">
@@ -453,60 +473,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                               </div>
                               <span className="font-medium">{stats.completedTickets}</span>
                             </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Unrepairable</span>
+                              </div>
+                              <span className="font-medium">{stats.unrepairableTickets}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Pending Customer</span>
+                              </div>
+                              <span className="font-medium">{stats.pendingCustomerTickets}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Performance Metrics */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <TrendingUp className="text-green-600" size={20} />
-                          <h3 className="text-lg font-semibold text-gray-900">Performance Trends</h3>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Average Repair Time</span>
-                            <span className="font-medium">2.3 days</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Customer Satisfaction</span>
-                            <span className="font-medium">4.8/5.0</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">First-time Fix Rate</span>
-                            <span className="font-medium">87%</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Package className="text-orange-600" size={20} />
-                          <h3 className="text-lg font-semibold text-gray-900">Inventory Alerts</h3>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-                            <span className="text-sm text-gray-700">Laptop Screens (15.6")</span>
-                            <span className="text-sm font-medium text-orange-600">Low Stock</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
-                            <span className="text-sm text-gray-700">Hard Drives (1TB)</span>
-                            <span className="text-sm font-medium text-red-600">Critical</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-                            <span className="text-sm text-gray-700">RAM (8GB DDR4)</span>
-                            <span className="text-sm font-medium text-green-600">In Stock</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                 )}
                 {currentView === 'tickets' && (
                   <TicketsView 
                     tickets={filteredTickets} 
                     onViewLabel={handleViewLabel}
+                    onManageTicket={handleManageTicket}
                     onRefresh={loadData}
                     onUpdateStatus={updateTicketStatus}
                   />
@@ -525,6 +517,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     ticket={selectedTicket} 
                     onBack={() => setCurrentView('tickets')}
                   />
+                )}
+                {currentView === 'manage-ticket' && selectedTicket && (
+                  <TicketManagement 
+                    ticket={selectedTicket} 
+                    onBack={() => setCurrentView('tickets')}
+                    onTicketUpdated={(updatedTicket) => {
+                      setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+                      setSelectedTicket(updatedTicket);
+                    }}
+                  />
+                )}
+                {currentView === 'settings' && (
+                  <SystemSettings onBack={() => setCurrentView('dashboard')} />
                 )}
               </>
             )}

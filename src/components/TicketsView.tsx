@@ -1,15 +1,22 @@
 import React from 'react';
-import { Eye, RefreshCw, Calendar, User, Laptop, FileText } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Laptop, FileText, Settings } from 'lucide-react';
 import type { RepairTicket } from '../lib/supabase';
 
 interface TicketsViewProps {
   tickets: RepairTicket[];
   onViewLabel: (ticket: RepairTicket) => void;
+  onManageTicket?: (ticket: RepairTicket) => void;
   onRefresh: () => void;
   onUpdateStatus?: (ticketId: string, newStatus: string) => void;
 }
 
-export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, onRefresh, onUpdateStatus }) => {
+export const TicketsView: React.FC<TicketsViewProps> = ({ 
+  tickets, 
+  onViewLabel, 
+  onManageTicket,
+  onRefresh, 
+  onUpdateStatus 
+}) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'received':
@@ -20,6 +27,10 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, 
         return 'bg-green-100 text-green-800';
       case 'waiting-parts':
         return 'bg-orange-100 text-orange-800';
+      case 'unrepairable':
+        return 'bg-red-100 text-red-800';
+      case 'pending-customer-action':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -77,14 +88,26 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, 
                     {ticket.status.replace('-', ' ').toUpperCase()}
                   </span>
                 </div>
-                <button
-                  onClick={() => onViewLabel(ticket)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  style={{ color: PRIMARY }}
-                  title="View Label"
-                >
-                  <Eye size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {onManageTicket && (
+                    <button
+                      onClick={() => onManageTicket(ticket)}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                      style={{ color: PRIMARY }}
+                      title="Manage Ticket"
+                    >
+                      <Settings size={18} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onViewLabel(ticket)}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    style={{ color: PRIMARY }}
+                    title="View Label"
+                  >
+                    <Eye size={18} />
+                  </button>
+                </div>
               </div>
 
               {/* Customer Info */}
@@ -133,7 +156,19 @@ export const TicketsView: React.FC<TicketsViewProps> = ({ tickets, onViewLabel, 
                     <option value="in-progress">In Progress</option>
                     <option value="waiting-parts">Waiting Parts</option>
                     <option value="completed">Completed</option>
+                    <option value="unrepairable">Unrepairable</option>
+                    <option value="pending-customer-action">Pending Customer Action</option>
                   </select>
+                </div>
+              )}
+
+              {/* Repair Notes for unrepairable items */}
+              {ticket.status === 'unrepairable' && ticket.repair_notes && (
+                <div className="mb-4">
+                  <p className="text-xs font-medium text-red-600 mb-1">Reason:</p>
+                  <p className="text-sm text-gray-700 bg-red-50 p-2 rounded border-l-2 border-red-200">
+                    {ticket.repair_notes}
+                  </p>
                 </div>
               )}
 
