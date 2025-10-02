@@ -71,20 +71,34 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     }
 
     try {
-      const { error } = await supabase
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Get the email settings record
+      const { data: settings, error: fetchError } = await supabase
+        .from('email_settings')
+        .select('id')
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (!settings) throw new Error('Email settings not found');
+
+      // Update the password
+      const { error: updateError } = await supabase
         .from('email_settings')
         .update({
           smtp_password: newPassword,
           updated_at: new Date().toISOString(),
-          updated_by: (await supabase.auth.getUser()).data.user?.id
+          updated_by: user?.id
         })
-        .eq('id', (await supabase.from('email_settings').select('id').single()).data?.id);
+        .eq('id', settings.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       alert('Email password updated successfully!');
       passwordInput.value = '';
     } catch (error: any) {
+      console.error('Update error:', error);
       alert('Failed to update email password: ' + error.message);
     }
   };
