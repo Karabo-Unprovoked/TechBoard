@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, TrendingUp, DollarSign, Package } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
@@ -321,14 +321,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         icon={CheckCircle}
                         color="green"
                       />
-                      <StatCard
-                        title="Weekly Revenue"
-                        value={`R${stats.weeklyRevenue.toLocaleString()}`}
-                        change="+12.5% from last week"
-                        changeType="positive"
-                        icon={DollarSign}
-                        color="purple"
-                      />
                     </div>
 
                     {/* Quick Actions */}
@@ -458,49 +450,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       </div>
                     </div>
 
-                    {/* Performance Metrics */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <TrendingUp className="text-green-600" size={20} />
-                          <h3 className="text-lg font-semibold text-gray-900">Performance Trends</h3>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Average Repair Time</span>
-                            <span className="font-medium">2.3 days</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Customer Satisfaction</span>
-                            <span className="font-medium">4.8/5.0</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">First-time Fix Rate</span>
-                            <span className="font-medium">87%</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Package className="text-orange-600" size={20} />
-                          <h3 className="text-lg font-semibold text-gray-900">Inventory Alerts</h3>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-                            <span className="text-sm text-gray-700">Laptop Screens (15.6")</span>
-                            <span className="text-sm font-medium text-orange-600">Low Stock</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
-                            <span className="text-sm text-gray-700">Hard Drives (1TB)</span>
-                            <span className="text-sm font-medium text-red-600">Critical</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-                            <span className="text-sm text-gray-700">RAM (8GB DDR4)</span>
-                            <span className="text-sm font-medium text-green-600">In Stock</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                 )}
                 {currentView === 'tickets' && (
