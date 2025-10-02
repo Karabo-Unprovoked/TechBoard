@@ -296,7 +296,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Status and Priority */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
                   {isEditing ? (
                     <select
                       value={editData.status}
@@ -319,7 +319,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Priority</label>
                   {isEditing ? (
                     <select
                       value={editData.priority}
@@ -340,7 +340,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
                 {/* Device Information */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Device Type</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Device Type</label>
                   {isEditing ? (
                     <select
                       value={editData.device_type}
@@ -360,7 +360,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Brand</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -376,7 +376,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Model</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -392,7 +392,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Serial Number</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Serial Number</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -409,7 +409,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
                 {/* Cost Information */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Cost</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Estimated Cost</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -426,7 +426,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Actual Cost</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Actual Cost</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -444,7 +444,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
                 {/* Estimated Completion */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Completion</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Estimated Completion</label>
                   {isEditing ? (
                     <input
                       type="datetime-local"
@@ -463,7 +463,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
               {/* Issue Description */}
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Issue Description</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Issue Description</label>
                 {isEditing ? (
                   <textarea
                     value={editData.issue_description}
@@ -482,7 +482,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
               {/* Repair Notes */}
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Repair Notes</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Repair Notes</label>
                 {isEditing ? (
                   <textarea
                     value={editData.repair_notes}
@@ -674,7 +674,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Type</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Email Type</label>
                   <select
                     value={emailData.type}
                     onChange={(e) => setEmailData({ ...emailData, type: e.target.value })}
@@ -690,7 +690,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Subject</label>
                   <input
                     type="text"
                     value={emailData.subject}
@@ -708,7 +708,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Message</label>
                   <textarea
                     value={emailData.content}
                     onChange={(e) => setEmailData({ ...emailData, content: e.target.value })}

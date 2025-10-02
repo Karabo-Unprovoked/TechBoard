@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
@@ -9,6 +9,8 @@ import { TicketLabel } from './TicketLabel';
 import { TicketManagement } from './TicketManagement';
 import { StatCard } from './StatCard';
 import { SystemSettings } from './SystemSettings';
+import { CustomersView } from './CustomersView';
+import { CustomerManagement } from './CustomerManagement';
 
 interface DashboardProps {
   onBack: () => void;
@@ -16,12 +18,13 @@ interface DashboardProps {
   onTrackCustomer: () => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'settings';
+type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +41,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const loadData = async () => {
     setLoading(true);
     try {
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured) {
+        console.warn('Supabase not configured - using empty data');
+        setTickets([]);
+        setCustomers([]);
+        setLoading(false);
+        return;
+      }
+
       // Load tickets with customer data
       const { data: ticketsData, error: ticketsError } = await supabase
         .from('repair_tickets')
@@ -61,6 +73,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
       setCustomers(customersData || []);
     } catch (error) {
       console.error('Error loading data:', error);
+      // Set empty data on error to prevent crashes
+      setTickets([]);
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
@@ -85,6 +100,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const handleManageTicket = (ticket: RepairTicket) => {
     setSelectedTicket(ticket);
     setCurrentView('manage-ticket');
+  };
+
+  const handleViewCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCurrentView('manage-customer');
   };
 
   const updateTicketStatus = async (ticketId: string, newStatus: string) => {
@@ -197,29 +217,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span>All Tickets</span>
               </button>
               <button
-                onClick={() => setCurrentView('new-customer')}
+                onClick={() => setCurrentView('customers')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'new-customer' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  currentView === 'customers' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <Users size={20} />
-                <span>New Customer</span>
-              </button>
-              <button
-                onClick={() => setCurrentView('new-ticket')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'new-ticket' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Plus size={20} />
-                <span>New Ticket</span>
+                <span>All Customers</span>
               </button>
               <button
                 onClick={onTrackCustomer}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors font-medium"
               >
                 <Search size={20} />
-                <span>Track Customer</span>
+                <span>Track Repair</span>
               </button>
               <button
                 onClick={() => setCurrentView('settings')}
@@ -257,19 +268,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
                   {currentView === 'dashboard' && 'Repair Operations Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
+                  {currentView === 'customers' && 'Customer Management'}
                   {currentView === 'new-customer' && 'New Customer'}
                   {currentView === 'new-ticket' && 'New Repair Ticket'}
                   {currentView === 'label' && 'Ticket Label'}
                   {currentView === 'manage-ticket' && 'Manage Ticket'}
+                  {currentView === 'manage-customer' && 'Manage Customer'}
                   {currentView === 'settings' && 'System Settings'}
                 </h2>
                 <p className="text-gray-600">
                   {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
                   {currentView === 'tickets' && 'Manage and track repair tickets'}
+                  {currentView === 'customers' && 'View and manage customer information'}
                   {currentView === 'new-customer' && 'Add a new customer to the system'}
                   {currentView === 'new-ticket' && 'Create a new repair ticket'}
                   {currentView === 'label' && 'Print ticket label for device tracking'}
                   {currentView === 'manage-ticket' && 'Complete ticket management and communication'}
+                  {currentView === 'manage-customer' && 'View customer details and repair history'}
                   {currentView === 'settings' && 'Configure system settings and test functionality'}
                 </p>
               </div>
@@ -321,6 +336,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <>
                 {currentView === 'dashboard' && (
                   <div className="space-y-6">
+                    {/* Quick Action Buttons */}
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setCurrentView('new-customer')}
+                        className="flex items-center gap-2 px-6 py-3 bg-white border-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                        style={{ borderColor: PRIMARY, color: PRIMARY }}
+                      >
+                        <Users size={20} />
+                        <span>New Customer</span>
+                      </button>
+                      <button
+                        onClick={() => setCurrentView('new-ticket')}
+                        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition-colors shadow-sm"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Plus size={20} />
+                        <span>New Ticket</span>
+                      </button>
+                    </div>
+
+                    {/* Supabase Configuration Warning */}
+                    {!isSupabaseConfigured && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle size={20} className="text-yellow-600" />
+                          <h4 className="font-medium text-yellow-900">Database Not Configured</h4>
+                        </div>
+                        <div className="text-sm text-yellow-800">
+                          <p className="mb-2">Supabase connection is not configured. To enable full functionality:</p>
+                          <ol className="list-decimal list-inside space-y-1 ml-4">
+                            <li>Click the "Supabase" button in the settings (top of preview)</li>
+                            <li>Follow the setup instructions to connect your database</li>
+                            <li>Restart the application after configuration</li>
+                          </ol>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Stats Overview */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       <StatCard
@@ -503,6 +556,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     onUpdateStatus={updateTicketStatus}
                   />
                 )}
+                {currentView === 'customers' && (
+                  <CustomersView 
+                    customers={customers} 
+                    onViewCustomer={handleViewCustomer}
+                    onRefresh={loadData}
+                  />
+                )}
                 {currentView === 'new-customer' && (
                   <CustomerForm onCustomerCreated={handleCustomerCreated} />
                 )}
@@ -525,6 +585,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     onTicketUpdated={(updatedTicket) => {
                       setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
                       setSelectedTicket(updatedTicket);
+                    }}
+                  />
+                )}
+                {currentView === 'manage-customer' && selectedCustomer && (
+                  <CustomerManagement 
+                    customer={selectedCustomer} 
+                    onBack={() => setCurrentView('customers')}
+                    onCustomerUpdated={(updatedCustomer) => {
+                      setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+                      setSelectedCustomer(updatedCustomer);
                     }}
                   />
                 )}

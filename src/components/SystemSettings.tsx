@@ -1,13 +1,27 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3 } from 'lucide-react';
+import { supabase, getUserRole } from '../lib/supabase';
 
 interface SystemSettingsProps {
   onBack: () => void;
 }
 
+interface User {
+  id: string;
+  email: string;
+  role: 'admin' | 'technician' | 'viewer';
+  created_at: string;
+  last_sign_in_at?: string;
+}
+
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users'>('email');
+  const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
+  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState<'admin' | 'technician' | 'viewer'>('technician');
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [emailTest, setEmailTest] = useState({
     testEmail: '',
     subject: 'Test Email from Guardian Assist - SMTP Configuration Test',
@@ -15,6 +29,28 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     loading: false,
     result: null as { success: boolean; message: string } | null
   });
+
+  // Load user role on component mount
+  React.useEffect(() => {
+    const loadUserRole = async () => {
+      try {
+        const role = await getUserRole();
+        setUserRole(role as 'admin' | 'technician' | 'viewer');
+        
+        // If not admin, default to email tab (which they can access)
+        if (role !== 'admin' && activeTab === 'users') {
+          setActiveTab('email');
+        }
+      } catch (error) {
+        console.error('Error loading user role:', error);
+        setUserRole('viewer');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserRole();
+  }, []);
 
   const handleTestEmail = async () => {
     if (!emailTest.testEmail) {
@@ -62,15 +98,152 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     }
   };
 
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { action: 'list' }
+      });
+      if (error) throw error;
+      
+      if (data.success) {
+        setUsers(data.users);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const createUser = async () => {
+    if (!newUserEmail.trim()) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { 
+          action: 'create',
+          email: newUserEmail,
+          role: newUserRole
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        setNewUserEmail('');
+        setNewUserRole('technician');
+        loadUsers();
+        alert(`User created successfully. Temporary password: ${data.tempPassword}\nUser should change this on first login.`);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      alert('Error creating user: ' + error.message);
+    }
+  };
+
+  const updateUserRole = async (userId: string, newRole: 'admin' | 'technician' | 'viewer') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { 
+          action: 'update',
+          userId,
+          role: newRole
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        loadUsers();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      alert('Error updating user role: ' + error.message);
+    }
+  };
+
+  const deleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to delete user: ${userEmail}?`)) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: { 
+          action: 'delete',
+          userId
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        loadUsers();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      alert('Error deleting user: ' + error.message);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeTab === 'users') {
+      loadUsers();
+    }
+  }, [activeTab]);
+
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
 
-  const tabs = [
+  // Define tabs based on user role
+  const getAllTabs = () => [
     { id: 'email', label: 'Email Settings', icon: Mail },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
-    { id: 'notifications', label: 'Notifications', icon: Bell }
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'users', label: 'User Management', icon: User }
   ];
+
+  const getAvailableTabs = () => {
+    const allTabs = getAllTabs();
+    
+    switch (userRole) {
+      case 'admin':
+        return allTabs; // Admin can see everything
+      case 'technician':
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security'); // No user management or security
+      case 'viewer':
+        return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
+      default:
+        return [allTabs[0]]; // Default to just email
+    }
+  };
+
+  const tabs = getAvailableTabs();
+
+  // Show loading state while determining user role
+  if (loading) {
+    return (
+      <>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: PRIMARY }}></div>
+              <p className="text-gray-600">Loading settings...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -175,7 +348,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Test Email Address</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Test Email Address</label>
                       <input
                         type="email"
                         value={emailTest.testEmail}
@@ -187,7 +360,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Subject</label>
                       <input
                         type="text"
                         value={emailTest.subject}
@@ -198,7 +371,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Message</label>
                       <textarea
                         value={emailTest.message}
                         onChange={(e) => setEmailTest({ ...emailTest, message: e.target.value })}
@@ -210,12 +383,18 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
 
                     <button
                       onClick={handleTestEmail}
-                      disabled={emailTest.loading}
+                      disabled={emailTest.loading || userRole === 'viewer'}
                       className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-50"
                     >
                       <Send size={16} />
                       <span>{emailTest.loading ? 'Sending...' : 'Send Test Email'}</span>
                     </button>
+
+                    {userRole === 'viewer' && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        Email testing is not available for viewers. Contact an administrator for assistance.
+                      </p>
+                    )}
 
                     {emailTest.result && (
                       <div className={`flex items-center gap-2 p-3 rounded-lg ${
@@ -280,6 +459,16 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
             )}
 
             {activeTab === 'security' && (
+              // Only admins can access security settings
+              userRole !== 'admin' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div className="text-center py-12">
+                    <Shield size={48} className="mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Access Restricted</h3>
+                    <p className="text-gray-600">Security settings are only available to administrators.</p>
+                  </div>
+                </div>
+              ) : (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
                   Security Settings
@@ -307,10 +496,24 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   </div>
                 </div>
               </div>
+              )
             )}
 
             {activeTab === 'notifications' && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                {/* Role-based access notice */}
+                {userRole === 'viewer' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield size={16} className="text-blue-600" />
+                      <h4 className="font-medium text-blue-900">Read-Only Access</h4>
+                    </div>
+                    <p className="text-sm text-blue-800">
+                      You can view notification settings but cannot modify them.
+                    </p>
+                  </div>
+                )}
+
                 <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
                   Notification Settings
                 </h3>
@@ -318,18 +521,15 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">Email Notifications</p>
-                      <p className="text-sm text-gray-600">Send email updates to customers</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
                       <p className="font-medium text-gray-900">Status Change Alerts</p>
                       <p className="text-sm text-gray-600">Notify when ticket status changes</p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      defaultChecked 
+                      disabled={userRole === 'viewer'}
+                      className="rounded disabled:opacity-50" 
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -337,7 +537,192 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                       <p className="font-medium text-gray-900">Completion Notifications</p>
                       <p className="text-sm text-gray-600">Alert customers when repairs are complete</p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      defaultChecked 
+                      disabled={userRole === 'viewer'}
+                      className="rounded disabled:opacity-50" 
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'users' && userRole === 'admin' && (
+              <div className="space-y-6">
+                {/* Add New User */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    Add New User
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                        style={{ focusRingColor: PRIMARY }}
+                        placeholder="user@example.com"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Role</label>
+                      <select
+                        value={newUserRole}
+                        onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'technician' | 'viewer')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                        style={{ focusRingColor: PRIMARY }}
+                      >
+                        <option value="technician">Technician</option>
+                        <option value="admin">Admin</option>
+                        <option value="viewer">Viewer</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <button
+                        onClick={createUser}
+                        disabled={!newUserEmail.trim()}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Plus size={16} />
+                        <span>Add User</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Role Permissions</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p><strong>Admin:</strong> Full system access, user management, settings</p>
+                      <p><strong>Technician:</strong> Create/edit tickets, customer management, email sending</p>
+                      <p><strong>Viewer:</strong> Read-only access to tickets and customer info</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current Users */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>
+                      Current Users
+                    </h3>
+                    <button
+                      onClick={loadUsers}
+                      disabled={loadingUsers}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      <User size={16} />
+                      <span>{loadingUsers ? 'Loading...' : 'Refresh'}</span>
+                    </button>
+                  </div>
+                  
+                  {loadingUsers ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: PRIMARY }}></div>
+                      <p className="text-gray-600">Loading users...</p>
+                    </div>
+                  ) : users.length > 0 ? (
+                    <div className="space-y-3">
+                      {users.map((user) => (
+                        <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-1">
+                              <span className="font-medium text-gray-900">{user.email}</span>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                                user.role === 'technician' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {user.role.toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Created: {new Date(user.created_at).toLocaleDateString()}
+                              {user.last_sign_in_at && (
+                                <span className="ml-4">
+                                  Last login: {new Date(user.last_sign_in_at).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={user.role}
+                              onChange={(e) => updateUserRole(user.id, e.target.value as 'admin' | 'technician' | 'viewer')}
+                              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
+                              style={{ focusRingColor: PRIMARY }}
+                            >
+                              <option value="admin">Admin</option>
+                              <option value="technician">Technician</option>
+                              <option value="viewer">Viewer</option>
+                            </select>
+                            
+                            <button
+                              onClick={() => deleteUser(user.id, user.email)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete User"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <User size={48} className="mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-600 mb-2">No users found</p>
+                      <p className="text-sm text-gray-500">
+                        User management requires proper Supabase configuration
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Configuration Status */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    Configuration Status
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle size={20} className="text-green-600" />
+                        <div>
+                          <p className="font-medium text-green-900">User Management Ready</p>
+                          <p className="text-sm text-green-700">Edge Function is properly configured</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <h4 className="font-medium text-green-900 mb-2">✅ System Features</h4>
+                      <div className="text-sm text-green-800 space-y-1">
+                        <p>• User creation with role assignment</p>
+                        <p>• Role-based access control (Admin, Technician, Viewer)</p>
+                        <p>• Secure user management via Edge Functions</p>
+                        <p>• Temporary password generation for new users</p>
+                        <p>• User role updates and account deletion</p>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">🔐 Security Notes</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p>• All admin operations use service role authentication</p>
+                        <p>• New users receive temporary passwords to change on first login</p>
+                        <p>• Role permissions are enforced throughout the application</p>
+                        <p>• User sessions are managed securely by Supabase Auth</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

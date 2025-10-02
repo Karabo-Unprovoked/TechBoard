@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw } from 'lucide-react';
+import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
@@ -16,6 +16,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [error, setError] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [customerNotes, setCustomerNotes] = useState<any[]>([]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +33,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         .from('repair_tickets')
         .select(`
           *,
-          customer:customers(name)
+          customer:customers(customer_number, name)
         `)
         .ilike('ticket_number', `%${searchTerm}%`)
         .order('created_at', { ascending: false });
@@ -52,6 +53,18 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
       
       setTrackingNumber(searchTerm.toUpperCase());
       setTickets(ticketsData || []);
+
+      // Load customer-visible notes for the ticket
+      if (ticketsData && ticketsData.length > 0) {
+        const { data: notesData } = await supabase
+          .from('ticket_notes')
+          .select('*')
+          .eq('ticket_id', ticketsData[0].id)
+          .eq('note_type', 'customer')
+          .order('created_at', { ascending: false });
+        
+        setCustomerNotes(notesData || []);
+      }
 
     } catch (err) {
       console.error('Search error:', err);
@@ -314,34 +327,40 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   <div className="flex items-center gap-3">
                     <Laptop size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Device Type</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>{tickets[0].device_type}</p>
+                      <p className="text-sm font-bold text-gray-700">Device Type</p>
+                      <p className="text-gray-900">{tickets[0].device_type}</p>
                     </div>
                   </div>
 
                   {(tickets[0].brand || tickets[0].model) && (
-                    <div>
-                      <p className="text-sm text-gray-500">Model</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                    <div className="flex items-center gap-3">
+                      <Laptop size={20} style={{ color: PRIMARY }} />
+                      <div>
+                        <p className="text-sm font-bold text-gray-700">Model</p>
+                        <p className="text-gray-900">
                         {[tickets[0].brand, tickets[0].model].filter(Boolean).join(' ')}
-                      </p>
+                        </p>
+                      </div>
                     </div>
                   )}
 
                   {tickets[0].serial_number && (
-                    <div>
-                      <p className="text-sm text-gray-500">Serial Number</p>
-                      <p className="font-semibold font-mono text-sm" style={{ color: SECONDARY }}>
+                    <div className="flex items-center gap-3">
+                      <Hash size={20} style={{ color: PRIMARY }} />
+                      <div>
+                        <p className="text-sm font-bold text-gray-700">Serial Number</p>
+                        <p className="font-mono text-sm text-gray-900">
                         {tickets[0].serial_number}
-                      </p>
+                        </p>
+                      </div>
                     </div>
                   )}
 
                   <div className="flex items-center gap-3">
                     <Calendar size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Received Date</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                      <p className="text-sm font-bold text-gray-700">Received Date</p>
+                      <p className="text-gray-900">
                         {formatDate(tickets[0].created_at)}
                       </p>
                     </div>
@@ -350,8 +369,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   <div className="flex items-center gap-3">
                     <Clock size={20} style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm text-gray-500">Last Updated</p>
-                      <p className="font-semibold" style={{ color: SECONDARY }}>
+                      <p className="text-sm font-bold text-gray-700">Last Updated</p>
+                      <p className="text-gray-900">
                         {formatDate(tickets[0].updated_at)}
                       </p>
                     </div>
@@ -362,8 +381,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       className={`w-5 h-5 rounded-full flex items-center justify-center ${getStatusColor(tickets[0].status)}`}
                     />
                     <div>
-                      <p className="text-sm text-gray-500">Current Status</p>
-                      <p className="font-semibold capitalize" style={{ color: SECONDARY }}>
+                      <p className="text-sm font-bold text-gray-700">Current Status</p>
+                      <p className="capitalize text-gray-900">
                         {tickets[0].status.replace('-', ' ')}
                       </p>
                     </div>
@@ -379,6 +398,39 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       <p className="text-gray-700">
                         {tickets[0].issue_description}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Customer Notes Section */}
+                {customerNotes.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                      Updates & Notes
+                    </h4>
+
+                    <div className="space-y-4">
+                      {customerNotes.map((note) => (
+                        <div key={note.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: PRIMARY }}
+                              />
+                              <span className="text-sm font-medium" style={{ color: SECONDARY }}>
+                                Update from Guardian Assist
+                              </span>
+                            </div>
+                            <span className="text-sm text-gray-500">
+                              {formatDate(note.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 leading-relaxed">
+                            {note.content}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
