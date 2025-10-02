@@ -42,6 +42,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
     const searchLower = customerSearch.toLowerCase();
     return (
       customer.name.toLowerCase().includes(searchLower) ||
+      customer.first_name?.toLowerCase().includes(searchLower) ||
+      customer.last_name?.toLowerCase().includes(searchLower) ||
       customer.customer_number.toLowerCase().includes(searchLower) ||
       customer.email?.toLowerCase().includes(searchLower) ||
       customer.phone?.toLowerCase().includes(searchLower)
@@ -146,7 +148,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
                         className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
                       >
                         <div className="font-medium text-gray-900">
-                          {customer.name}
+                          {customer.first_name && customer.last_name ? `${customer.first_name} ${customer.last_name}` : customer.name}
                         </div>
                         <div className="text-sm text-gray-600">
                           {customer.customer_number}
@@ -162,7 +164,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
               <div className="flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
                 <div>
                   <div className="font-medium text-gray-900">
-                    {selectedCustomer?.name}
+                    {selectedCustomer?.first_name && selectedCustomer?.last_name ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}` : selectedCustomer?.name}
                   </div>
                   <div className="text-sm text-gray-600">
                     {selectedCustomer?.customer_number}

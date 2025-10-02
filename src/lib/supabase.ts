@@ -52,8 +52,12 @@ export type Customer = {
   id: string;
   customer_number: string;
   name: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   phone?: string;
+  gender?: string;
+  referral_source?: string;
   created_at: string;
 };
 
