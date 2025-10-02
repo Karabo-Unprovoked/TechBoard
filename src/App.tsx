@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { LoginForm } from './components/LoginForm';
+import { CustomerTracking } from './components/CustomerTracking';
 import { Dashboard } from './components/Dashboard';
-import { CustomerForm } from './components/CustomerForm';
-import { TicketsView } from './components/TicketsView';
-import { TicketLabel } from './components/TicketLabel';
 import { supabase } from './lib/supabase';
-import type { Customer, RepairTicket } from './lib/supabase';
 
-type AppState = 'login' | 'dashboard' | 'new-ticket' | 'view-tickets' | 'ticket-created';
+type AppState = 'login' | 'track-customer' | 'dashboard';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('login');
-  const [currentTicket, setCurrentTicket] = useState<(RepairTicket & { customer: Customer }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        setIsAuthenticated(true);
         setAppState('dashboard');
       }
       setLoading(false);
@@ -29,48 +27,33 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        setIsAuthenticated(true);
         setAppState('dashboard');
       } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
         setAppState('login');
-        setCurrentTicket(null);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = () => {
-    setAppState('dashboard');
-  };
-
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
     setAppState('login');
-    setCurrentTicket(null);
   };
 
-  const handleNewTicket = () => {
-    setAppState('new-ticket');
-    setCurrentTicket(null);
+  const handleTrackCustomer = () => {
+    setAppState('track-customer');
   };
 
-  const handleViewTickets = () => {
-    setAppState('view-tickets');
-    setCurrentTicket(null);
-  };
-
-  const handleTicketCreated = (ticket: RepairTicket & { customer: Customer }) => {
-    setCurrentTicket(ticket);
-    setAppState('ticket-created');
-  };
-
-  const handleViewTicket = (ticket: RepairTicket & { customer: Customer }) => {
-    setCurrentTicket(ticket);
-    setAppState('ticket-created');
-  };
-
-  const handleBackToDashboard = () => {
+  const handleDashboard = () => {
     setAppState('dashboard');
-    setCurrentTicket(null);
+  };
+
+  const handleBackToLogin = () => {
+    setAppState('login');
   };
 
   if (loading) {
@@ -86,41 +69,30 @@ function App() {
 
   switch (appState) {
     case 'login':
-      return <LoginForm onLogin={handleLogin} />;
+      return <LoginForm onTrackCustomer={handleTrackCustomer} onDashboard={handleDashboard} />;
+    
+    case 'track-customer':
+      return (
+        <CustomerTracking 
+          onBack={handleBackToLogin}
+          onLogout={handleLogout}
+          isAuthenticated={isAuthenticated}
+          onDashboard={isAuthenticated ? handleDashboard : undefined}
+        />
+      );
     
     case 'dashboard':
+      if (!isAuthenticated) {
+        setAppState('login');
+        return null;
+      }
       return (
         <Dashboard 
-          onNewTicket={handleNewTicket}
-          onViewTickets={handleViewTickets}
+          onBack={handleBackToLogin}
           onLogout={handleLogout}
+          onTrackCustomer={handleTrackCustomer}
         />
       );
-    
-    case 'new-ticket':
-      return (
-        <CustomerForm 
-          onTicketCreated={handleTicketCreated}
-          onBack={handleBackToDashboard}
-        />
-      );
-    
-    case 'view-tickets':
-      return (
-        <TicketsView 
-          onBack={handleBackToDashboard}
-          onViewTicket={handleViewTicket}
-        />
-      );
-    
-    case 'ticket-created':
-      return currentTicket ? (
-        <TicketLabel 
-          ticket={currentTicket}
-          onBack={handleBackToDashboard}
-          onNewTicket={handleNewTicket}
-        />
-      ) : null;
     
     default:
       return null;
