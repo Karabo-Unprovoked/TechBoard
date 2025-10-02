@@ -185,14 +185,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                 {isSignUp ? 'Create Account' : 'Log in'}
               </h3>
 
-              {!isSignUp && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>First time user?</strong> Click "Register here" below to create your account.
-                  </p>
-                </div>
-              )}
-
               <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="space-y-6">
                 <div>
                   <label className="block text-sm font-bold mb-2" style={{ color: SECONDARY }}>
