@@ -132,7 +132,30 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
       return;
     }
 
+    setLoading(true);
     try {
+      // Call the Edge Function to send email
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: ticket.customer.email,
+          subject: emailData.subject,
+          content: emailData.content,
+          ticketNumber: ticket.ticket_number
+        })
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+
+      // Save email record to database
       const { data, error } = await supabase
         .from('ticket_emails')
         .insert([{
@@ -152,10 +175,12 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
       setShowEmailModal(false);
       setEmailData({ type: 'status_update', subject: '', content: '' });
       
-      // In a real app, you would integrate with an email service here
-      alert('Email sent successfully!');
+      alert('Email sent successfully to ' + ticket.customer.email);
     } catch (error) {
       console.error('Error sending email:', error);
+      alert('Failed to send email: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -680,7 +705,13 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                     onChange={(e) => setEmailData({ ...emailData, subject: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                     style={{ focusRingColor: PRIMARY }}
-                    placeholder="Email subject..."
+                    placeholder={
+                      emailData.type === 'status_update' ? `Repair Update - ${ticket.ticket_number}` :
+                      emailData.type === 'completion_notice' ? `Repair Complete - ${ticket.ticket_number}` :
+                      emailData.type === 'parts_needed' ? `Parts Required - ${ticket.ticket_number}` :
+                      emailData.type === 'quote_request' ? `Repair Quote - ${ticket.ticket_number}` :
+                      'Email subject...'
+                    }
                   />
                 </div>
 
@@ -692,7 +723,17 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none"
                     style={{ focusRingColor: PRIMARY }}
                     rows={6}
-                    placeholder="Email content..."
+                    placeholder={
+                      emailData.type === 'status_update' ? 
+                        `Dear ${ticket.customer?.name},\n\nWe wanted to update you on the status of your ${ticket.device_type} repair.\n\nCurrent Status: ${ticket.status.replace('-', ' ').toUpperCase()}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team` :
+                      emailData.type === 'completion_notice' ?
+                        `Dear ${ticket.customer?.name},\n\nGreat news! Your ${ticket.device_type} repair has been completed and is ready for collection.\n\nPlease contact us to arrange pickup at your convenience.\n\nThank you for choosing Guardian Assist!\n\nBest regards,\nGuardian Assist Team` :
+                      emailData.type === 'parts_needed' ?
+                        `Dear ${ticket.customer?.name},\n\nWe need to order additional parts for your ${ticket.device_type} repair.\n\nThis may extend the repair time by a few days. We will keep you updated on the progress.\n\nThank you for your patience.\n\nBest regards,\nGuardian Assist Team` :
+                      emailData.type === 'quote_request' ?
+                        `Dear ${ticket.customer?.name},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nEstimated Cost: R${ticket.estimated_cost?.toFixed(2) || '0.00'}\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team` :
+                      'Email content...'
+                    }
                   />
                 </div>
 
@@ -705,11 +746,11 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   </button>
                   <button
                     onClick={handleSendEmail}
-                    disabled={!emailData.subject || !emailData.content}
+                    disabled={!emailData.subject || !emailData.content || loading}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50"
                   >
                     <Send size={16} />
-                    <span>Send Email</span>
+                    <span>{loading ? 'Sending...' : 'Send Email'}</span>
                   </button>
                 </div>
               </div>
