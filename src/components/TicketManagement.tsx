@@ -580,7 +580,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <User size={16} className="text-gray-400" />
-                    <span className="font-medium">{ticket.customer.name}</span>
+                    <span className="font-medium">{ticket.customer.first_name} {ticket.customer.last_name}</span>
                   </div>
                   {ticket.customer.email && (
                     <div className="flex items-center gap-2">
@@ -717,13 +717,13 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                     rows={6}
                     placeholder={
                       emailData.type === 'status_update' ? 
-                        `Dear ${ticket.customer?.name},\n\nWe wanted to update you on the status of your ${ticket.device_type} repair.\n\nCurrent Status: ${ticket.status.replace('-', ' ').toUpperCase()}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team` :
+                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nWe wanted to update you on the status of your ${ticket.device_type} repair.\n\nCurrent Status: ${ticket.status.replace('-', ' ').toUpperCase()}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team` :
                       emailData.type === 'completion_notice' ?
-                        `Dear ${ticket.customer?.name},\n\nGreat news! Your ${ticket.device_type} repair has been completed and is ready for collection.\n\nPlease contact us to arrange pickup at your convenience.\n\nThank you for choosing Guardian Assist!\n\nBest regards,\nGuardian Assist Team` :
+                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nGreat news! Your ${ticket.device_type} repair has been completed and is ready for collection.\n\nPlease contact us to arrange pickup at your convenience.\n\nThank you for choosing Guardian Assist!\n\nBest regards,\nGuardian Assist Team` :
                       emailData.type === 'parts_needed' ?
-                        `Dear ${ticket.customer?.name},\n\nWe need to order additional parts for your ${ticket.device_type} repair.\n\nThis may extend the repair time by a few days. We will keep you updated on the progress.\n\nThank you for your patience.\n\nBest regards,\nGuardian Assist Team` :
+                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nWe need to order additional parts for your ${ticket.device_type} repair.\n\nThis may extend the repair time by a few days. We will keep you updated on the progress.\n\nThank you for your patience.\n\nBest regards,\nGuardian Assist Team` :
                       emailData.type === 'quote_request' ?
-                        `Dear ${ticket.customer?.name},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nEstimated Cost: R${ticket.estimated_cost?.toFixed(2) || '0.00'}\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team` :
+                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nEstimated Cost: R${ticket.estimated_cost?.toFixed(2) || '0.00'}\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team` :
                       'Email content...'
                     }
                   />

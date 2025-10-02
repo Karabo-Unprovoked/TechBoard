@@ -114,7 +114,7 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
               {ticket.customer && (
                 <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
                   <User size={16} />
-                  <span>{ticket.customer.name}</span>
+                  <span>{ticket.customer.first_name} {ticket.customer.last_name}</span>
                 </div>
               )}
 
