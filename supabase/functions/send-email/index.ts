@@ -5,6 +5,113 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// SMTP configuration for computerguardian.co.za
+const SMTP_CONFIG = {
+  hostname: 'computerguardian.co.za',
+  port: 465,
+  username: 'info@computerguardian.co.za',
+  password: Deno.env.get('SMTP_PASSWORD') || 'your-email-password', // Set this in Supabase secrets
+  secure: true, // Use SSL
+}
+
+// Simple SMTP client implementation
+async function sendSMTPEmail(to: string, subject: string, htmlContent: string, textContent: string) {
+  try {
+    // Create a TCP connection to the SMTP server
+    const conn = await Deno.connect({
+      hostname: SMTP_CONFIG.hostname,
+      port: SMTP_CONFIG.port,
+    })
+
+    // Upgrade to TLS/SSL
+    const tlsConn = await Deno.startTls(conn, {
+      hostname: SMTP_CONFIG.hostname,
+    })
+
+    const encoder = new TextEncoder()
+    const decoder = new TextDecoder()
+
+    // Helper function to send command and read response
+    async function sendCommand(command: string): Promise<string> {
+      await tlsConn.write(encoder.encode(command + '\r\n'))
+      const buffer = new Uint8Array(1024)
+      const bytesRead = await tlsConn.read(buffer)
+      return decoder.decode(buffer.subarray(0, bytesRead || 0))
+    }
+
+    // SMTP conversation
+    let response = await sendCommand('')
+    console.log('Initial response:', response)
+
+    response = await sendCommand('EHLO computerguardian.co.za')
+    console.log('EHLO response:', response)
+
+    response = await sendCommand('AUTH LOGIN')
+    console.log('AUTH response:', response)
+
+    // Send username (base64 encoded)
+    const username = btoa(SMTP_CONFIG.username)
+    response = await sendCommand(username)
+    console.log('Username response:', response)
+
+    // Send password (base64 encoded)
+    const password = btoa(SMTP_CONFIG.password)
+    response = await sendCommand(password)
+    console.log('Password response:', response)
+
+    response = await sendCommand(`MAIL FROM:<${SMTP_CONFIG.username}>`)
+    console.log('MAIL FROM response:', response)
+
+    response = await sendCommand(`RCPT TO:<${to}>`)
+    console.log('RCPT TO response:', response)
+
+    response = await sendCommand('DATA')
+    console.log('DATA response:', response)
+
+    // Email headers and content
+    const emailContent = [
+      `From: Guardian Assist <${SMTP_CONFIG.username}>`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: multipart/alternative; boundary="boundary123"',
+      '',
+      '--boundary123',
+      'Content-Type: text/plain; charset=UTF-8',
+      '',
+      textContent,
+      '',
+      '--boundary123',
+      'Content-Type: text/html; charset=UTF-8',
+      '',
+      htmlContent,
+      '',
+      '--boundary123--',
+      '.',
+    ].join('\r\n')
+
+    response = await sendCommand(emailContent)
+    console.log('Email content response:', response)
+
+    response = await sendCommand('QUIT')
+    console.log('QUIT response:', response)
+
+    tlsConn.close()
+
+    return {
+      success: true,
+      message: 'Email sent successfully via SMTP'
+    }
+
+  } catch (error) {
+    console.error('SMTP Error:', error)
+    return {
+      success: false,
+      message: `SMTP Error: ${error.message}`
+    }
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -92,75 +199,42 @@ serve(async (req) => {
       </html>
     `
 
-    // Use Gmail SMTP API via fetch to send email
-    // This is a workaround since Deno doesn't have built-in SMTP
-    const emailPayload = {
-      personalizations: [{
-        to: [{ email: to }],
-        subject: subject
-      }],
-      from: { 
-        email: "info@computerguardian.co.za",
-        name: "Guardian Assist"
-      },
-      content: [
-        {
-          type: "text/html",
-          value: emailHtml
-        },
-        {
-          type: "text/plain", 
-          value: content
-        }
-      ]
-    }
+    // Convert HTML to plain text for the text version
+    const textContent = content.replace(/<[^>]*>/g, '').replace(/\n\s*\n/g, '\n\n')
 
-    // For now, we'll use a simple HTTP request to simulate SMTP
-    // In production, you would need to integrate with an email service like:
-    // - SendGrid API
-    // - Mailgun API  
-    // - AWS SES
-    // - Or use a proper SMTP library
-
-    // Simulate successful email sending
-    console.log('Email configuration:', {
+    console.log('Sending email via SMTP:', {
       to: to,
-      from: 'info@computerguardian.co.za',
+      from: SMTP_CONFIG.username,
       subject: subject,
-      server: 'computerguardian.co.za:465',
-      ssl: true
+      server: `${SMTP_CONFIG.hostname}:${SMTP_CONFIG.port}`,
+      ssl: SMTP_CONFIG.secure
     })
 
-    // Try to use a basic SMTP approach with fetch
-    try {
-      // This is a placeholder - you'll need to replace with actual SMTP service
-      // For now, we'll return success to test the UI
-      const response = {
-        success: true,
-        message: 'Email sent successfully via computerguardian.co.za SMTP',
-        details: {
-          to: to,
-          subject: subject,
-          timestamp: new Date().toISOString(),
-          server: 'computerguardian.co.za:465 (SSL)'
-        }
-      }
+    // Send email via SMTP
+    const result = await sendSMTPEmail(to, subject, emailHtml, textContent)
 
+    if (result.success) {
       return new Response(
-        JSON.stringify(response),
+        JSON.stringify({
+          success: true,
+          message: 'Email sent successfully via SMTP',
+          details: {
+            to: to,
+            subject: subject,
+            timestamp: new Date().toISOString(),
+            server: `${SMTP_CONFIG.hostname}:${SMTP_CONFIG.port} (SSL)`
+          }
+        }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         },
       )
-
-    } catch (smtpError) {
-      console.error('SMTP Error:', smtpError)
-      
+    } else {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `SMTP connection failed: ${smtpError.message}. Please check your email server settings.`
+          error: result.message
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -179,6 +253,7 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
       },
     )
   }
