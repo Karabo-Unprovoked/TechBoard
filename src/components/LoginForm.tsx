@@ -14,6 +14,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,11 +80,42 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
           setError(error.message);
         }
       } else {
-        setError('Account created successfully! You can now sign in with your credentials.');
+        setSuccessMessage('Account created successfully! You can now sign in with your credentials.');
         setIsSignUp(false);
         // Clear the form
         setEmail('');
         setPassword('');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    // Check if Supabase is configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      setError('Supabase is not configured. Please set up your database connection.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccessMessage('Password reset email sent! Please check your inbox.');
+        setEmail('');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -175,17 +208,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                 Welcome to Guardian Assist
               </h2>
               <p className="text-gray-600">
-                {isSignUp ? 'Create your account to get started' : 'Sign in to your account to continue'}
+                {isForgotPassword ? 'Reset your password' : isSignUp ? 'Create your account to get started' : 'Sign in to your account to continue'}
               </p>
             </div>
 
             {/* Login Form */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <h3 className="text-xl font-semibold mb-6 text-center" style={{ color: SECONDARY }}>
-                {isSignUp ? 'Create Account' : 'Log in'}
+                {isForgotPassword ? 'Forgot Password' : isSignUp ? 'Create Account' : 'Log in'}
               </h3>
 
-              <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="space-y-6">
+              <form onSubmit={isForgotPassword ? handleForgotPassword : isSignUp ? handleSignUp : handleLogin} className="space-y-6">
                 <div>
                   <label className="block text-sm font-bold mb-2" style={{ color: SECONDARY }}>
                     Email
@@ -204,35 +237,42 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold mb-2" style={{ color: SECONDARY }}>
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none bg-gray-50"
-                      style={{ focusRingColor: PRIMARY }}
-                      placeholder="Enter your password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                {!isForgotPassword && (
+                  <div>
+                    <label className="block text-sm font-bold mb-2" style={{ color: SECONDARY }}>
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none bg-gray-50"
+                        style={{ focusRingColor: PRIMARY }}
+                        placeholder="Enter your password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {!isSignUp && (
+                {!isSignUp && !isForgotPassword && (
                   <div className="text-right">
                     <button
                       type="button"
+                      onClick={() => {
+                        setIsForgotPassword(true);
+                        setError('');
+                        setSuccessMessage('');
+                      }}
                       className="text-sm font-medium hover:underline"
                       style={{ color: PRIMARY }}
                     >
@@ -248,21 +288,48 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                   </div>
                 )}
 
+                {successMessage && (
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
+                    <AlertCircle size={16} />
+                    <span className="text-sm">{successMessage}</span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
                   className="w-full py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors text-white"
                   style={{ backgroundColor: PRIMARY }}
                 >
-                  {loading ? (isSignUp ? 'Creating Account...' : 'Signing In...') : (isSignUp ? 'Create Account' : 'Log in')}
+                  {loading ? (isForgotPassword ? 'Sending Reset Link...' : isSignUp ? 'Creating Account...' : 'Signing In...') : (isForgotPassword ? 'Send Reset Link' : isSignUp ? 'Create Account' : 'Log in')}
                 </button>
 
+                {isForgotPassword && (
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setError('');
+                        setSuccessMessage('');
+                        setEmail('');
+                      }}
+                      className="text-sm font-medium hover:underline"
+                      style={{ color: PRIMARY }}
+                    >
+                      Back to Login
+                    </button>
+                  </div>
+                )}
+
                 {/* Registration disabled for internal use only */}
-                <div className="text-center">
-                  <p className="text-xs text-gray-500">
-                    Internal application - Contact administrator for access
-                  </p>
-                </div>
+                {!isForgotPassword && (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">
+                      Internal application - Contact administrator for access
+                    </p>
+                  </div>
+                )}
               </form>
             </div>
           </div>
