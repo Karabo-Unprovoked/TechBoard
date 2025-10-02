@@ -110,7 +110,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="font-semibold text-gray-900">{customer.customer_number}</h4>
-                  <p className="text-sm text-gray-600">{customer.name}</p>
+                  <p className="text-sm text-gray-600">{customer.first_name} {customer.last_name}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -136,6 +136,24 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                 <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
                   <Phone size={16} />
                   <span>{customer.phone}</span>
+                </div>
+              )}
+
+              {/* Additional Info */}
+              {(customer.gender || customer.referral_source) && (
+                <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                  {customer.gender && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Gender:</span>
+                      <span className="text-gray-700 font-medium">{customer.gender}</span>
+                    </div>
+                  )}
+                  {customer.referral_source && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Referral:</span>
+                      <span className="text-gray-700 font-medium">{customer.referral_source}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
