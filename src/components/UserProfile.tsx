@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Lock, Save, X, Edit3, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Save, X, CreditCard as Edit3, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export const UserProfile: React.FC = () => {
