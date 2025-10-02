@@ -22,6 +22,26 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<'admin' | 'technician' | 'viewer'>('technician');
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [emailSettings, setEmailSettings] = useState<{
+    smtp_host: string;
+    smtp_port: number;
+    smtp_username: string;
+    smtp_password: string;
+    from_email: string;
+    use_ssl: boolean;
+    updated_at: string;
+  } | null>(null);
+  const [emailStatus, setEmailStatus] = useState<{
+    connected: boolean;
+    checking: boolean;
+    lastChecked: Date | null;
+    error: string | null;
+  }>({
+    connected: false,
+    checking: false,
+    lastChecked: null,
+    error: null
+  });
   const [emailTest, setEmailTest] = useState({
     testEmail: '',
     subject: 'Test Email from Guardian Assist - SMTP Configuration Test',
@@ -30,13 +50,62 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     result: null as { success: boolean; message: string } | null
   });
 
+  // Load email settings
+  const loadEmailSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('email_settings')
+        .select('*')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setEmailSettings(data);
+        checkEmailConnection();
+      }
+    } catch (error) {
+      console.error('Error loading email settings:', error);
+    }
+  };
+
+  // Check email connection by sending a test
+  const checkEmailConnection = async () => {
+    setEmailStatus(prev => ({ ...prev, checking: true, error: null }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: 'test@test.com',
+          subject: 'Connection Test',
+          content: 'Testing connection',
+          isTest: true
+        }
+      });
+
+      setEmailStatus({
+        connected: data?.success || false,
+        checking: false,
+        lastChecked: new Date(),
+        error: data?.success ? null : (data?.error || 'Connection failed')
+      });
+    } catch (error: any) {
+      setEmailStatus({
+        connected: false,
+        checking: false,
+        lastChecked: new Date(),
+        error: error.message || 'Network error'
+      });
+    }
+  };
+
   // Load user role on component mount
   React.useEffect(() => {
     const loadUserRole = async () => {
       try {
         const role = await getUserRole();
         setUserRole(role as 'admin' | 'technician' | 'viewer');
-        
+
         // If not admin, default to email tab (which they can access)
         if (role !== 'admin' && activeTab === 'users') {
           setActiveTab('email');
@@ -50,6 +119,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     };
 
     loadUserRole();
+    loadEmailSettings();
   }, []);
 
   const handleUpdateEmailPassword = async () => {
@@ -97,6 +167,9 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
 
       alert('Email password updated successfully!');
       passwordInput.value = '';
+
+      // Reload settings and check connection
+      await loadEmailSettings();
     } catch (error: any) {
       console.error('Update error:', error);
       alert('Failed to update email password: ' + error.message);
@@ -360,35 +433,90 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
           <div className="lg:col-span-3">
             {activeTab === 'email' && (
               <div className="space-y-6">
-                {/* SMTP Configuration Info */}
+                {/* Email Connection Status */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
-                    SMTP Email Configuration
-                  </h3>
-                  
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle size={16} className="text-green-600" />
-                      <h4 className="font-medium text-green-900">SMTP Server Configured</h4>
-                    </div>
-                    <div className="text-sm text-green-800 space-y-1">
-                      <p><strong>Server:</strong> computerguardian.co.za:465 (SSL)</p>
-                      <p><strong>From Email:</strong> info@computerguardian.co.za</p>
-                      <p><strong>Authentication:</strong> Configured</p>
-                      <p><strong>Status:</strong> Ready to send emails</p>
-                    </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>
+                      Email Connection Status
+                    </h3>
+                    <button
+                      onClick={checkEmailConnection}
+                      disabled={emailStatus.checking}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{
+                        backgroundColor: emailStatus.checking ? '#ccc' : PRIMARY,
+                        color: 'white'
+                      }}
+                    >
+                      {emailStatus.checking ? 'Checking...' : 'Test Connection'}
+                    </button>
                   </div>
 
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">📧 Email Features</h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p>• Professional email templates with company branding</p>
-                      <p>• Automatic customer notifications for status updates</p>
-                      <p>• Repair completion alerts</p>
-                      <p>• Quote requests and approvals</p>
-                      <p>• Secure SMTP delivery via computerguardian.co.za</p>
+                  <div className={`rounded-lg p-4 mb-4 border ${
+                    emailStatus.checking ? 'bg-gray-50 border-gray-200' :
+                    emailStatus.connected ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {emailStatus.checking ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                          <h4 className="font-medium text-gray-900">Checking Connection...</h4>
+                        </>
+                      ) : emailStatus.connected ? (
+                        <>
+                          <CheckCircle size={16} className="text-green-600" />
+                          <h4 className="font-medium text-green-900">Connected</h4>
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle size={16} className="text-red-600" />
+                          <h4 className="font-medium text-red-900">Not Connected</h4>
+                        </>
+                      )}
                     </div>
+                    {emailStatus.error && (
+                      <p className="text-sm text-red-800 mt-2">
+                        <strong>Error:</strong> {emailStatus.error}
+                      </p>
+                    )}
+                    {emailStatus.lastChecked && (
+                      <p className="text-xs text-gray-600 mt-2">
+                        Last checked: {emailStatus.lastChecked.toLocaleString()}
+                      </p>
+                    )}
                   </div>
+
+                  {emailSettings && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Current Configuration</h4>
+                      <div className="text-sm text-gray-700 space-y-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Server:</span>
+                          <span>{emailSettings.smtp_host}:{emailSettings.smtp_port}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">From Email:</span>
+                          <span>{emailSettings.from_email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Username:</span>
+                          <span>{emailSettings.smtp_username}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Password:</span>
+                          <span>{emailSettings.smtp_password ? '••••••••' : 'Not set'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Security:</span>
+                          <span>{emailSettings.use_ssl ? 'SSL/TLS' : 'None'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Last Updated:</span>
+                          <span>{new Date(emailSettings.updated_at).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Email Password Configuration */}
