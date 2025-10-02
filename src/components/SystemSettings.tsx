@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, getUserRole } from '../lib/supabase';
 
 interface SystemSettingsProps {
   onBack: () => void;
@@ -16,6 +16,8 @@ interface User {
 
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users'>('email');
+  const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
+  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<'admin' | 'technician' | 'viewer'>('technician');
@@ -27,6 +29,28 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     loading: false,
     result: null as { success: boolean; message: string } | null
   });
+
+  // Load user role on component mount
+  React.useEffect(() => {
+    const loadUserRole = async () => {
+      try {
+        const role = await getUserRole();
+        setUserRole(role as 'admin' | 'technician' | 'viewer');
+        
+        // If not admin, default to email tab (which they can access)
+        if (role !== 'admin' && activeTab === 'users') {
+          setActiveTab('email');
+        }
+      } catch (error) {
+        console.error('Error loading user role:', error);
+        setUserRole('viewer');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserRole();
+  }, []);
 
   const handleTestEmail = async () => {
     if (!emailTest.testEmail) {
@@ -175,13 +199,51 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
 
-  const tabs = [
+  // Define tabs based on user role
+  const getAllTabs = () => [
     { id: 'email', label: 'Email Settings', icon: Mail },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'users', label: 'User Management', icon: User }
   ];
+
+  const getAvailableTabs = () => {
+    const allTabs = getAllTabs();
+    
+    switch (userRole) {
+      case 'admin':
+        return allTabs; // Admin can see everything
+      case 'technician':
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security'); // No user management or security
+      case 'viewer':
+        return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
+      default:
+        return [allTabs[0]]; // Default to just email
+    }
+  };
+
+  const tabs = getAvailableTabs();
+
+  // Show loading state while determining user role
+  if (loading) {
+    return (
+      <>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: PRIMARY }}></div>
+              <p className="text-gray-600">Loading settings...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -321,12 +383,18 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
 
                     <button
                       onClick={handleTestEmail}
-                      disabled={emailTest.loading}
+                      disabled={emailTest.loading || userRole === 'viewer'}
                       className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-50"
                     >
                       <Send size={16} />
                       <span>{emailTest.loading ? 'Sending...' : 'Send Test Email'}</span>
                     </button>
+
+                    {userRole === 'viewer' && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        Email testing is not available for viewers. Contact an administrator for assistance.
+                      </p>
+                    )}
 
                     {emailTest.result && (
                       <div className={`flex items-center gap-2 p-3 rounded-lg ${
@@ -391,6 +459,16 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
             )}
 
             {activeTab === 'security' && (
+              // Only admins can access security settings
+              userRole !== 'admin' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div className="text-center py-12">
+                    <Shield size={48} className="mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Access Restricted</h3>
+                    <p className="text-gray-600">Security settings are only available to administrators.</p>
+                  </div>
+                </div>
+              ) : (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
                   Security Settings
@@ -418,10 +496,24 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   </div>
                 </div>
               </div>
+              )
             )}
 
             {activeTab === 'notifications' && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                {/* Role-based access notice */}
+                {userRole === 'viewer' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield size={16} className="text-blue-600" />
+                      <h4 className="font-medium text-blue-900">Read-Only Access</h4>
+                    </div>
+                    <p className="text-sm text-blue-800">
+                      You can view notification settings but cannot modify them.
+                    </p>
+                  </div>
+                )}
+
                 <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
                   Notification Settings
                 </h3>
@@ -432,7 +524,12 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                       <p className="font-medium text-gray-900">Status Change Alerts</p>
                       <p className="text-sm text-gray-600">Notify when ticket status changes</p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      defaultChecked 
+                      disabled={userRole === 'viewer'}
+                      className="rounded disabled:opacity-50" 
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -440,13 +537,18 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                       <p className="font-medium text-gray-900">Completion Notifications</p>
                       <p className="text-sm text-gray-600">Alert customers when repairs are complete</p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      defaultChecked 
+                      disabled={userRole === 'viewer'}
+                      className="rounded disabled:opacity-50" 
+                    />
                   </div>
                 </div>
               </div>
             )}
 
-            {activeTab === 'users' && (
+            {activeTab === 'users' && userRole === 'admin' && (
               <div className="space-y-6">
                 {/* Add New User */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
