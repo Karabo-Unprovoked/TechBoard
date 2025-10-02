@@ -326,6 +326,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         value={`R${stats.weeklyRevenue.toLocaleString()}`}
                         change="+12.5% from last week"
                         changeType="positive"
+                        icon={DollarSign}
+                        color="purple"
+                      />
+                    </div>
+
                     {/* Quick Actions */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
@@ -385,7 +390,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           </div>
                         </div>
                       </div>
-                        icon={DollarSign}
+
                       {/* Quick Actions Panel */}
                       <div className="space-y-6">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -415,7 +420,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                             </button>
                           </div>
                         </div>
-                        color="purple"
+
                         {/* Status Overview */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                           <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Overview</h3>
@@ -452,7 +457,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         </div>
                       </div>
                     </div>
-                      />
+
                     {/* Performance Metrics */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
