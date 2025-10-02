@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench } from 'lucide-react';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, Edit3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface SystemSettingsProps {
   onBack: () => void;
 }
 
+interface User {
+  id: string;
+  email: string;
+  role: 'admin' | 'technician' | 'viewer';
+  created_at: string;
+  last_sign_in_at?: string;
+}
+
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users'>('email');
+  const [users, setUsers] = useState<User[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState<'admin' | 'technician' | 'viewer'>('technician');
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [emailTest, setEmailTest] = useState({
     testEmail: '',
     subject: 'Test Email from Guardian Assist - SMTP Configuration Test',
@@ -62,6 +74,86 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     }
   };
 
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data, error } = await supabase.auth.admin.listUsers();
+      if (error) throw error;
+      
+      // Transform auth users to our User interface
+      const transformedUsers: User[] = data.users.map(user => ({
+        id: user.id,
+        email: user.email || '',
+        role: (user.user_metadata?.role || 'viewer') as 'admin' | 'technician' | 'viewer',
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at
+      }));
+      
+      setUsers(transformedUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const createUser = async () => {
+    if (!newUserEmail.trim()) return;
+    
+    try {
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: newUserEmail,
+        password: 'TempPassword123!', // User will need to reset
+        email_confirm: true,
+        user_metadata: {
+          role: newUserRole
+        }
+      });
+      
+      if (error) throw error;
+      
+      setNewUserEmail('');
+      setNewUserRole('technician');
+      loadUsers();
+      alert(`User created successfully. Temporary password: TempPassword123!\nUser should change this on first login.`);
+    } catch (error: any) {
+      alert('Error creating user: ' + error.message);
+    }
+  };
+
+  const updateUserRole = async (userId: string, newRole: 'admin' | 'technician' | 'viewer') => {
+    try {
+      const { error } = await supabase.auth.admin.updateUserById(userId, {
+        user_metadata: { role: newRole }
+      });
+      
+      if (error) throw error;
+      
+      loadUsers();
+    } catch (error: any) {
+      alert('Error updating user role: ' + error.message);
+    }
+  };
+
+  const deleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to delete user: ${userEmail}?`)) return;
+    
+    try {
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) throw error;
+      
+      loadUsers();
+    } catch (error: any) {
+      alert('Error deleting user: ' + error.message);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeTab === 'users') {
+      loadUsers();
+    }
+  }, [activeTab]);
+
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
 
@@ -69,7 +161,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     { id: 'email', label: 'Email Settings', icon: Mail },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
-    { id: 'notifications', label: 'Notifications', icon: Bell }
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'users', label: 'User Management', icon: User }
   ];
 
   return (

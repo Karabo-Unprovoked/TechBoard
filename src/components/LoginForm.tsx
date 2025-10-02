@@ -265,21 +265,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                   {loading ? (isSignUp ? 'Creating Account...' : 'Signing In...') : (isSignUp ? 'Create Account' : 'Log in')}
                 </button>
 
+                {/* Registration disabled for internal use only */}
                 <div className="text-center">
-                  <span className="text-gray-600 text-sm">
-                    {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSignUp(!isSignUp);
-                      setError('');
-                    }}
-                    className="font-medium hover:underline text-sm"
-                    style={{ color: PRIMARY }}
-                  >
-                    {isSignUp ? 'Sign in here.' : 'Register here.'}
-                  </button>
+                  <p className="text-xs text-gray-500">
+                    Internal application - Contact administrator for access
+                  </p>
                 </div>
               </form>
             </div>
