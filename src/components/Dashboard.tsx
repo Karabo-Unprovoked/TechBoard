@@ -226,29 +226,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span>All Customers</span>
               </button>
               <button
-                onClick={() => setCurrentView('new-customer')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'new-customer' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Users size={20} />
-                <span>New Customer</span>
-              </button>
-              <button
-                onClick={() => setCurrentView('new-ticket')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'new-ticket' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Plus size={20} />
-                <span>New Ticket</span>
-              </button>
-              <button
                 onClick={onTrackCustomer}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors font-medium"
               >
                 <Search size={20} />
-                <span>Track Customer</span>
+                <span>Track Repair</span>
               </button>
               <button
                 onClick={() => setCurrentView('settings')}
@@ -354,6 +336,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <>
                 {currentView === 'dashboard' && (
                   <div className="space-y-6">
+                    {/* Quick Action Buttons */}
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setCurrentView('new-customer')}
+                        className="flex items-center gap-2 px-6 py-3 bg-white border-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                        style={{ borderColor: PRIMARY, color: PRIMARY }}
+                      >
+                        <Users size={20} />
+                        <span>New Customer</span>
+                      </button>
+                      <button
+                        onClick={() => setCurrentView('new-ticket')}
+                        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition-colors shadow-sm"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Plus size={20} />
+                        <span>New Ticket</span>
+                      </button>
+                    </div>
+
                     {/* Supabase Configuration Warning */}
                     {!isSupabaseConfigured && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
