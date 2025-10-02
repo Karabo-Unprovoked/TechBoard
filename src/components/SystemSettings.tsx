@@ -41,21 +41,12 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     setEmailTest(prev => ({ ...prev, loading: true, result: null }));
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: emailTest.testEmail,
-          subject: emailTest.subject,
-          content: emailTest.message,
-          isTest: true
-        })
+      const result = await sendTestEmail({
+        to: emailTest.testEmail,
+        subject: emailTest.subject,
+        message: emailTest.message,
+        ticketNumber: 'TEST-001'
       });
-
-      const result = await response.json();
       
       setEmailTest(prev => ({
         ...prev,
@@ -238,16 +229,16 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                   <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <h4 className="font-medium text-blue-900 mb-2">📧 EmailJS Setup Instructions</h4>
                     <div className="text-sm text-blue-800 space-y-2">
-                      <p><strong>Step 1:</strong> Go to <a href="https://emailjs.com" target=\"_blank" className="underline">emailjs.com</a> and create a free account</p>
+                      <p><strong>Step 1:</strong> Go to <a href="https://emailjs.com" target="_blank" className="underline">emailjs.com</a> and create a free account</p>
                       <p><strong>Step 2:</strong> Add an email service (Gmail, Outlook, etc.)</p>
                       <p><strong>Step 3:</strong> Create an email template with these variables:</p>
                       <ul className="list-disc list-inside ml-4 space-y-1">
-                        <li>{{`{{to_email}}`}} - Recipient email</li>
-                        <li>{{`{{to_name}}`}} - Recipient name</li>
-                        <li>{{`{{subject}}`}} - Email subject</li>
-                        <li>{{`{{message}}`}} - Email content</li>
-                        <li>{{`{{ticket_number}}`}} - Repair ticket number</li>
-                        <li>{{`{{from_name}}`}} - Your business name</li>
+                        <li>to_email - Recipient email</li>
+                        <li>to_name - Recipient name</li>
+                        <li>subject - Email subject</li>
+                        <li>message - Email content</li>
+                        <li>ticket_number - Repair ticket number</li>
+                        <li>from_name - Your business name</li>
                       </ul>
                       <p><strong>Step 4:</strong> Copy your Service ID, Template ID, and Public Key above</p>
                       <p><strong>Free Tier:</strong> 200 emails/month - Perfect for small repair shops!</p>
@@ -320,18 +311,18 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                       </div>
                     )}
 
-                    {/* SMTP Configuration Note */}
+                    {/* EmailJS Configuration Note */}
                     <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <h4 className="font-medium text-yellow-900 mb-2">⚠️ SMTP Configuration Required</h4>
+                      <h4 className="font-medium text-yellow-900 mb-2">⚠️ EmailJS Configuration Required</h4>
                       <div className="text-sm text-yellow-800 space-y-1">
-                        <p>To send real emails, you need to integrate with an email service:</p>
+                        <p>To send real emails, you need to configure EmailJS:</p>
                         <ul className="list-disc list-inside ml-4 space-y-1">
-                          <li><strong>Option 1:</strong> Use SendGrid API (recommended)</li>
-                          <li><strong>Option 2:</strong> Use Mailgun API</li>
-                          <li><strong>Option 3:</strong> Use AWS SES</li>
-                          <li><strong>Option 4:</strong> Configure direct SMTP with a library</li>
+                          <li><strong>Free Service:</strong> 200 emails/month at no cost</li>
+                          <li><strong>Easy Setup:</strong> No server configuration needed</li>
+                          <li><strong>Reliable:</strong> Works with Gmail, Outlook, and more</li>
+                          <li><strong>Professional:</strong> Custom templates and branding</li>
                         </ul>
-                        <p className="mt-2">Current implementation simulates email sending for testing.</p>
+                        <p className="mt-2">Follow the setup instructions above to start sending emails!</p>
                       </div>
                     </div>
                   </div>
