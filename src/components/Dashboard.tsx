@@ -266,7 +266,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
-                  {currentView === 'dashboard' && 'Repair Operations Dashboard'}
+                  {currentView === 'dashboard' && 'Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'customers' && 'Customer Management'}
                   {currentView === 'new-customer' && 'New Customer'}
