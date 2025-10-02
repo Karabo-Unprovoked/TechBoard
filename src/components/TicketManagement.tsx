@@ -1,26 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Edit3, 
-  Save, 
-  X, 
-  Plus, 
-  Mail, 
-  FileText, 
-  Calendar, 
-  DollarSign, 
-  AlertTriangle,
-  Clock,
-  User,
-  Laptop,
-  Hash,
-  MessageSquare,
-  Send,
-  Paperclip,
-  Download,
-  Trash2,
-  CheckCircle
-} from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit3, Save, X, Plus, Mail, FileText, Calendar, DollarSign, AlertTriangle, Clock, User, Laptop, Hash, MessageSquare, Send, Paperclip, Download, Trash2, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { RepairTicket, TicketNote, TicketEmail, Customer } from '../lib/supabase';
 
