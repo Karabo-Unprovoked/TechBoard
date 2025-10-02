@@ -66,6 +66,7 @@ export type RepairTicket = {
   model?: string;
   serial_number?: string;
   issue_description?: string;
+  device_accessories?: string[];
   status: string;
   repair_notes?: string;
   priority?: string;

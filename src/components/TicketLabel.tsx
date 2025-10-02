@@ -159,6 +159,14 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               <span className="font-medium">Date:</span>
               <span className="ml-2">{new Date(ticket.created_at).toLocaleDateString()}</span>
             </div>
+            {ticket.device_accessories && ticket.device_accessories.length > 0 && (
+              <div>
+                <span className="font-medium">Includes:</span>
+                <div className="ml-2 text-xs">
+                  {ticket.device_accessories.join(', ')}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}

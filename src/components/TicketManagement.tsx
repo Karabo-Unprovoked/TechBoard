@@ -407,6 +407,23 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   )}
                 </div>
 
+                {/* Accessories */}
+                {ticket.device_accessories && ticket.device_accessories.length > 0 && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Device Came With</label>
+                    <div className="flex flex-wrap gap-2">
+                      {ticket.device_accessories.map((accessory) => (
+                        <span
+                          key={accessory}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                        >
+                          {accessory}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Cost Information */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Estimated Cost</label>

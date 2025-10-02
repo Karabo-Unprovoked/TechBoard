@@ -15,10 +15,26 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
     brand: '',
     model: '',
     serial_number: '',
-    issue_description: ''
+    issue_description: '',
+    device_accessories: [] as string[]
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const availableAccessories = [
+    'Bag',
+    'Charger',
+    'Battery',
+    'RAM',
+    'SSD',
+    'HDD',
+    'Power Cable',
+    'Mouse',
+    'Keyboard',
+    'Stylus',
+    'CD/DVD Drive',
+    'Other'
+  ];
 
   const generateTicketNumber = () => {
     const date = new Date();
@@ -57,7 +73,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
         brand: '',
         model: '',
         serial_number: '',
-        issue_description: ''
+        issue_description: '',
+        device_accessories: []
       });
     } catch (err: any) {
       setError(err.message || 'Failed to create ticket');
@@ -176,6 +193,41 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
                 placeholder="Describe the issue with the device..."
                 required
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-3">
+              Device Came With
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {availableAccessories.map((accessory) => (
+                <label
+                  key={accessory}
+                  className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.device_accessories.includes(accessory)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({
+                          ...formData,
+                          device_accessories: [...formData.device_accessories, accessory]
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          device_accessories: formData.device_accessories.filter(a => a !== accessory)
+                        });
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-gray-300"
+                    style={{ accentColor: PRIMARY }}
+                  />
+                  <span className="text-sm text-gray-700">{accessory}</span>
+                </label>
+              ))}
             </div>
           </div>
 
