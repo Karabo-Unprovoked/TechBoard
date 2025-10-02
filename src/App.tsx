@@ -74,7 +74,7 @@ function App() {
     case 'track-customer':
       return (
         <CustomerTracking 
-          onBack={handleBackToLogin}
+          onBack={isAuthenticated ? handleDashboard : handleBackToLogin}
           onLogout={handleLogout}
           isAuthenticated={isAuthenticated}
           onDashboard={isAuthenticated ? handleDashboard : undefined}
