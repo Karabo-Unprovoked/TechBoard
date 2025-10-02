@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3 } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
+import { RecycleBin } from './RecycleBin';
 
 interface SystemSettingsProps {
   onBack: () => void;
+  onNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
 }
 
 interface User {
@@ -14,8 +16,9 @@ interface User {
   last_sign_in_at?: string;
 }
 
-export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users'>('email');
+export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotification }) => {
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle'>('email');
+  const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -342,7 +345,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'users', label: 'User Management', icon: User }
+    { id: 'users', label: 'User Management', icon: User },
+    { id: 'recycle', label: 'Recycle Bin', icon: Trash2 }
   ];
 
   const getAvailableTabs = () => {
@@ -352,7 +356,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
       case 'admin':
         return allTabs; // Admin can see everything
       case 'technician':
-        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security'); // No user management or security
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle'); // No user management, security, or recycle bin
       case 'viewer':
         return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
       default:
@@ -992,9 +996,71 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                 </div>
               </div>
             )}
+
+            {activeTab === 'recycle' && userRole === 'admin' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>Recycle Bin</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      View and restore deleted customers. Items are permanently deleted after 30 days.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowRecycleBin(true)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                  >
+                    Open Recycle Bin
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">ℹ️ How It Works</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>• Deleted customers are moved to the recycle bin instead of being permanently removed</p>
+                      <p>• Customer data and their completed tickets are preserved</p>
+                      <p>• Items can be restored within 30 days</p>
+                      <p>• After 30 days, items are automatically and permanently deleted</p>
+                      <p>• Admins can manually delete items permanently at any time</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 className="font-medium text-yellow-900 mb-2">⚠️ Important Notes</h4>
+                    <div className="text-sm text-yellow-800 space-y-1">
+                      <p>• Only customers with completed/cancelled tickets or no tickets can be deleted</p>
+                      <p>• Deleting customers with completed tickets requires admin password</p>
+                      <p>• Restoring a customer will also restore their associated tickets</p>
+                      <p>• Permanent deletion cannot be undone</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle size={20} className="text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-900">Automatic Cleanup</p>
+                        <p className="text-sm text-green-700">
+                          The system automatically removes items older than 30 days via edge function
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {showRecycleBin && (
+        <RecycleBin
+          onClose={() => setShowRecycleBin(false)}
+          onRefresh={() => {}}
+          onNotification={onNotification}
+        />
+      )}
     </>
   );
 };
