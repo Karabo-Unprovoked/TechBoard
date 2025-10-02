@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, Trash2 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
@@ -12,16 +12,19 @@ import { SystemSettings } from './SystemSettings';
 import { CustomersView } from './CustomersView';
 import { CustomerManagement } from './CustomerManagement';
 import { UserProfile } from './UserProfile';
+import { RecycleBin } from './RecycleBin';
+import type { NotificationType } from './Notification';
 
 interface DashboardProps {
   onBack: () => void;
   onLogout: () => void;
   onTrackCustomer: () => void;
+  onNotification: (type: NotificationType, message: string) => void;
 }
 
 type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile';
 
-export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer, onNotification }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -30,6 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showRecycleBin, setShowRecycleBin] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -241,6 +245,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               >
                 <Settings size={20} />
                 <span>Settings</span>
+              </button>
+              <button
+                onClick={() => setShowRecycleBin(true)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors font-medium"
+              >
+                <Trash2 size={20} />
+                <span>Recycle Bin</span>
               </button>
               <button
                 onClick={() => setCurrentView('profile')}
@@ -567,10 +578,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'customers' && (
-                  <CustomersView 
-                    customers={customers} 
+                  <CustomersView
+                    customers={customers}
                     onViewCustomer={handleViewCustomer}
                     onRefresh={loadData}
+                    onNotification={onNotification}
                   />
                 )}
                 {currentView === 'new-customer' && (
@@ -619,6 +631,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           </div>
         </div>
       </div>
+
+      {showRecycleBin && (
+        <RecycleBin
+          onClose={() => setShowRecycleBin(false)}
+          onRefresh={loadData}
+          onNotification={onNotification}
+        />
+      )}
     </>
   );
 };

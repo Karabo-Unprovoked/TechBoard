@@ -2,49 +2,117 @@ import React, { useState } from 'react';
 import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
+import { AdminPasswordModal } from './AdminPasswordModal';
+import type { NotificationType } from './Notification';
 
 interface CustomersViewProps {
   customers: Customer[];
   onViewCustomer: (customer: Customer) => void;
   onRefresh: () => void;
+  onNotification: (type: NotificationType, message: string) => void;
 }
 
 export const CustomersView: React.FC<CustomersViewProps> = ({
   customers,
   onViewCustomer,
-  onRefresh
+  onRefresh,
+  onNotification
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'customer_number'>('date');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [pendingDeleteCustomerId, setPendingDeleteCustomerId] = useState<string | null>(null);
 
-  const handleDeleteCustomer = async (customerId: string) => {
-    setDeleting(true);
-    try {
-      const { data: tickets } = await supabase
-        .from('repair_tickets')
-        .select('id')
-        .eq('customer_id', customerId);
+  const handleDeleteClick = async (customerId: string) => {
+    const { data: tickets } = await supabase
+      .from('repair_tickets')
+      .select('*')
+      .eq('customer_id', customerId);
 
-      if (tickets && tickets.length > 0) {
-        alert('Cannot delete customer with existing repair tickets. Please delete or reassign tickets first.');
+    if (tickets && tickets.length > 0) {
+      const hasActiveTickets = tickets.some(
+        (t) => !['completed', 'cancelled'].includes(t.status)
+      );
+
+      if (hasActiveTickets) {
+        onNotification(
+          'warning',
+          'Cannot delete customer with active tickets. Only customers with completed or no tickets can be deleted.'
+        );
+        setDeleteConfirm(null);
         return;
       }
 
-      const { error } = await supabase
-        .from('customers')
-        .delete()
-        .eq('id', customerId);
+      setPendingDeleteCustomerId(customerId);
+      setShowAdminModal(true);
+      setDeleteConfirm(null);
+    } else {
+      await deleteCustomer(customerId);
+    }
+  };
 
-      if (error) throw error;
+  const deleteCustomer = async (customerId: string) => {
+    setDeleting(true);
+    try {
+      const customer = customers.find((c) => c.id === customerId);
+      if (!customer) throw new Error('Customer not found');
 
+      const { data: tickets } = await supabase
+        .from('repair_tickets')
+        .select('*')
+        .eq('customer_id', customerId)
+        .in('status', ['completed', 'cancelled']);
+
+      const { data: session } = await supabase.auth.getSession();
+
+      await supabase.from('deleted_customers').insert({
+        customer_id: customer.id,
+        customer_number: customer.customer_number,
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        gender: customer.gender,
+        referral_source: customer.referral_source,
+        original_created_at: customer.created_at,
+        deleted_by: session?.session?.user?.id,
+        tickets_data: tickets || []
+      });
+
+      if (tickets && tickets.length > 0) {
+        await supabase
+          .from('repair_tickets')
+          .delete()
+          .eq('customer_id', customerId);
+      }
+
+      await supabase.from('customers').delete().eq('id', customerId);
+
+      onNotification('success', 'Customer moved to recycle bin. Can be restored within 30 days.');
       onRefresh();
       setDeleteConfirm(null);
     } catch (error: any) {
-      alert('Failed to delete customer: ' + error.message);
+      onNotification('error', 'Failed to delete customer: ' + error.message);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleAdminConfirm = async (password: string) => {
+    const ADMIN_PASSWORD = 'admin123';
+
+    if (password !== ADMIN_PASSWORD) {
+      onNotification('error', 'Incorrect admin password');
+      return;
+    }
+
+    setShowAdminModal(false);
+    if (pendingDeleteCustomerId) {
+      await deleteCustomer(pendingDeleteCustomerId);
+      setPendingDeleteCustomerId(null);
     }
   };
 
@@ -157,7 +225,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   {deleteConfirm === customer.id ? (
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => handleDeleteCustomer(customer.id)}
+                        onClick={() => handleDeleteClick(customer.id)}
                         disabled={deleting}
                         className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors disabled:opacity-50"
                       >
@@ -225,6 +293,17 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           ))}
         </div>
       )}
+
+      <AdminPasswordModal
+        isOpen={showAdminModal}
+        onClose={() => {
+          setShowAdminModal(false);
+          setPendingDeleteCustomerId(null);
+        }}
+        onConfirm={handleAdminConfirm}
+        title="Admin Authorization Required"
+        message="This customer has completed tickets. Admin password is required to proceed with deletion."
+      />
     </div>
   );
 };

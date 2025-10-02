@@ -743,6 +743,22 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack }) => {
                       </div>
                     </div>
                   </div>
+
+                  <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-start gap-3">
+                      <Shield size={20} className="text-yellow-600 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-yellow-900 mb-2">Admin Password</p>
+                        <p className="text-sm text-yellow-700 mb-2">
+                          When deleting customers with completed tickets, an admin password is required.
+                        </p>
+                        <div className="bg-white p-3 rounded border border-yellow-300">
+                          <p className="text-sm font-mono text-gray-900">Default Password: <span className="font-bold">admin123</span></p>
+                          <p className="text-xs text-gray-600 mt-1">Change this in the code: CustomersView.tsx (line 105)</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               )
