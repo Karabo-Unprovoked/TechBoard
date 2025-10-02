@@ -115,23 +115,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
           {/* Navigation Menu */}
           <div className="flex-1 px-6">
             <nav className="space-y-2">
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 cursor-pointer group">
                 <User size={20} />
-                <span className="font-medium">Log in</span>
+                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Log in</span>
               </div>
               <button
                 onClick={onTrackCustomer}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 group"
               >
                 <Search size={20} />
-                <span className="font-medium">Track Customer</span>
+                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Track Customer</span>
               </button>
               <button
                 onClick={() => window.open('mailto:support@guardianassist.co.za', '_blank')}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 group"
               >
                 <HelpCircle size={20} />
-                <span className="font-medium">Help centre</span>
+                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Help centre</span>
               </button>
             </nav>
           </div>
