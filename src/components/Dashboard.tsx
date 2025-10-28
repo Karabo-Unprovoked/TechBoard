@@ -160,8 +160,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     return matchesSearch && matchesStatus;
   });
 
-  const PRIMARY = '#5d5d5d';
-  const SECONDARY = '#5d5d5d';
+  const PRIMARY = '#4a5568';
+  const SIDEBAR_BG = '#2d3748';
+  const ACCENT_BLUE = '#3b82f6';
+  const ACCENT_GREEN = '#10b981';
+  const ACCENT_ORANGE = '#f59e0b';
 
   return (
     <>
@@ -175,98 +178,98 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         className="min-h-screen flex"
         style={{
           fontFamily: 'Montserrat, sans-serif',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: '#f1f5f9',
         }}
       >
         {/* Left Sidebar */}
         <div
-          className="w-80 flex flex-col"
-          style={{ backgroundColor: PRIMARY }}
+          className="w-72 flex flex-col shadow-xl"
+          style={{ backgroundColor: SIDEBAR_BG }}
         >
           {/* Logo and Brand */}
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-8">
-              <img 
-                src="/FinalWhite.png" 
-                alt="Guardian Assist Logo" 
-                className="w-12 h-12"
+          <div className="p-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <img
+                src="/FinalWhite.png"
+                alt="Guardian Assist Logo"
+                className="w-10 h-10"
               />
               <div>
-                <h1 className="text-xl font-bold text-white">Guardian Assist</h1>
-                <p className="text-sm text-white/80">Computer Repair Management</p>
+                <h1 className="text-lg font-bold text-white">Guardian Assist</h1>
+                <p className="text-xs text-white/60">Repair Management</p>
               </div>
             </div>
           </div>
 
           {/* Navigation Menu */}
-          <div className="flex-1 px-6">
-            <nav className="space-y-2">
+          <div className="flex-1 px-4 py-6">
+            <nav className="space-y-1">
               <button
                 onClick={() => setCurrentView('dashboard')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'dashboard' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'dashboard' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <BarChart3 size={20} />
-                <span>Dashboard</span>
+                <BarChart3 size={18} />
+                <span className="text-sm">Dashboard</span>
               </button>
               <button
                 onClick={() => setCurrentView('tickets')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'tickets' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'tickets' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Wrench size={20} />
-                <span>All Tickets</span>
+                <Wrench size={18} />
+                <span className="text-sm">All Tickets</span>
               </button>
               <button
                 onClick={() => setCurrentView('customers')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'customers' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'customers' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Users size={20} />
-                <span>All Customers</span>
+                <Users size={18} />
+                <span className="text-sm">All Customers</span>
               </button>
               <button
                 onClick={onTrackCustomer}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors font-medium"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all font-medium"
               >
-                <Search size={20} />
-                <span>Track Repair</span>
+                <Search size={18} />
+                <span className="text-sm">Track Repair</span>
               </button>
               <button
                 onClick={() => setCurrentView('settings')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'settings' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'settings' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Settings size={20} />
-                <span>Settings</span>
+                <Settings size={18} />
+                <span className="text-sm">Settings</span>
               </button>
               <button
                 onClick={() => setCurrentView('profile')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'profile' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'profile' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <User size={20} />
-                <span>My Profile</span>
+                <User size={18} />
+                <span className="text-sm">My Profile</span>
               </button>
             </nav>
           </div>
 
           {/* Footer */}
-          <div className="p-6">
+          <div className="p-4 border-t border-white/10">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-medium"
             >
-              <LogOut size={20} />
-              <span>Logout</span>
+              <LogOut size={18} />
+              <span className="text-sm">Logout</span>
             </button>
-            <p className="text-xs text-white/60 text-center mt-4">
-              © 2025 Guardian Assist. All rights reserved.
+            <p className="text-xs text-white/40 text-center mt-3">
+              © 2025 Guardian Assist
             </p>
           </div>
         </div>
@@ -274,10 +277,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         {/* Right Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <div className="bg-white shadow-sm border-b border-gray-100 px-6 py-4">
+          <div className="bg-white/70 backdrop-blur-sm border-b border-gray-200/50 px-8 py-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
+                <h2 className="text-2xl font-bold text-gray-800">
                   {currentView === 'dashboard' && 'Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'customers' && 'Customer Management'}
@@ -289,8 +292,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'settings' && 'System Settings'}
                   {currentView === 'profile' && 'My Profile'}
                 </h2>
-                <p className="text-gray-600">
-                  {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
+                <p className="text-sm text-gray-500 mt-1">
+                  {currentView === 'dashboard' && 'Welcome back! Here\'s your overview'}
                   {currentView === 'tickets' && 'Manage and track repair tickets'}
                   {currentView === 'customers' && 'View and manage customer information'}
                   {currentView === 'new-customer' && 'Add a new customer to the system'}
@@ -336,7 +339,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-8 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
@@ -348,24 +351,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <>
                 {currentView === 'dashboard' && (
                   <div className="space-y-6">
-                    {/* Quick Action Buttons */}
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => setCurrentView('new-customer')}
-                        className="flex items-center gap-2 px-6 py-3 bg-white border-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm"
-                        style={{ borderColor: PRIMARY, color: PRIMARY }}
-                      >
-                        <Users size={20} />
-                        <span>New Customer</span>
-                      </button>
-                      <button
-                        onClick={() => setCurrentView('new-ticket')}
-                        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition-colors shadow-sm"
-                        style={{ backgroundColor: PRIMARY }}
-                      >
-                        <Plus size={20} />
-                        <span>New Ticket</span>
-                      </button>
+                    {/* Welcome Section */}
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white shadow-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-2xl font-bold mb-2">Hello, Welcome back</h3>
+                          <p className="text-blue-100 text-sm">Your dashboard is updated with the latest information</p>
+                        </div>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setCurrentView('new-customer')}
+                            className="flex items-center gap-2 px-5 py-3 bg-white/20 backdrop-blur-sm rounded-xl font-semibold hover:bg-white/30 transition-all"
+                          >
+                            <Users size={18} />
+                            <span className="text-sm">New Customer</span>
+                          </button>
+                          <button
+                            onClick={() => setCurrentView('new-ticket')}
+                            className="flex items-center gap-2 px-5 py-3 bg-white text-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
+                          >
+                            <Plus size={18} />
+                            <span className="text-sm">New Ticket</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Supabase Configuration Warning */}
@@ -387,63 +396,75 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     )}
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      <StatCard
-                        title="Total Tickets"
-                        value={stats.totalTickets}
-                        change={`+${stats.todayTickets} today`}
-                        changeType="positive"
-                        icon={Wrench}
-                        color="blue"
-                      />
-                      <StatCard
-                        title="In Progress"
-                        value={stats.inProgressTickets}
-                        change={`${Math.round((stats.inProgressTickets / stats.totalTickets) * 100)}% of total`}
-                        changeType="neutral"
-                        icon={Clock}
-                        color="orange"
-                      />
-                      <StatCard
-                        title="Completed"
-                        value={stats.completedTickets}
-                        change={`${Math.round((stats.completedTickets / stats.totalTickets) * 100)}% success rate`}
-                        changeType="positive"
-                        icon={CheckCircle}
-                        color="green"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="bg-blue-50 p-3 rounded-xl">
+                            <Wrench size={24} className="text-blue-600" />
+                          </div>
+                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                            +{stats.todayTickets} today
+                          </span>
+                        </div>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Tickets</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.totalTickets}</p>
+                      </div>
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="bg-orange-50 p-3 rounded-xl">
+                            <Clock size={24} className="text-orange-600" />
+                          </div>
+                          <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                            {stats.totalTickets > 0 ? Math.round((stats.inProgressTickets / stats.totalTickets) * 100) : 0}%
+                          </span>
+                        </div>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">In Progress</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.inProgressTickets}</p>
+                      </div>
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="bg-green-50 p-3 rounded-xl">
+                            <CheckCircle size={24} className="text-green-600" />
+                          </div>
+                          <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                            {stats.totalTickets > 0 ? Math.round((stats.completedTickets / stats.totalTickets) * 100) : 0}%
+                          </span>
+                        </div>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Completed</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.completedTickets}</p>
+                      </div>
                     </div>
 
                     {/* Quick Actions */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
                         {/* Recent Tickets with Status Updates */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                           <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900">Recent Tickets</h3>
+                            <h3 className="text-lg font-bold text-gray-900">Latest Updates</h3>
                             <button
                               onClick={() => setCurrentView('tickets')}
-                              className="text-sm font-medium hover:underline"
-                              style={{ color: PRIMARY }}
+                              className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                             >
-                              View All
+                              View All →
                             </button>
                           </div>
                           
-                          <div className="space-y-4">
+                          <div className="space-y-3">
                             {tickets.slice(0, 5).map((ticket) => (
-                              <div key={ticket.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                              <div key={ticket.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="flex items-center gap-3">
-                                    <span className="font-medium text-gray-900">{ticket.ticket_number}</span>
+                                    <div className="bg-gray-100 px-3 py-1 rounded-lg">
+                                      <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
+                                    </div>
                                     <span className="text-sm text-gray-600">
                                       {ticket.customer?.name} - {ticket.device_type}
                                     </span>
                                   </div>
                                   <button
                                     onClick={() => handleViewLabel(ticket)}
-                                    className="p-1 rounded hover:bg-gray-200 transition-colors"
-                                    style={{ color: PRIMARY }}
+                                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
                                   >
                                     <Eye size={16} />
                                   </button>
@@ -453,8 +474,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                   <select
                                     value={ticket.status}
                                     onChange={(e) => updateTicketStatus(ticket.id, e.target.value)}
-                                    className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
-                                    style={{ focusRingColor: PRIMARY }}
+                                    className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
                                   >
                                     <option value="received">Received</option>
                                     <option value="in-progress">In Progress</option>
@@ -463,9 +483,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                     <option value="unrepairable">Unrepairable</option>
                                     <option value="pending-customer-action">Pending Customer Action</option>
                                   </select>
-                                  
+
                                   <div className="text-right">
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-gray-400 font-medium">
                                       {new Date(ticket.created_at).toLocaleDateString()}
                                     </p>
                                   </div>
@@ -478,79 +498,69 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
                       {/* Quick Actions Panel */}
                       <div className="space-y-6">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                          <div className="space-y-3">
+                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-sm p-6 text-white">
+                          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4">
+                            <h4 className="text-sm font-medium mb-1">Open projects</h4>
+                            <p className="text-2xl font-bold">{stats.totalTickets}</p>
+                            <p className="text-xs text-green-100 mt-1">Complete tasks</p>
+                          </div>
+                          <div className="space-y-2">
                             <button
                               onClick={() => setCurrentView('new-ticket')}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg text-white font-medium transition-colors"
-                              style={{ backgroundColor: PRIMARY }}
+                              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 font-semibold transition-all text-sm"
                             >
                               <Plus size={18} />
                               <span>New Ticket</span>
                             </button>
                             <button
                               onClick={() => setCurrentView('new-customer')}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 font-semibold transition-all text-sm"
                             >
                               <Users size={18} />
                               <span>Add Customer</span>
-                            </button>
-                            <button
-                              onClick={onTrackCustomer}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
-                            >
-                              <Search size={18} />
-                              <span>Track Device</span>
                             </button>
                           </div>
                         </div>
 
                         {/* Status Overview */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Overview</h3>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Received</span>
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                          <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between group">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span className="text-sm text-gray-600 font-medium">Received</span>
                               </div>
-                              <span className="font-medium">{stats.pendingTickets}</span>
+                              <span className="font-bold text-gray-900">{stats.pendingTickets}</span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">In Progress</span>
+                            <div className="flex items-center justify-between group">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                </div>
+                                <span className="text-sm text-gray-600 font-medium">In Progress</span>
                               </div>
-                              <span className="font-medium">{stats.inProgressTickets}</span>
+                              <span className="font-bold text-gray-900">{stats.inProgressTickets}</span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Waiting Parts</span>
+                            <div className="flex items-center justify-between group">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
+                                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                </div>
+                                <span className="text-sm text-gray-600 font-medium">Waiting Parts</span>
                               </div>
-                              <span className="font-medium">{stats.waitingPartsTickets}</span>
+                              <span className="font-bold text-gray-900">{stats.waitingPartsTickets}</span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Completed</span>
+                            <div className="flex items-center justify-between group">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span className="text-sm text-gray-600 font-medium">Completed</span>
                               </div>
-                              <span className="font-medium">{stats.completedTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Unrepairable</span>
-                              </div>
-                              <span className="font-medium">{stats.unrepairableTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Pending Customer</span>
-                              </div>
-                              <span className="font-medium">{stats.pendingCustomerTickets}</span>
+                              <span className="font-bold text-gray-900">{stats.completedTickets}</span>
                             </div>
                           </div>
                         </div>
