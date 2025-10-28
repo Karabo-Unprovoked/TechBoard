@@ -160,7 +160,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     return matchesSearch && matchesStatus;
   });
 
-  const PRIMARY = '#4a5568';
+  const PRIMARY = '#ffb400';
   const SIDEBAR_BG = '#2d3748';
   const ACCENT_BLUE = '#3b82f6';
   const ACCENT_GREEN = '#10b981';
@@ -352,11 +352,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 {currentView === 'dashboard' && (
                   <div className="space-y-6">
                     {/* Welcome Section */}
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white shadow-lg">
+                    <div
+                      className="rounded-2xl p-8 text-white shadow-lg"
+                      style={{
+                        background: `linear-gradient(135deg, ${PRIMARY} 0%, #ff9500 100%)`
+                      }}
+                    >
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-2xl font-bold mb-2">Hello, Welcome back</h3>
-                          <p className="text-blue-100 text-sm">Your dashboard is updated with the latest information</p>
+                          <p className="text-orange-50 text-sm">Your dashboard is updated with the latest information</p>
                         </div>
                         <div className="flex gap-3">
                           <button
@@ -368,7 +373,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           </button>
                           <button
                             onClick={() => setCurrentView('new-ticket')}
-                            className="flex items-center gap-2 px-5 py-3 bg-white text-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
+                            className="flex items-center gap-2 px-5 py-3 bg-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                            style={{ color: PRIMARY }}
                           >
                             <Plus size={18} />
                             <span className="text-sm">New Ticket</span>
