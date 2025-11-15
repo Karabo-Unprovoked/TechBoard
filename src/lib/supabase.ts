@@ -96,6 +96,18 @@ export type TicketStatus = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  sub_statuses?: TicketSubStatus[];
+}
+
+export type TicketSubStatus = {
+  id: string;
+  parent_status_id: string;
+  sub_status_key: string;
+  sub_status_label: string;
+  sub_status_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export type TicketNote = {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List } from 'lucide-react';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
-import type { TicketStatus } from '../lib/supabase';
+import type { TicketStatus, TicketSubStatus } from '../lib/supabase';
 import { RecycleBin } from './RecycleBin';
 
 interface SystemSettingsProps {
@@ -37,6 +37,10 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [newStatusLabel, setNewStatusLabel] = useState('');
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
   const [editingStatusLabel, setEditingStatusLabel] = useState('');
+  const [expandedStatusId, setExpandedStatusId] = useState<string | null>(null);
+  const [newSubStatusLabel, setNewSubStatusLabel] = useState<string>('');
+  const [editingSubStatusId, setEditingSubStatusId] = useState<string | null>(null);
+  const [editingSubStatusLabel, setEditingSubStatusLabel] = useState('');
   const [emailSettings, setEmailSettings] = useState<{
     smtp_host: string;
     smtp_port: number;
@@ -424,13 +428,26 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const loadStatuses = async () => {
     setLoadingStatuses(true);
     try {
-      const { data, error } = await supabase
+      const { data: statusesData, error: statusesError } = await supabase
         .from('ticket_statuses')
         .select('*')
         .order('status_order', { ascending: true });
 
-      if (error) throw error;
-      setStatuses(data || []);
+      if (statusesError) throw statusesError;
+
+      const { data: subStatusesData, error: subStatusesError } = await supabase
+        .from('ticket_sub_statuses')
+        .select('*')
+        .order('sub_status_order', { ascending: true });
+
+      if (subStatusesError) throw subStatusesError;
+
+      const statusesWithSubs = (statusesData || []).map(status => ({
+        ...status,
+        sub_statuses: (subStatusesData || []).filter(sub => sub.parent_status_id === status.id)
+      }));
+
+      setStatuses(statusesWithSubs);
     } catch (error: any) {
       console.error('Error loading statuses:', error);
       onNotification('error', 'Failed to load statuses');
@@ -527,6 +544,72 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
       loadStatuses();
     } catch (error: any) {
       onNotification('error', 'Failed to reorder statuses: ' + error.message);
+    }
+  };
+
+  const addSubStatus = async (parentStatusId: string) => {
+    if (!newSubStatusLabel.trim()) {
+      onNotification('error', 'Sub-status label is required');
+      return;
+    }
+
+    try {
+      const subStatusKey = newSubStatusLabel.toLowerCase().replace(/\s+/g, '-');
+      const parentStatus = statuses.find(s => s.id === parentStatusId);
+      const maxOrder = Math.max(0, ...(parentStatus?.sub_statuses?.map(s => s.sub_status_order) || []));
+
+      const { error } = await supabase
+        .from('ticket_sub_statuses')
+        .insert({
+          parent_status_id: parentStatusId,
+          sub_status_key: subStatusKey,
+          sub_status_label: newSubStatusLabel,
+          sub_status_order: maxOrder + 1,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      onNotification('success', 'Sub-status added successfully');
+      setNewSubStatusLabel('');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to add sub-status: ' + error.message);
+    }
+  };
+
+  const updateSubStatus = async (subStatusId: string, updates: Partial<TicketSubStatus>) => {
+    try {
+      const { error } = await supabase
+        .from('ticket_sub_statuses')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', subStatusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Sub-status updated successfully');
+      setEditingSubStatusId(null);
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to update sub-status: ' + error.message);
+    }
+  };
+
+  const deleteSubStatus = async (subStatusId: string, subStatusLabel: string) => {
+    if (!confirm(`Are you sure you want to delete the sub-status "${subStatusLabel}"?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('ticket_sub_statuses')
+        .delete()
+        .eq('id', subStatusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Sub-status deleted successfully');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to delete sub-status: ' + error.message);
     }
   };
 
@@ -795,90 +878,203 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                   ) : (
                     <div className="space-y-2">
                       {statuses.map((status, index) => (
-                        <div key={status.id} className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                          <div className="flex flex-col gap-1">
+                        <div key={status.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                          <div className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex flex-col gap-1">
+                              <button
+                                onClick={() => moveStatus(status.id, 'up')}
+                                disabled={index === 0}
+                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move Up"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                onClick={() => moveStatus(status.id, 'down')}
+                                disabled={index === statuses.length - 1}
+                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move Down"
+                              >
+                                ▼
+                              </button>
+                            </div>
+
                             <button
-                              onClick={() => moveStatus(status.id, 'up')}
-                              disabled={index === 0}
-                              className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                              title="Move Up"
+                              onClick={() => setExpandedStatusId(expandedStatusId === status.id ? null : status.id)}
+                              className="p-2 hover:bg-gray-100 rounded transition-colors"
+                              title={expandedStatusId === status.id ? "Collapse" : "Expand sub-statuses"}
                             >
-                              ▲
+                              {expandedStatusId === status.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                             </button>
-                            <button
-                              onClick={() => moveStatus(status.id, 'down')}
-                              disabled={index === statuses.length - 1}
-                              className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                              title="Move Down"
-                            >
-                              ▼
-                            </button>
+
+                            <div className="flex-1">
+                              {editingStatusId === status.id ? (
+                                <input
+                                  type="text"
+                                  value={editingStatusLabel}
+                                  onChange={(e) => setEditingStatusLabel(e.target.value)}
+                                  className="w-full px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:border-transparent outline-none"
+                                  style={{ focusRingColor: PRIMARY }}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateStatus(status.id, { status_label: editingStatusLabel });
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                              ) : (
+                                <div>
+                                  <p className="font-medium text-gray-900">{status.status_label}</p>
+                                  <p className="text-xs text-gray-500">{status.status_key} {status.sub_statuses && status.sub_statuses.length > 0 && `• ${status.sub_statuses.length} sub-status${status.sub_statuses.length === 1 ? '' : 'es'}`}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {editingStatusId === status.id ? (
+                                <>
+                                  <button
+                                    onClick={() => updateStatus(status.id, { status_label: editingStatusLabel })}
+                                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingStatusId(null);
+                                      setEditingStatusLabel('');
+                                    }}
+                                    className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setEditingStatusId(status.id);
+                                      setEditingStatusLabel(status.status_label);
+                                    }}
+                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit3 size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteStatus(status.id, status.status_label)}
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex-1">
-                            {editingStatusId === status.id ? (
-                              <input
-                                type="text"
-                                value={editingStatusLabel}
-                                onChange={(e) => setEditingStatusLabel(e.target.value)}
-                                className="w-full px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:border-transparent outline-none"
-                                style={{ focusRingColor: PRIMARY }}
-                                onKeyPress={(e) => {
-                                  if (e.key === 'Enter') {
-                                    updateStatus(status.id, { status_label: editingStatusLabel });
-                                  }
-                                }}
-                                autoFocus
-                              />
-                            ) : (
-                              <div>
-                                <p className="font-medium text-gray-900">{status.status_label}</p>
-                                <p className="text-xs text-gray-500">{status.status_key}</p>
+                          {/* Sub-statuses section */}
+                          {expandedStatusId === status.id && (
+                            <div className="bg-gray-50 border-t border-gray-200 p-4">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-3">Sub-statuses for {status.status_label}</h4>
+
+                              {/* Add new sub-status */}
+                              <div className="flex gap-2 mb-4">
+                                <input
+                                  type="text"
+                                  value={newSubStatusLabel}
+                                  onChange={(e) => setNewSubStatusLabel(e.target.value)}
+                                  placeholder="Add sub-status..."
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+                                  style={{ focusRingColor: PRIMARY }}
+                                  onKeyPress={(e) => e.key === 'Enter' && addSubStatus(status.id)}
+                                />
+                                <button
+                                  onClick={() => addSubStatus(status.id)}
+                                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-white font-medium transition-colors text-sm"
+                                  style={{ backgroundColor: PRIMARY }}
+                                >
+                                  <Plus size={14} />
+                                  Add
+                                </button>
                               </div>
-                            )}
-                          </div>
 
-                          <div className="flex items-center gap-2">
-                            {editingStatusId === status.id ? (
-                              <>
-                                <button
-                                  onClick={() => updateStatus(status.id, { status_label: editingStatusLabel })}
-                                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setEditingStatusId(null);
-                                    setEditingStatusLabel('');
-                                  }}
-                                  className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    setEditingStatusId(status.id);
-                                    setEditingStatusLabel(status.status_label);
-                                  }}
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                  title="Edit"
-                                >
-                                  <Edit3 size={16} />
-                                </button>
-                                <button
-                                  onClick={() => deleteStatus(status.id, status.status_label)}
-                                  className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </>
-                            )}
-                          </div>
+                              {/* Sub-status list */}
+                              {status.sub_statuses && status.sub_statuses.length > 0 ? (
+                                <div className="space-y-2">
+                                  {status.sub_statuses.map((subStatus) => (
+                                    <div key={subStatus.id} className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg">
+                                      <div className="flex-1">
+                                        {editingSubStatusId === subStatus.id ? (
+                                          <input
+                                            type="text"
+                                            value={editingSubStatusLabel}
+                                            onChange={(e) => setEditingSubStatusLabel(e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:border-transparent outline-none text-sm"
+                                            style={{ focusRingColor: PRIMARY }}
+                                            onKeyPress={(e) => {
+                                              if (e.key === 'Enter') {
+                                                updateSubStatus(subStatus.id, { sub_status_label: editingSubStatusLabel });
+                                              }
+                                            }}
+                                            autoFocus
+                                          />
+                                        ) : (
+                                          <div>
+                                            <p className="text-sm font-medium text-gray-900">{subStatus.sub_status_label}</p>
+                                            <p className="text-xs text-gray-500">{subStatus.sub_status_key}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        {editingSubStatusId === subStatus.id ? (
+                                          <>
+                                            <button
+                                              onClick={() => updateSubStatus(subStatus.id, { sub_status_label: editingSubStatusLabel })}
+                                              className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
+                                            >
+                                              Save
+                                            </button>
+                                            <button
+                                              onClick={() => {
+                                                setEditingSubStatusId(null);
+                                                setEditingSubStatusLabel('');
+                                              }}
+                                              className="px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-xs"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <button
+                                              onClick={() => {
+                                                setEditingSubStatusId(subStatus.id);
+                                                setEditingSubStatusLabel(subStatus.sub_status_label);
+                                              }}
+                                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                              title="Edit"
+                                            >
+                                              <Edit3 size={14} />
+                                            </button>
+                                            <button
+                                              onClick={() => deleteSubStatus(subStatus.id, subStatus.sub_status_label)}
+                                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                              title="Delete"
+                                            >
+                                              <Trash2 size={14} />
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500 italic">No sub-statuses added yet</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
