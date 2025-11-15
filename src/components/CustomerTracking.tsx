@@ -18,25 +18,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [trackingNumber, setTrackingNumber] = useState('');
   const [customerNotes, setCustomerNotes] = useState<any[]>([]);
 
-  React.useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#track-')) {
-      const ticketNumber = hash.replace('#track-', '');
-      if (ticketNumber) {
-        setSearchTerm(ticketNumber);
-        setTimeout(() => {
-          const form = document.querySelector('form');
-          if (form) {
-            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-          }
-        }, 100);
-      }
-    }
-  }, []);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
+  const performSearch = async (term: string) => {
+    if (!term.trim()) return;
 
     setLoading(true);
     setError('');
@@ -51,7 +34,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
           *,
           customer:customers(customer_number, name)
         `)
-        .ilike('ticket_number', `%${searchTerm}%`)
+        .ilike('ticket_number', `%${term}%`)
         .order('created_at', { ascending: false });
 
       if (ticketsError) {
@@ -66,8 +49,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         setLoading(false);
         return;
       }
-      
-      setTrackingNumber(searchTerm.toUpperCase());
+
+      setTrackingNumber(term.toUpperCase());
       setTickets(ticketsData || []);
 
       // Load customer-visible notes for the ticket
@@ -88,6 +71,22 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
     } finally {
       setLoading(false);
     }
+  };
+
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#track-')) {
+      const ticketNumber = hash.replace('#track-', '');
+      if (ticketNumber) {
+        setSearchTerm(ticketNumber);
+        performSearch(ticketNumber);
+      }
+    }
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performSearch(searchTerm);
   };
 
   const getStatusColor = (status: string) => {
