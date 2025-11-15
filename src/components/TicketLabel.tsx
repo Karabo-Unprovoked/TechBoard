@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { ArrowLeft, Download, Printer } from 'lucide-react';
 import QRCode from 'qrcode';
+import JsBarcode from 'jsbarcode';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import type { RepairTicket } from '../lib/supabase';
@@ -12,11 +13,12 @@ interface TicketLabelProps {
 
 export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
   const labelRef = useRef<HTMLDivElement>(null);
+  const barcodeRef = useRef<SVGSVGElement>(null);
 
   const generateQRCode = async (text: string) => {
     try {
       return await QRCode.toDataURL(text, {
-        width: 128,
+        width: 200,
         margin: 1,
         color: {
           dark: '#000000',
@@ -29,6 +31,28 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
     }
   };
 
+  const [qrCode, setQrCode] = React.useState('');
+
+  React.useEffect(() => {
+    const trackingUrl = `${window.location.origin}/#track-${ticket.ticket_number}`;
+    generateQRCode(trackingUrl).then(setQrCode);
+
+    if (barcodeRef.current && ticket.serial_number) {
+      try {
+        JsBarcode(barcodeRef.current, ticket.serial_number, {
+          format: 'CODE128',
+          width: 2,
+          height: 50,
+          displayValue: true,
+          fontSize: 12,
+          margin: 5
+        });
+      } catch (error) {
+        console.error('Error generating barcode:', error);
+      }
+    }
+  }, [ticket.ticket_number, ticket.serial_number]);
+
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow || !labelRef.current) return;
@@ -40,7 +64,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       <html>
         <head>
           <title>Print Label - ${ticket.ticket_number}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
             * {
               margin: 0;
@@ -64,100 +88,12 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               .label-container {
                 width: 102mm !important;
                 height: 152mm !important;
-                padding: 8mm !important;
-                font-family: 'Montserrat', Arial, sans-serif;
+                padding: 5mm !important;
+                font-family: 'Inter', Arial, sans-serif;
                 background: white;
                 display: flex;
                 flex-direction: column;
                 page-break-after: avoid;
-              }
-
-              .label-header {
-                text-align: center;
-                margin-bottom: 6mm;
-              }
-
-              .label-header img {
-                width: 20mm;
-                height: 20mm;
-                margin: 0 auto 3mm;
-                display: block;
-              }
-
-              .label-header h1 {
-                font-size: 18pt;
-                font-weight: 700;
-                color: #000;
-                margin-bottom: 1mm;
-              }
-
-              .label-header p {
-                font-size: 10pt;
-                color: #333;
-              }
-
-              .ticket-number {
-                text-align: center;
-                margin-bottom: 6mm;
-              }
-
-              .ticket-number-box {
-                font-size: 24pt;
-                font-weight: 700;
-                padding: 4mm 6mm;
-                border: 3px solid #000;
-                border-radius: 4mm;
-                background: #000;
-                color: #fff;
-                display: inline-block;
-              }
-
-              .qr-code {
-                text-align: center;
-                margin-bottom: 6mm;
-              }
-
-              .qr-code img {
-                width: 35mm;
-                height: 35mm;
-              }
-
-              .device-info {
-                font-size: 11pt;
-                line-height: 1.6;
-                margin-bottom: 6mm;
-              }
-
-              .device-info > div {
-                margin-bottom: 2mm;
-                word-wrap: break-word;
-              }
-
-              .device-info .label {
-                font-weight: 600;
-                color: #000;
-              }
-
-              .device-info .value {
-                color: #333;
-              }
-
-              .label-footer {
-                text-align: center;
-                font-size: 9pt;
-                color: #333;
-                margin-top: auto;
-                padding-top: 4mm;
-                border-top: 2px solid #000;
-              }
-
-              .label-footer p {
-                margin-bottom: 1mm;
-              }
-
-              .label-footer .website {
-                font-weight: 600;
-                font-size: 10pt;
               }
             }
 
@@ -172,9 +108,9 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                 height: 152mm;
                 margin: 0 auto;
                 background: white;
-                padding: 8mm;
+                padding: 5mm;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                font-family: 'Montserrat', Arial, sans-serif;
+                font-family: 'Inter', Arial, sans-serif;
                 display: flex;
                 flex-direction: column;
               }
@@ -214,25 +150,21 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [100, 150] // Label size
+        format: [102, 152]
       });
 
       const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 100, 150);
+      pdf.addImage(imgData, 'PNG', 0, 0, 102, 152);
       pdf.save(`${ticket.ticket_number}-label.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
   };
 
-  const [qrCode, setQrCode] = React.useState('');
-
-  React.useEffect(() => {
-    generateQRCode(ticket.ticket_number).then(setQrCode);
-  }, [ticket.ticket_number]);
-
   const PRIMARY = '#ffb400';
-  const SECONDARY = '#5d5d5d';
+  const customerName = ticket.customer
+    ? `${ticket.customer.first_name || ''} ${ticket.customer.last_name || ticket.customer.name || ''}`.trim()
+    : 'Customer';
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -245,7 +177,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
           <ArrowLeft size={16} />
           <span>Back to Tickets</span>
         </button>
-        
+
         <div className="flex items-center gap-3">
           <button
             onClick={handleDownload}
@@ -274,91 +206,139 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             style={{
               width: '102mm',
               height: '152mm',
-              padding: '8mm',
-              fontFamily: 'Montserrat, sans-serif',
+              padding: '5mm',
+              fontFamily: 'Inter, Arial, sans-serif',
               background: 'white'
             }}
           >
-            {/* Header */}
-            <div className="label-header" style={{ textAlign: 'center', marginBottom: '6mm' }}>
-              <img
-                src="/Logo.png"
-                alt="Guardian Assist Logo"
-                style={{ width: '20mm', height: '20mm', margin: '0 auto 3mm', display: 'block' }}
-              />
-              <h1 style={{ fontSize: '18pt', fontWeight: 700, color: '#000', marginBottom: '1mm' }}>
-                Guardian Assist
-              </h1>
-              <p style={{ fontSize: '10pt', color: '#333' }}>Computer Repair Service</p>
-            </div>
-
-            {/* Ticket Number */}
-            <div className="ticket-number" style={{ textAlign: 'center', marginBottom: '6mm' }}>
-              <div
-                className="ticket-number-box"
-                style={{
-                  fontSize: '24pt',
-                  fontWeight: 700,
-                  padding: '4mm 6mm',
-                  border: '3px solid #000',
-                  borderRadius: '4mm',
-                  background: '#000',
-                  color: '#fff',
-                  display: 'inline-block'
-                }}
-              >
-                {ticket.ticket_number}
+            {/* Header Section with Logo and Ticket Number */}
+            <div style={{
+              background: '#2c3e50',
+              padding: '3mm',
+              borderRadius: '2mm',
+              marginBottom: '3mm',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{
+                width: '15mm',
+                height: '15mm',
+                background: 'white',
+                borderRadius: '2mm',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+              }}>
+                <img
+                  src="/Logo.png"
+                  alt="Logo"
+                  style={{ width: '13mm', height: '13mm', objectFit: 'contain' }}
+                />
+              </div>
+              <div style={{ textAlign: 'right', color: 'white' }}>
+                <div style={{ fontSize: '20pt', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  {ticket.ticket_number}
+                </div>
+                <div style={{ fontSize: '8pt', marginTop: '1mm', opacity: 0.9 }}>
+                  {new Date(ticket.created_at).toLocaleDateString('en-GB')}
+                </div>
               </div>
             </div>
 
-            {/* QR Code */}
-            {qrCode && (
-              <div className="qr-code" style={{ textAlign: 'center', marginBottom: '6mm' }}>
-                <img src={qrCode} alt="QR Code" style={{ width: '35mm', height: '35mm' }} />
+            {/* Device Information */}
+            <div style={{
+              background: '#34495e',
+              padding: '3mm',
+              borderRadius: '2mm',
+              marginBottom: '3mm',
+              textAlign: 'center'
+            }}>
+              <div style={{ color: 'white', fontSize: '14pt', fontWeight: 600 }}>
+                {ticket.brand ? `${ticket.brand} ${ticket.model || ''}` : ticket.device_type}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10pt', marginTop: '1mm' }}>
+                {ticket.issue_description || 'Screen Repair'}
+              </div>
+            </div>
+
+            {/* Customer Information Box */}
+            <div style={{
+              border: '2px solid #34495e',
+              borderRadius: '2mm',
+              padding: '3mm',
+              marginBottom: '3mm',
+              background: '#ecf0f1'
+            }}>
+              <div style={{ fontSize: '14pt', fontWeight: 600, color: '#2c3e50', marginBottom: '1mm' }}>
+                {customerName}
+              </div>
+              <div style={{ fontSize: '11pt', color: '#34495e' }}>
+                {ticket.customer?.customer_number || 'N/A'}
+              </div>
+            </div>
+
+            {/* Barcode Section */}
+            {ticket.serial_number && (
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '3mm',
+                padding: '2mm',
+                background: 'white',
+                borderRadius: '2mm'
+              }}>
+                <svg ref={barcodeRef}></svg>
               </div>
             )}
 
-            {/* Device Info */}
-            <div className="device-info" style={{ fontSize: '11pt', lineHeight: 1.6, marginBottom: '6mm' }}>
-              <div style={{ marginBottom: '2mm' }}>
-                <span className="label" style={{ fontWeight: 600, color: '#000' }}>Device:</span>
-                <span className="value" style={{ color: '#333', marginLeft: '4mm' }}>{ticket.device_type}</span>
-              </div>
-              {(ticket.brand || ticket.model) && (
-                <div style={{ marginBottom: '2mm' }}>
-                  <span className="label" style={{ fontWeight: 600, color: '#000' }}>Model:</span>
-                  <span className="value" style={{ color: '#333', marginLeft: '4mm' }}>{[ticket.brand, ticket.model].filter(Boolean).join(' ')}</span>
-                </div>
-              )}
-              {ticket.serial_number && (
-                <div style={{ marginBottom: '2mm' }}>
-                  <span className="label" style={{ fontWeight: 600, color: '#000' }}>Serial:</span>
-                  <span className="value" style={{ color: '#333', marginLeft: '4mm', fontSize: '9pt' }}>{ticket.serial_number}</span>
-                </div>
-              )}
-              <div style={{ marginBottom: '2mm' }}>
-                <span className="label" style={{ fontWeight: 600, color: '#000' }}>Status:</span>
-                <span className="value" style={{ color: '#333', marginLeft: '4mm', textTransform: 'capitalize' }}>{ticket.status.replace('-', ' ')}</span>
-              </div>
-              <div style={{ marginBottom: '2mm' }}>
-                <span className="label" style={{ fontWeight: 600, color: '#000' }}>Date:</span>
-                <span className="value" style={{ color: '#333', marginLeft: '4mm' }}>{new Date(ticket.created_at).toLocaleDateString()}</span>
-              </div>
-              {ticket.device_accessories && ticket.device_accessories.length > 0 && (
-                <div style={{ marginBottom: '2mm' }}>
-                  <span className="label" style={{ fontWeight: 600, color: '#000' }}>Includes:</span>
-                  <div style={{ color: '#333', marginLeft: '4mm', fontSize: '9pt', marginTop: '1mm' }}>
-                    {ticket.device_accessories.join(', ')}
+            {/* QR Code Section */}
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column'
+            }}>
+              {qrCode && (
+                <>
+                  <img
+                    src={qrCode}
+                    alt="QR Code"
+                    style={{
+                      width: '45mm',
+                      height: '45mm',
+                      border: '3px solid #2c3e50',
+                      borderRadius: '2mm',
+                      padding: '2mm',
+                      background: 'white'
+                    }}
+                  />
+                  <div style={{
+                    marginTop: '2mm',
+                    fontSize: '9pt',
+                    color: '#34495e',
+                    textAlign: 'center',
+                    fontWeight: 500
+                  }}>
+                    Scan to track repair status
                   </div>
-                </div>
+                </>
               )}
             </div>
 
             {/* Footer */}
-            <div className="label-footer" style={{ textAlign: 'center', fontSize: '9pt', color: '#333', marginTop: 'auto', paddingTop: '4mm', borderTop: '2px solid #000' }}>
-              <p style={{ marginBottom: '1mm' }}>Track your repair at</p>
-              <p className="website" style={{ fontWeight: 600, fontSize: '10pt', marginBottom: '1mm' }}>guardianassist.co.za</p>
-              <p>+27 86 120 3203</p>
+            <div style={{
+              textAlign: 'center',
+              paddingTop: '3mm',
+              borderTop: '2px solid #2c3e50',
+              fontSize: '9pt',
+              color: '#34495e'
+            }}>
+              <div style={{ fontWeight: 600, fontSize: '10pt', marginBottom: '1mm' }}>
+                guardianassist.co.za
+              </div>
+              <div>+27 86 120 3203</div>
             </div>
           </div>
         </div>
