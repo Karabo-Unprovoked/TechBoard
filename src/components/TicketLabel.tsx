@@ -32,7 +32,9 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
   const [qrCode, setQrCode] = React.useState('');
 
   React.useEffect(() => {
-    generateQRCode(ticket.ticket_number).then(setQrCode);
+    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    const trackingUrl = `${appUrl}/#track-${ticket.ticket_number}`;
+    generateQRCode(trackingUrl).then(setQrCode);
   }, [ticket.ticket_number]);
 
   const handlePrint = () => {
