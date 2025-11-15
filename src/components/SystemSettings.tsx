@@ -761,17 +761,17 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                        activeTab === tab.id 
-                          ? 'text-white' 
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${
+                        activeTab === tab.id
+                          ? 'text-white'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
-                      style={{ 
+                      style={{
                         backgroundColor: activeTab === tab.id ? PRIMARY : 'transparent'
                       }}
                     >
-                      <Icon size={18} />
-                      <span>{tab.label}</span>
+                      <Icon size={18} className="flex-shrink-0" />
+                      <span className="flex-1">{tab.label}</span>
                     </button>
                   );
                 })}
