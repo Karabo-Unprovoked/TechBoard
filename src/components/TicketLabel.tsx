@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { ArrowLeft, Download, Printer } from 'lucide-react';
 import QRCode from 'qrcode';
-import JsBarcode from 'jsbarcode';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import type { RepairTicket } from '../lib/supabase';
@@ -13,7 +12,6 @@ interface TicketLabelProps {
 
 export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
   const labelRef = useRef<HTMLDivElement>(null);
-  const barcodeRef = useRef<SVGSVGElement>(null);
 
   const generateQRCode = async (text: string) => {
     try {
@@ -36,22 +34,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
   React.useEffect(() => {
     const trackingUrl = `${window.location.origin}/#track-${ticket.ticket_number}`;
     generateQRCode(trackingUrl).then(setQrCode);
-
-    if (barcodeRef.current && ticket.serial_number) {
-      try {
-        JsBarcode(barcodeRef.current, ticket.serial_number, {
-          format: 'CODE128',
-          width: 2,
-          height: 50,
-          displayValue: true,
-          fontSize: 12,
-          margin: 5
-        });
-      } catch (error) {
-        console.error('Error generating barcode:', error);
-      }
-    }
-  }, [ticket.ticket_number, ticket.serial_number]);
+  }, [ticket.ticket_number]);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -247,50 +230,21 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               </div>
             </div>
 
-            {/* Device Information */}
-            <div style={{
-              background: '#34495e',
-              padding: '3mm',
-              borderRadius: '2mm',
-              marginBottom: '3mm',
-              textAlign: 'center'
-            }}>
-              <div style={{ color: 'white', fontSize: '14pt', fontWeight: 600 }}>
-                {ticket.brand ? `${ticket.brand} ${ticket.model || ''}` : ticket.device_type}
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10pt', marginTop: '1mm' }}>
-                {ticket.issue_description || 'Screen Repair'}
-              </div>
-            </div>
-
             {/* Customer Information Box */}
             <div style={{
               border: '2px solid #34495e',
               borderRadius: '2mm',
-              padding: '3mm',
-              marginBottom: '3mm',
+              padding: '5mm',
+              marginBottom: '5mm',
               background: '#ecf0f1'
             }}>
-              <div style={{ fontSize: '14pt', fontWeight: 600, color: '#2c3e50', marginBottom: '1mm' }}>
+              <div style={{ fontSize: '16pt', fontWeight: 600, color: '#2c3e50', marginBottom: '2mm' }}>
                 {customerName}
               </div>
-              <div style={{ fontSize: '11pt', color: '#34495e' }}>
+              <div style={{ fontSize: '12pt', color: '#34495e' }}>
                 {ticket.customer?.customer_number || 'N/A'}
               </div>
             </div>
-
-            {/* Barcode Section */}
-            {ticket.serial_number && (
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '3mm',
-                padding: '2mm',
-                background: 'white',
-                borderRadius: '2mm'
-              }}>
-                <svg ref={barcodeRef}></svg>
-              </div>
-            )}
 
             {/* QR Code Section */}
             <div style={{
@@ -298,7 +252,8 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              marginBottom: '5mm'
             }}>
               {qrCode && (
                 <>
@@ -306,20 +261,20 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                     src={qrCode}
                     alt="QR Code"
                     style={{
-                      width: '45mm',
-                      height: '45mm',
+                      width: '55mm',
+                      height: '55mm',
                       border: '3px solid #2c3e50',
                       borderRadius: '2mm',
-                      padding: '2mm',
+                      padding: '3mm',
                       background: 'white'
                     }}
                   />
                   <div style={{
-                    marginTop: '2mm',
-                    fontSize: '9pt',
+                    marginTop: '3mm',
+                    fontSize: '10pt',
                     color: '#34495e',
                     textAlign: 'center',
-                    fontWeight: 500
+                    fontWeight: 600
                   }}>
                     Scan to track repair status
                   </div>
