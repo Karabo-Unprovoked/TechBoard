@@ -16,7 +16,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
   const generateQRCode = async (text: string) => {
     try {
       return await QRCode.toDataURL(text, {
-        width: 200,
+        width: 400,
         margin: 1,
         color: {
           dark: '#000000',
@@ -47,7 +47,6 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       <html>
         <head>
           <title>Print Label - ${ticket.ticket_number}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
             * {
               margin: 0;
@@ -71,8 +70,8 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               .label-container {
                 width: 51mm !important;
                 height: 102mm !important;
-                padding: 3mm !important;
-                font-family: 'Inter', Arial, sans-serif;
+                padding: 4mm !important;
+                font-family: Arial, sans-serif;
                 background: white;
                 display: flex;
                 flex-direction: column;
@@ -91,9 +90,9 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                 height: 102mm;
                 margin: 0 auto;
                 background: white;
-                padding: 3mm;
+                padding: 4mm;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                font-family: 'Inter', Arial, sans-serif;
+                font-family: Arial, sans-serif;
                 display: flex;
                 flex-direction: column;
               }
@@ -126,7 +125,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
 
     try {
       const canvas = await html2canvas(labelRef.current, {
-        scale: 2,
+        scale: 3,
         backgroundColor: '#ffffff'
       });
 
@@ -187,55 +186,52 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             style={{
               width: '51mm',
               height: '102mm',
-              padding: '3mm',
-              fontFamily: 'Inter, Arial, sans-serif',
+              padding: '4mm',
+              fontFamily: 'Arial, sans-serif',
               background: 'white'
             }}
           >
             <div style={{
               textAlign: 'center',
-              paddingBottom: '2mm',
+              marginBottom: '3mm'
+            }}>
+              <div style={{
+                width: '20mm',
+                height: '20mm',
+                background: '#000',
+                borderRadius: '50%',
+                margin: '0 auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+              }}>
+                <img
+                  src="/FinalWhite.png"
+                  alt="Logo"
+                  style={{
+                    width: '16mm',
+                    height: '16mm',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{
+              borderTop: '2px solid #000',
               borderBottom: '2px solid #000',
+              padding: '2mm 0',
               marginBottom: '3mm'
             }}>
-              <img
-                src="/Logo.png"
-                alt="Logo"
-                style={{
-                  width: '30mm',
-                  height: 'auto',
-                  maxHeight: '12mm',
-                  objectFit: 'contain',
-                  margin: '0 auto',
-                  display: 'block'
-                }}
-              />
-            </div>
-
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '3mm'
-            }}>
-              <div style={{ fontSize: '14pt', fontWeight: 700, color: '#000', letterSpacing: '0.5px' }}>
+              <div style={{
+                fontSize: '16pt',
+                fontWeight: 900,
+                color: '#000',
+                textAlign: 'center',
+                letterSpacing: '-0.5px'
+              }}>
                 {ticket.ticket_number}
-              </div>
-              <div style={{ fontSize: '7pt', marginTop: '1mm', color: '#000' }}>
-                {new Date(ticket.created_at).toLocaleDateString('en-GB')}
-              </div>
-            </div>
-
-            <div style={{
-              border: '2px solid #000',
-              borderRadius: '1mm',
-              padding: '2mm',
-              marginBottom: '3mm',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '10pt', fontWeight: 600, color: '#000', marginBottom: '1mm' }}>
-                {customerName}
-              </div>
-              <div style={{ fontSize: '9pt', color: '#000' }}>
-                {ticket.customer?.customer_number || 'N/A'}
               </div>
             </div>
 
@@ -244,47 +240,42 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              flexDirection: 'column'
+              marginBottom: '3mm'
             }}>
               {qrCode && (
-                <>
-                  <img
-                    src={qrCode}
-                    alt="QR Code"
-                    style={{
-                      width: '35mm',
-                      height: '35mm',
-                      border: '2px solid #000',
-                      borderRadius: '1mm',
-                      padding: '1mm',
-                      background: 'white'
-                    }}
-                  />
-                  <div style={{
-                    marginTop: '2mm',
-                    fontSize: '7pt',
-                    color: '#000',
-                    textAlign: 'center',
-                    fontWeight: 600
-                  }}>
-                    Scan to track repair
-                  </div>
-                </>
+                <img
+                  src={qrCode}
+                  alt="QR Code"
+                  style={{
+                    width: '38mm',
+                    height: '38mm',
+                    display: 'block'
+                  }}
+                />
               )}
             </div>
 
             <div style={{
-              textAlign: 'center',
-              paddingTop: '2mm',
               borderTop: '2px solid #000',
-              fontSize: '7pt',
-              color: '#000',
-              marginTop: '2mm'
+              borderBottom: '2px solid #000',
+              padding: '2mm 0',
+              textAlign: 'center'
             }}>
-              <div style={{ fontWeight: 600, marginBottom: '0.5mm' }}>
-                guardianassist.co.za
+              <div style={{
+                fontSize: '14pt',
+                fontWeight: 900,
+                color: '#000',
+                marginBottom: '0.5mm'
+              }}>
+                {customerName}
               </div>
-              <div>+27 86 120 3203</div>
+              <div style={{
+                fontSize: '11pt',
+                fontWeight: 400,
+                color: '#000'
+              }}>
+                {ticket.customer?.customer_number || 'N/A'}
+              </div>
             </div>
           </div>
         </div>
