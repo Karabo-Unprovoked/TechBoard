@@ -17,7 +17,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
     try {
       return await QRCode.toDataURL(text, {
         width: 400,
-        margin: 1,
+        margin: 0,
         color: {
           dark: '#000000',
           light: '#FFFFFF'
@@ -47,11 +47,15 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       <html>
         <head>
           <title>Print Label - ${ticket.ticket_number}</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
           <style>
             * {
               margin: 0;
               padding: 0;
               box-sizing: border-box;
+              font-family: 'Poppins', sans-serif;
             }
 
             @page {
@@ -70,8 +74,8 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               .label-container {
                 width: 51mm !important;
                 height: 102mm !important;
-                padding: 4mm !important;
-                font-family: Arial, sans-serif;
+                padding: 0 !important;
+                font-family: 'Poppins', sans-serif;
                 background: white;
                 display: flex;
                 flex-direction: column;
@@ -90,9 +94,9 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                 height: 102mm;
                 margin: 0 auto;
                 background: white;
-                padding: 4mm;
+                padding: 0;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                font-family: Arial, sans-serif;
+                font-family: 'Poppins', sans-serif;
                 display: flex;
                 flex-direction: column;
               }
@@ -186,50 +190,53 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             style={{
               width: '51mm',
               height: '102mm',
-              padding: '4mm',
-              fontFamily: 'Arial, sans-serif',
-              background: 'white'
+              padding: '0',
+              fontFamily: 'Poppins, sans-serif',
+              background: 'white',
+              position: 'relative'
             }}
           >
             <div style={{
               textAlign: 'center',
-              marginBottom: '3mm'
+              paddingTop: '5mm',
+              paddingBottom: '4mm'
             }}>
               <div style={{
-                width: '20mm',
-                height: '20mm',
-                background: '#000',
-                borderRadius: '50%',
+                width: '22mm',
+                height: '22mm',
                 margin: '0 auto',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
+                justifyContent: 'center'
               }}>
                 <img
-                  src="/FinalWhite.png"
+                  src="/ticket logo.png"
                   alt="Logo"
                   style={{
-                    width: '16mm',
-                    height: '16mm',
-                    objectFit: 'contain'
+                    width: '22mm',
+                    height: '22mm',
+                    objectFit: 'contain',
+                    display: 'block'
                   }}
                 />
               </div>
             </div>
 
             <div style={{
-              borderTop: '2px solid #000',
-              borderBottom: '2px solid #000',
-              padding: '2mm 0',
-              marginBottom: '3mm'
+              borderTop: '1.5px solid #000',
+              borderBottom: '1.5px solid #000',
+              padding: '2.5mm 0',
+              marginLeft: '4mm',
+              marginRight: '4mm',
+              marginBottom: '4mm'
             }}>
               <div style={{
-                fontSize: '16pt',
+                fontSize: '18pt',
                 fontWeight: 900,
                 color: '#000',
                 textAlign: 'center',
-                letterSpacing: '-0.5px'
+                letterSpacing: '-0.3px',
+                lineHeight: 1
               }}>
                 {ticket.ticket_number}
               </div>
@@ -240,15 +247,15 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: '3mm'
+              paddingBottom: '4mm'
             }}>
               {qrCode && (
                 <img
                   src={qrCode}
                   alt="QR Code"
                   style={{
-                    width: '38mm',
-                    height: '38mm',
+                    width: '40mm',
+                    height: '40mm',
                     display: 'block'
                   }}
                 />
@@ -256,23 +263,28 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             </div>
 
             <div style={{
-              borderTop: '2px solid #000',
-              borderBottom: '2px solid #000',
-              padding: '2mm 0',
+              borderTop: '1.5px solid #000',
+              borderBottom: '1.5px solid #000',
+              padding: '2.5mm 0',
+              marginLeft: '4mm',
+              marginRight: '4mm',
+              marginBottom: '5mm',
               textAlign: 'center'
             }}>
               <div style={{
-                fontSize: '14pt',
+                fontSize: '16pt',
                 fontWeight: 900,
                 color: '#000',
-                marginBottom: '0.5mm'
+                marginBottom: '0.5mm',
+                lineHeight: 1.1
               }}>
                 {customerName}
               </div>
               <div style={{
-                fontSize: '11pt',
+                fontSize: '12pt',
                 fontWeight: 400,
-                color: '#000'
+                color: '#000',
+                lineHeight: 1.1
               }}>
                 {ticket.customer?.customer_number || 'N/A'}
               </div>
