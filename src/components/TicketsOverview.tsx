@@ -7,10 +7,13 @@ interface TicketsOverviewProps {
 }
 
 const statusConfig = {
-  pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-  'in-progress': { color: 'bg-blue-100 text-blue-800', icon: Wrench },
+  'in-transit': { color: 'bg-indigo-100 text-indigo-800', icon: Clock },
+  received: { color: 'bg-blue-100 text-blue-800', icon: Clock },
+  'in-progress': { color: 'bg-yellow-100 text-yellow-800', icon: Wrench },
+  invoiced: { color: 'bg-teal-100 text-teal-800', icon: CheckCircle },
   completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-  'waiting-parts': { color: 'bg-orange-100 text-orange-800', icon: AlertTriangle }
+  unrepairable: { color: 'bg-red-100 text-red-800', icon: AlertTriangle },
+  'pending-customer-action': { color: 'bg-purple-100 text-purple-800', icon: AlertTriangle }
 };
 
 const priorityConfig = {
@@ -31,15 +34,16 @@ export const TicketsOverview: React.FC<TicketsOverviewProps> = ({ tickets }) => 
       
       <div className="space-y-4">
         {tickets.slice(0, 5).map((ticket) => {
-          const StatusIcon = statusConfig[ticket.status].icon;
-          
+          const statusInfo = statusConfig[ticket.status] || { color: 'bg-gray-100 text-gray-800', icon: Clock };
+          const StatusIcon = statusInfo.icon;
+
           return (
             <div key={ticket.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-medium text-gray-900">{ticket.id}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig[ticket.status].color}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
                       <StatusIcon size={12} className="inline mr-1" />
                       {ticket.status.replace('-', ' ')}
                     </span>
