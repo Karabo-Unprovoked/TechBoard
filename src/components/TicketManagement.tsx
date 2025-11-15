@@ -399,22 +399,6 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   </div>
                 )}
 
-                {/* Pending Customer Action Type */}
-                {editData.status === 'pending-customer-action' && isEditing && (
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Action Type</label>
-                    <select
-                      value={editData.pending_customer_action_type}
-                      onChange={(e) => setEditData({ ...editData, pending_customer_action_type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                      style={{ focusRingColor: PRIMARY }}
-                    >
-                      <option value="">Select...</option>
-                      <option value="collect">Collect</option>
-                      <option value="call-us-back">Call Us Back</option>
-                    </select>
-                  </div>
-                )}
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Priority</label>
