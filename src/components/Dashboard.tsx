@@ -540,7 +540,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                         <select
                                           value={ticket.internal_status || ''}
                                           onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
-                                          className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                          className="px-2 py-1 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
                                         >
                                           <option value="">—</option>
                                           {currentStatus.sub_statuses.map((subStatus) => (
