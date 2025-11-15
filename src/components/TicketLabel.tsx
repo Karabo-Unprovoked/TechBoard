@@ -56,7 +56,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             }
 
             @page {
-              size: 102mm 152mm;
+              size: 51mm 102mm;
               margin: 0;
             }
 
@@ -64,14 +64,14 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               body {
                 margin: 0;
                 padding: 0;
-                width: 102mm;
-                height: 152mm;
+                width: 51mm;
+                height: 102mm;
               }
 
               .label-container {
-                width: 102mm !important;
-                height: 152mm !important;
-                padding: 5mm !important;
+                width: 51mm !important;
+                height: 102mm !important;
+                padding: 3mm !important;
                 font-family: 'Inter', Arial, sans-serif;
                 background: white;
                 display: flex;
@@ -87,11 +87,11 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               }
 
               .label-container {
-                width: 102mm;
-                height: 152mm;
+                width: 51mm;
+                height: 102mm;
                 margin: 0 auto;
                 background: white;
-                padding: 5mm;
+                padding: 3mm;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                 font-family: 'Inter', Arial, sans-serif;
                 display: flex;
@@ -133,11 +133,11 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [102, 152]
+        format: [51, 102]
       });
 
       const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 102, 152);
+      pdf.addImage(imgData, 'PNG', 0, 0, 51, 102);
       pdf.save(`${ticket.ticket_number}-label.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -151,7 +151,6 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <button
           onClick={onBack}
@@ -180,80 +179,72 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
         </div>
       </div>
 
-      {/* Label Preview */}
       <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-        <div className="mx-auto" style={{ width: '102mm', height: '152mm', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <div className="mx-auto" style={{ width: '51mm', height: '102mm', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <div
             ref={labelRef}
             className="flex flex-col"
             style={{
-              width: '102mm',
-              height: '152mm',
-              padding: '5mm',
+              width: '51mm',
+              height: '102mm',
+              padding: '3mm',
               fontFamily: 'Inter, Arial, sans-serif',
               background: 'white'
             }}
           >
-            {/* Header Section with Logo and Ticket Number */}
             <div style={{
-              background: '#2c3e50',
-              padding: '3mm',
-              borderRadius: '2mm',
-              marginBottom: '3mm',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
+              textAlign: 'center',
+              paddingBottom: '2mm',
+              borderBottom: '2px solid #000',
+              marginBottom: '3mm'
             }}>
-              <div style={{
-                width: '15mm',
-                height: '15mm',
-                background: 'white',
-                borderRadius: '2mm',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}>
-                <img
-                  src="/Logo.png"
-                  alt="Logo"
-                  style={{ width: '13mm', height: '13mm', objectFit: 'contain' }}
-                />
+              <img
+                src="/Logo.png"
+                alt="Logo"
+                style={{
+                  width: '30mm',
+                  height: 'auto',
+                  maxHeight: '12mm',
+                  objectFit: 'contain',
+                  margin: '0 auto',
+                  display: 'block'
+                }}
+              />
+            </div>
+
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '3mm'
+            }}>
+              <div style={{ fontSize: '14pt', fontWeight: 700, color: '#000', letterSpacing: '0.5px' }}>
+                {ticket.ticket_number}
               </div>
-              <div style={{ textAlign: 'right', color: 'white' }}>
-                <div style={{ fontSize: '20pt', fontWeight: 700, letterSpacing: '0.5px' }}>
-                  {ticket.ticket_number}
-                </div>
-                <div style={{ fontSize: '8pt', marginTop: '1mm', opacity: 0.9 }}>
-                  {new Date(ticket.created_at).toLocaleDateString('en-GB')}
-                </div>
+              <div style={{ fontSize: '7pt', marginTop: '1mm', color: '#000' }}>
+                {new Date(ticket.created_at).toLocaleDateString('en-GB')}
               </div>
             </div>
 
-            {/* Customer Information Box */}
             <div style={{
-              border: '2px solid #34495e',
-              borderRadius: '2mm',
-              padding: '5mm',
-              marginBottom: '5mm',
-              background: '#ecf0f1'
+              border: '2px solid #000',
+              borderRadius: '1mm',
+              padding: '2mm',
+              marginBottom: '3mm',
+              textAlign: 'center'
             }}>
-              <div style={{ fontSize: '16pt', fontWeight: 600, color: '#2c3e50', marginBottom: '2mm' }}>
+              <div style={{ fontSize: '10pt', fontWeight: 600, color: '#000', marginBottom: '1mm' }}>
                 {customerName}
               </div>
-              <div style={{ fontSize: '12pt', color: '#34495e' }}>
+              <div style={{ fontSize: '9pt', color: '#000' }}>
                 {ticket.customer?.customer_number || 'N/A'}
               </div>
             </div>
 
-            {/* QR Code Section */}
             <div style={{
               flex: 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              flexDirection: 'column',
-              marginBottom: '5mm'
+              flexDirection: 'column'
             }}>
               {qrCode && (
                 <>
@@ -261,36 +252,36 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                     src={qrCode}
                     alt="QR Code"
                     style={{
-                      width: '55mm',
-                      height: '55mm',
-                      border: '3px solid #2c3e50',
-                      borderRadius: '2mm',
-                      padding: '3mm',
+                      width: '35mm',
+                      height: '35mm',
+                      border: '2px solid #000',
+                      borderRadius: '1mm',
+                      padding: '1mm',
                       background: 'white'
                     }}
                   />
                   <div style={{
-                    marginTop: '3mm',
-                    fontSize: '10pt',
-                    color: '#34495e',
+                    marginTop: '2mm',
+                    fontSize: '7pt',
+                    color: '#000',
                     textAlign: 'center',
                     fontWeight: 600
                   }}>
-                    Scan to track repair status
+                    Scan to track repair
                   </div>
                 </>
               )}
             </div>
 
-            {/* Footer */}
             <div style={{
               textAlign: 'center',
-              paddingTop: '3mm',
-              borderTop: '2px solid #2c3e50',
-              fontSize: '9pt',
-              color: '#34495e'
+              paddingTop: '2mm',
+              borderTop: '2px solid #000',
+              fontSize: '7pt',
+              color: '#000',
+              marginTop: '2mm'
             }}>
-              <div style={{ fontWeight: 600, fontSize: '10pt', marginBottom: '1mm' }}>
+              <div style={{ fontWeight: 600, marginBottom: '0.5mm' }}>
                 guardianassist.co.za
               </div>
               <div>+27 86 120 3203</div>
@@ -299,14 +290,12 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
         </div>
       </div>
 
-      {/* Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-medium text-blue-900 mb-2">Brother TD-4100N Printing Instructions</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Label size: 4" x 6" (102mm x 152mm)</li>
-          <li>• Ensure printer is set to "Continuous Length" mode</li>
-          <li>• Select "Brother TD-4100N" as your printer</li>
-          <li>• Paper size should be set to 102mm x 152mm</li>
+          <li>• Label size: 2" x 4" (51mm x 102mm)</li>
+          <li>• Black and white thermal print optimized</li>
+          <li>• Ensure printer is set to correct paper size</li>
           <li>• Print using "Actual Size" (no scaling)</li>
           <li>• Attach label securely to device with QR code visible</li>
         </ul>
