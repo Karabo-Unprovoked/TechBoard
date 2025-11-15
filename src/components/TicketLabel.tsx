@@ -59,7 +59,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             }
 
             @page {
-              size: 51mm 102mm;
+              size: 102mm 102mm;
               margin: 0;
             }
 
@@ -67,12 +67,12 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               body {
                 margin: 0;
                 padding: 0;
-                width: 51mm;
+                width: 102mm;
                 height: 102mm;
               }
 
               .label-container {
-                width: 51mm !important;
+                width: 102mm !important;
                 height: 102mm !important;
                 padding: 0 !important;
                 font-family: 'Poppins', sans-serif;
@@ -90,7 +90,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               }
 
               .label-container {
-                width: 51mm;
+                width: 102mm;
                 height: 102mm;
                 margin: 0 auto;
                 background: white;
@@ -136,11 +136,11 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [51, 102]
+        format: [102, 102]
       });
 
       const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 51, 102);
+      pdf.addImage(imgData, 'PNG', 0, 0, 102, 102);
       pdf.save(`${ticket.ticket_number}-label.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -183,12 +183,12 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       </div>
 
       <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-        <div className="mx-auto" style={{ width: '51mm', height: '102mm', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <div className="mx-auto" style={{ width: '102mm', height: '102mm', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <div
             ref={labelRef}
             className="flex flex-col"
             style={{
-              width: '51mm',
+              width: '102mm',
               height: '102mm',
               padding: '0',
               fontFamily: 'Poppins, sans-serif',
@@ -198,12 +198,12 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
           >
             <div style={{
               textAlign: 'center',
-              paddingTop: '5mm',
-              paddingBottom: '4mm'
+              paddingTop: '8mm',
+              paddingBottom: '6mm'
             }}>
               <div style={{
-                width: '22mm',
-                height: '22mm',
+                width: '28mm',
+                height: '28mm',
                 margin: '0 auto',
                 display: 'flex',
                 alignItems: 'center',
@@ -213,8 +213,8 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                   src="/ticket logo.png"
                   alt="Logo"
                   style={{
-                    width: '22mm',
-                    height: '22mm',
+                    width: '28mm',
+                    height: '28mm',
                     objectFit: 'contain',
                     display: 'block'
                   }}
@@ -225,13 +225,13 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             <div style={{
               borderTop: '1.5px solid #000',
               borderBottom: '1.5px solid #000',
-              padding: '2.5mm 0',
-              marginLeft: '4mm',
-              marginRight: '4mm',
-              marginBottom: '4mm'
+              padding: '2mm 0',
+              marginLeft: '8mm',
+              marginRight: '8mm',
+              marginBottom: '6mm'
             }}>
               <div style={{
-                fontSize: '18pt',
+                fontSize: '14pt',
                 fontWeight: 900,
                 color: '#000',
                 textAlign: 'center',
@@ -247,15 +247,15 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: '4mm'
+              paddingBottom: '6mm'
             }}>
               {qrCode && (
                 <img
                   src={qrCode}
                   alt="QR Code"
                   style={{
-                    width: '40mm',
-                    height: '40mm',
+                    width: '35mm',
+                    height: '35mm',
                     display: 'block'
                   }}
                 />
@@ -266,13 +266,13 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               borderTop: '1.5px solid #000',
               borderBottom: '1.5px solid #000',
               padding: '2.5mm 0',
-              marginLeft: '4mm',
-              marginRight: '4mm',
-              marginBottom: '5mm',
+              marginLeft: '8mm',
+              marginRight: '8mm',
+              marginBottom: '8mm',
               textAlign: 'center'
             }}>
               <div style={{
-                fontSize: '16pt',
+                fontSize: '15pt',
                 fontWeight: 900,
                 color: '#000',
                 marginBottom: '0.5mm',
@@ -281,7 +281,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                 {customerName}
               </div>
               <div style={{
-                fontSize: '12pt',
+                fontSize: '11pt',
                 fontWeight: 400,
                 color: '#000',
                 lineHeight: 1.1
@@ -296,7 +296,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-medium text-blue-900 mb-2">Brother TD-4100N Printing Instructions</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Label size: 2" x 4" (51mm x 102mm)</li>
+          <li>• Label size: 4" x 4" (102mm x 102mm)</li>
           <li>• Black and white thermal print optimized</li>
           <li>• Ensure printer is set to correct paper size</li>
           <li>• Print using "Actual Size" (no scaling)</li>
