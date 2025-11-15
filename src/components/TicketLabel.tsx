@@ -198,12 +198,12 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
           >
             <div style={{
               textAlign: 'center',
-              paddingTop: '8mm',
-              paddingBottom: '6mm'
+              paddingTop: '6mm',
+              paddingBottom: '4mm'
             }}>
               <div style={{
-                width: '28mm',
-                height: '28mm',
+                width: '22mm',
+                height: '22mm',
                 margin: '0 auto',
                 display: 'flex',
                 alignItems: 'center',
@@ -213,8 +213,8 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                   src="/ticket logo.png"
                   alt="Logo"
                   style={{
-                    width: '28mm',
-                    height: '28mm',
+                    width: '22mm',
+                    height: '22mm',
                     objectFit: 'contain',
                     display: 'block'
                   }}
@@ -225,13 +225,13 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             <div style={{
               borderTop: '1.5px solid #000',
               borderBottom: '1.5px solid #000',
-              padding: '2mm 0',
-              marginLeft: '8mm',
-              marginRight: '8mm',
-              marginBottom: '6mm'
+              padding: '1.5mm 0',
+              marginLeft: '6mm',
+              marginRight: '6mm',
+              marginBottom: '4mm'
             }}>
               <div style={{
-                fontSize: '14pt',
+                fontSize: '12pt',
                 fontWeight: 900,
                 color: '#000',
                 textAlign: 'center',
@@ -247,15 +247,15 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: '6mm'
+              paddingBottom: '4mm'
             }}>
               {qrCode && (
                 <img
                   src={qrCode}
                   alt="QR Code"
                   style={{
-                    width: '35mm',
-                    height: '35mm',
+                    width: '30mm',
+                    height: '30mm',
                     display: 'block'
                   }}
                 />
@@ -265,14 +265,14 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             <div style={{
               borderTop: '1.5px solid #000',
               borderBottom: '1.5px solid #000',
-              padding: '2.5mm 0',
-              marginLeft: '8mm',
-              marginRight: '8mm',
-              marginBottom: '8mm',
+              padding: '2mm 0',
+              marginLeft: '6mm',
+              marginRight: '6mm',
+              marginBottom: '6mm',
               textAlign: 'center'
             }}>
               <div style={{
-                fontSize: '15pt',
+                fontSize: '13pt',
                 fontWeight: 900,
                 color: '#000',
                 marginBottom: '0.5mm',
@@ -281,7 +281,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                 {customerName}
               </div>
               <div style={{
-                fontSize: '11pt',
+                fontSize: '10pt',
                 fontWeight: 400,
                 color: '#000',
                 lineHeight: 1.1
