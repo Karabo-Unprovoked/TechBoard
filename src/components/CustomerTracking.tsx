@@ -18,6 +18,22 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [trackingNumber, setTrackingNumber] = useState('');
   const [customerNotes, setCustomerNotes] = useState<any[]>([]);
 
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#track-')) {
+      const ticketNumber = hash.replace('#track-', '');
+      if (ticketNumber) {
+        setSearchTerm(ticketNumber);
+        setTimeout(() => {
+          const form = document.querySelector('form');
+          if (form) {
+            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          }
+        }, 100);
+      }
+    }
+  }, []);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
