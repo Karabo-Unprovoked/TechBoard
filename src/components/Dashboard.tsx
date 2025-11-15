@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
-import type { Customer, RepairTicket } from '../lib/supabase';
+import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
+import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
 import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
 import { TicketsView } from './TicketsView';
@@ -33,6 +34,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
+  const [statuses, setStatuses] = useState<TicketStatus[]>([]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -41,7 +43,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   useEffect(() => {
     loadData();
     loadUserRole();
+    loadStatusesData();
   }, []);
+
+  const loadStatusesData = async () => {
+    const data = await loadStatuses();
+    setStatuses(data);
+  };
 
   const loadUserRole = async () => {
     try {
@@ -144,16 +152,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     }
   };
 
-  // Calculate dashboard stats
-  const stats = {
+  // Calculate dashboard stats dynamically based on loaded statuses
+  const stats: any = {
     totalTickets: tickets.length,
-    inTransitTickets: tickets.filter(t => t.status === 'in-transit').length,
-    receivedTickets: tickets.filter(t => t.status === 'received').length,
-    inProgressTickets: tickets.filter(t => t.status === 'in-progress').length,
-    invoicedTickets: tickets.filter(t => t.status === 'invoiced').length,
-    completedTickets: tickets.filter(t => t.status === 'completed').length,
-    unrepairableTickets: tickets.filter(t => t.status === 'unrepairable').length,
-    pendingCustomerTickets: tickets.filter(t => t.status === 'pending-customer-action').length,
     totalCustomers: customers.length,
     todayTickets: tickets.filter(t => {
       const today = new Date().toDateString();
@@ -161,6 +162,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     }).length,
     weeklyRevenue: tickets.filter(t => t.status === 'completed').length * 150 // Mock calculation
   };
+
+  // Dynamically add stats for each status
+  statuses.forEach(status => {
+    const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+    stats[statusKey] = tickets.filter(t => t.status === status.status_key).length;
+  });
+
+  // Fallback for common status keys if statuses haven't loaded yet
+  if (statuses.length === 0) {
+    stats.inTransitTickets = tickets.filter(t => t.status === 'in-transit').length;
+    stats.receivedTickets = tickets.filter(t => t.status === 'received').length;
+    stats.inProgressTickets = tickets.filter(t => t.status === 'in-progress').length;
+    stats.invoicedTickets = tickets.filter(t => t.status === 'invoiced').length;
+    stats.completedTickets = tickets.filter(t => t.status === 'completed').length;
+    stats.unrepairableTickets = tickets.filter(t => t.status === 'unrepairable').length;
+    stats.pendingCustomerTickets = tickets.filter(t => t.status === 'pending-customer-action').length;
+  }
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -515,73 +533,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         </div>
                       </div>
 
-                      {/* Status Overview */}
+                      {/* Status Overview - Dynamic based on database */}
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-                                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                          {statuses.map((status) => {
+                            const colors = getStatusDisplayColors(status.status_key);
+                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+                            const count = stats[statusKey] || 0;
+
+                            return (
+                              <div key={status.id} className="flex items-center justify-between group">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center group-hover:${colors.bg.replace('50', '100')} transition-colors`}>
+                                    <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
+                                  </div>
+                                  <span className="text-sm text-gray-600 font-medium">{status.status_label}</span>
+                                </div>
+                                <span className="font-bold text-gray-900">{count}</span>
                               </div>
-                              <span className="text-sm text-gray-600 font-medium">In Transit</span>
-                            </div>
-                            <span className="font-bold text-gray-900">{stats.inTransitTickets}</span>
-                          </div>
-                          <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              </div>
-                              <span className="text-sm text-gray-600 font-medium">Received</span>
-                            </div>
-                            <span className="font-bold text-gray-900">{stats.receivedTickets}</span>
-                          </div>
-                          <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                              </div>
-                              <span className="text-sm text-gray-600 font-medium">In Progress</span>
-                            </div>
-                            <span className="font-bold text-gray-900">{stats.inProgressTickets}</span>
-                          </div>
-                          <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center group-hover:bg-teal-100 transition-colors">
-                                <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
-                              </div>
-                              <span className="text-sm text-gray-600 font-medium">Invoiced</span>
-                            </div>
-                            <span className="font-bold text-gray-900">{stats.invoicedTickets}</span>
-                          </div>
-                          <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              </div>
-                              <span className="text-sm text-gray-600 font-medium">Completed</span>
-                            </div>
-                            <span className="font-bold text-gray-900">{stats.completedTickets}</span>
-                          </div>
-                          <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              </div>
-                              <span className="text-sm text-gray-600 font-medium">Unrepairable</span>
-                            </div>
-                            <span className="font-bold text-gray-900">{stats.unrepairableTickets}</span>
-                          </div>
-                          <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                              </div>
-                              <span className="text-sm text-gray-600 font-medium">Pending Customer</span>
-                            </div>
-                            <span className="font-bold text-gray-900">{stats.pendingCustomerTickets}</span>
-                          </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>

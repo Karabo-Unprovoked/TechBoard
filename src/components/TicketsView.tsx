@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, RefreshCw, Calendar, User, Laptop, FileText, Settings, LayoutGrid, List } from 'lucide-react';
-import type { RepairTicket } from '../lib/supabase';
+import type { RepairTicket, TicketStatus } from '../lib/supabase';
+import { loadStatuses, getStatusColor as getStatusColorUtil, getStatusLabel } from '../lib/statusUtils';
 
 interface TicketsViewProps {
   tickets: RepairTicket[];
@@ -10,33 +11,24 @@ interface TicketsViewProps {
   onUpdateStatus?: (ticketId: string, newStatus: string) => void;
 }
 
-export const TicketsView: React.FC<TicketsViewProps> = ({ 
-  tickets, 
-  onViewLabel, 
+export const TicketsView: React.FC<TicketsViewProps> = ({
+  tickets,
+  onViewLabel,
   onManageTicket,
-  onRefresh, 
-  onUpdateStatus 
+  onRefresh,
+  onUpdateStatus
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'in-transit':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'received':
-        return 'bg-blue-100 text-blue-800';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'invoiced':
-        return 'bg-teal-100 text-teal-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'unrepairable':
-        return 'bg-red-100 text-red-800';
-      case 'pending-customer-action':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const [statuses, setStatuses] = useState<TicketStatus[]>([]);
+
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      const data = await loadStatuses();
+      setStatuses(data);
+    };
+    fetchStatuses();
+  }, []);
+
+  const getStatusColor = getStatusColorUtil;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -116,7 +108,7 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                 <div>
                   <h4 className="font-semibold text-gray-900">{ticket.ticket_number}</h4>
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                    {ticket.status.replace('-', ' ').toUpperCase()}
+                    {getStatusLabel(statuses, ticket.status)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -265,7 +257,7 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                       </select>
                     ) : (
                       <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                        {ticket.status.replace('-', ' ').toUpperCase()}
+                        {getStatusLabel(statuses, ticket.status)}
                       </span>
                     )}
                   </td>
