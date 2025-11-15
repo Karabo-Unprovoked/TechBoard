@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, RefreshCw, Calendar, User, Laptop, FileText, Settings, LayoutGrid, List } from 'lucide-react';
 import type { RepairTicket, TicketStatus } from '../lib/supabase';
-import { loadStatuses, getStatusColor as getStatusColorUtil, getStatusLabel } from '../lib/statusUtils';
+import { loadStatuses, getStatusColor as getStatusColorUtil, getStatusLabel, getSubStatusLabel } from '../lib/statusUtils';
 
 interface TicketsViewProps {
   tickets: RepairTicket[];
@@ -107,9 +107,16 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="font-semibold text-gray-900">{ticket.ticket_number}</h4>
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                    {getStatusLabel(statuses, ticket.status)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                      {getStatusLabel(statuses, ticket.status)}
+                    </span>
+                    {ticket.internal_status && (
+                      <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {onManageTicket && (
@@ -256,9 +263,16 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                         <option value="pending-customer-action">Pending Customer Action</option>
                       </select>
                     ) : (
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                        {getStatusLabel(statuses, ticket.status)}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                          {getStatusLabel(statuses, ticket.status)}
+                        </span>
+                        {ticket.internal_status && (
+                          <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                            {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4">

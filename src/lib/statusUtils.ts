@@ -23,14 +23,28 @@ const statusDisplayColorMap: Record<string, { bg: string; dot: string }> = {
 
 export const loadStatuses = async (): Promise<TicketStatus[]> => {
   try {
-    const { data, error } = await supabase
+    const { data: statusesData, error: statusesError } = await supabase
       .from('ticket_statuses')
       .select('*')
       .eq('is_active', true)
       .order('status_order', { ascending: true });
 
-    if (error) throw error;
-    return data || [];
+    if (statusesError) throw statusesError;
+
+    const { data: subStatusesData, error: subStatusesError } = await supabase
+      .from('ticket_sub_statuses')
+      .select('*')
+      .eq('is_active', true)
+      .order('sub_status_order', { ascending: true });
+
+    if (subStatusesError) throw subStatusesError;
+
+    const statusesWithSubs = (statusesData || []).map(status => ({
+      ...status,
+      sub_statuses: (subStatusesData || []).filter(sub => sub.parent_status_id === status.id)
+    }));
+
+    return statusesWithSubs;
   } catch (error) {
     console.error('Error loading statuses:', error);
     return [];
@@ -48,4 +62,12 @@ export const getStatusLabel = (statuses: TicketStatus[], statusKey: string): str
 
 export const getStatusDisplayColors = (statusKey: string): { bg: string; dot: string } => {
   return statusDisplayColorMap[statusKey] || { bg: 'bg-gray-50', dot: 'bg-gray-500' };
+};
+
+export const getSubStatusLabel = (statuses: TicketStatus[], statusKey: string, subStatusKey: string): string => {
+  const status = statuses.find(s => s.status_key === statusKey);
+  if (!status?.sub_statuses) return '';
+
+  const subStatus = status.sub_statuses.find(ss => ss.sub_status_key === subStatusKey);
+  return subStatus?.sub_status_label || '';
 };

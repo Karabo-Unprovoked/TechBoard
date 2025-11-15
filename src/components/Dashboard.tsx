@@ -129,22 +129,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     setCurrentView('manage-customer');
   };
 
-  const updateTicketStatus = async (ticketId: string, newStatus: string) => {
+  const updateTicketStatus = async (ticketId: string, newStatus: string, internalStatus?: string) => {
     try {
+      const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      if (internalStatus !== undefined) {
+        updateData.internal_status = internalStatus;
+      }
+
       const { error } = await supabase
         .from('repair_tickets')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', ticketId);
 
       if (error) throw error;
 
       // Update local state
-      setTickets(prev => prev.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status: newStatus, updated_at: new Date().toISOString() }
+      setTickets(prev => prev.map(ticket =>
+        ticket.id === ticketId
+          ? { ...ticket, ...updateData }
           : ticket
       ));
     } catch (error) {
@@ -504,24 +510,49 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                   </button>
                                 </div>
 
-                                <div className="flex items-center justify-between">
-                                  <select
-                                    value={ticket.status}
-                                    onChange={(e) => updateTicketStatus(ticket.id, e.target.value)}
-                                    className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
-                                  >
-                                    {statuses.map((status) => (
-                                      <option key={status.id} value={status.status_key}>
-                                        {status.status_label}
-                                      </option>
-                                    ))}
-                                  </select>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <select
+                                      value={ticket.status}
+                                      onChange={(e) => {
+                                        updateTicketStatus(ticket.id, e.target.value, '');
+                                      }}
+                                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
+                                    >
+                                      {statuses.map((status) => (
+                                        <option key={status.id} value={status.status_key}>
+                                          {status.status_label}
+                                        </option>
+                                      ))}
+                                    </select>
 
-                                  <div className="text-right">
-                                    <p className="text-xs text-gray-400 font-medium">
-                                      {new Date(ticket.created_at).toLocaleDateString()}
-                                    </p>
+                                    <div className="text-right">
+                                      <p className="text-xs text-gray-400 font-medium">
+                                        {new Date(ticket.created_at).toLocaleDateString()}
+                                      </p>
+                                    </div>
                                   </div>
+
+                                  {(() => {
+                                    const currentStatus = statuses.find(s => s.status_key === ticket.status);
+                                    if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
+                                      return (
+                                        <select
+                                          value={ticket.internal_status || ''}
+                                          onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
+                                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
+                                        >
+                                          <option value="">Select sub-status...</option>
+                                          {currentStatus.sub_statuses.map((subStatus) => (
+                                            <option key={subStatus.id} value={subStatus.sub_status_key}>
+                                              {subStatus.sub_status_label}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                               </div>
                             ))}

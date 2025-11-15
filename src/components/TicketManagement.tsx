@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CreditCard as Edit3, Save, X, Plus, Mail, FileText, Calendar, DollarSign, AlertTriangle, Clock, User, Laptop, Hash, MessageSquare, Send, Paperclip, Download, Trash2, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { RepairTicket, TicketNote, TicketEmail, Customer, TicketStatus } from '../lib/supabase';
+import { loadStatuses as loadStatusesUtil, getSubStatusLabel } from '../lib/statusUtils';
 
 interface TicketManagementProps {
   ticket: RepairTicket;
@@ -54,14 +55,8 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
   const loadStatuses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('ticket_statuses')
-        .select('*')
-        .eq('is_active', true)
-        .order('status_order', { ascending: true });
-
-      if (error) throw error;
-      setStatuses(data || []);
+      const data = await loadStatusesUtil();
+      setStatuses(data);
     } catch (error) {
       console.error('Error loading statuses:', error);
     }
@@ -344,29 +339,50 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                       )}
                     </select>
                   ) : (
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
-                      {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
+                        {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
+                      </span>
+                      {ticket.internal_status && (
+                        <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                          {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
 
-                {/* Internal Status for In Progress */}
-                {editData.status === 'in-progress' && isEditing && (
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Internal Status</label>
-                    <select
-                      value={editData.internal_status}
-                      onChange={(e) => setEditData({ ...editData, internal_status: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                      style={{ focusRingColor: PRIMARY }}
-                    >
-                      <option value="">Select...</option>
-                      <option value="waiting-for-part">Waiting for Part</option>
-                      <option value="repairing">Repairing</option>
-                      <option value="outsourced">Outsourced</option>
-                    </select>
-                  </div>
-                )}
+                {/* Sub-Status (Internal Status) */}
+                {(() => {
+                  const currentStatus = statuses.find(s => s.status_key === (isEditing ? editData.status : ticket.status));
+                  if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
+                    return (
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Sub-Status</label>
+                        {isEditing ? (
+                          <select
+                            value={editData.internal_status}
+                            onChange={(e) => setEditData({ ...editData, internal_status: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                            style={{ focusRingColor: PRIMARY }}
+                          >
+                            <option value="">Select...</option>
+                            {currentStatus.sub_statuses.map((subStatus) => (
+                              <option key={subStatus.id} value={subStatus.sub_status_key}>
+                                {subStatus.sub_status_label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-sm text-gray-900">
+                            {ticket.internal_status ? getSubStatusLabel(statuses, ticket.status, ticket.internal_status) : 'Not set'}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
                 {/* Outsourced To */}
                 {editData.internal_status === 'outsourced' && isEditing && (
