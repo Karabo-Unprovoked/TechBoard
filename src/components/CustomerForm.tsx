@@ -25,6 +25,15 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   const [existingCustomerId, setExistingCustomerId] = useState<string | null>(null);
 
   const generateCustomerNumber = async () => {
+    // Get the starting point from settings
+    const { data: setting } = await supabase
+      .from('admin_settings')
+      .select('setting_value')
+      .eq('setting_key', 'customer_number_start')
+      .maybeSingle();
+
+    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 1000;
+
     const { data: customers } = await supabase
       .from('customers')
       .select('customer_number')
@@ -32,13 +41,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       .limit(1);
 
     if (!customers || customers.length === 0) {
-      return 'CG001';
+      return `CUS-${startNumber}`;
     }
 
     const lastNumber = customers[0].customer_number;
-    const numberPart = parseInt(lastNumber.replace('CG', ''), 10);
-    const nextNumber = numberPart + 1;
-    return `CG${nextNumber.toString().padStart(3, '0')}`;
+    const numberPart = parseInt(lastNumber.replace('CUS-', ''), 10);
+    const nextNumber = Math.max(numberPart + 1, startNumber);
+    return `CUS-${nextNumber}`;
   };
 
   React.useEffect(() => {

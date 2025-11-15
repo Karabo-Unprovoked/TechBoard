@@ -17,7 +17,7 @@ interface User {
 }
 
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotification }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general'>('email');
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
@@ -29,6 +29,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [customerNumberStart, setCustomerNumberStart] = useState<string>('1000');
+  const [savingGeneralSettings, setSavingGeneralSettings] = useState(false);
   const [emailSettings, setEmailSettings] = useState<{
     smtp_host: string;
     smtp_port: number;
@@ -119,6 +121,52 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     }
   };
 
+  // Load general settings
+  const loadGeneralSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'customer_number_start')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setCustomerNumberStart(data.setting_value);
+      }
+    } catch (error) {
+      console.error('Error loading general settings:', error);
+    }
+  };
+
+  const handleSaveGeneralSettings = async () => {
+    const startNum = parseInt(customerNumberStart);
+    if (isNaN(startNum) || startNum < 1) {
+      onNotification('error', 'Customer number start must be a positive number');
+      return;
+    }
+
+    setSavingGeneralSettings(true);
+    try {
+      const { error } = await supabase
+        .from('admin_settings')
+        .update({
+          setting_value: customerNumberStart,
+          updated_at: new Date().toISOString()
+        })
+        .eq('setting_key', 'customer_number_start');
+
+      if (error) throw error;
+
+      onNotification('success', 'General settings saved successfully');
+    } catch (error: any) {
+      onNotification('error', 'Failed to save settings: ' + error.message);
+    } finally {
+      setSavingGeneralSettings(false);
+    }
+  };
+
   // Load user role on component mount
   React.useEffect(() => {
     const loadUserRole = async () => {
@@ -140,6 +188,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
     loadUserRole();
     loadEmailSettings();
+    loadGeneralSettings();
   }, []);
 
   const handleUpdateEmailPassword = async () => {
@@ -399,6 +448,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
   // Define tabs based on user role
   const getAllTabs = () => [
+    { id: 'general', label: 'General', icon: Settings },
     { id: 'email', label: 'Email Settings', icon: Mail },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
@@ -409,16 +459,16 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
   const getAvailableTabs = () => {
     const allTabs = getAllTabs();
-    
+
     switch (userRole) {
       case 'admin':
         return allTabs; // Admin can see everything
       case 'technician':
-        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle'); // No user management, security, or recycle bin
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general'); // No user management, security, recycle bin, or general
       case 'viewer':
         return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
       default:
-        return [allTabs[0]]; // Default to just email
+        return [allTabs[1]]; // Default to email
     }
   };
 
@@ -506,6 +556,60 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
           {/* Main Content */}
           <div className="lg:col-span-3">
+            {activeTab === 'general' && userRole === 'admin' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                  General Settings
+                </h3>
+
+                <div className="space-y-6">
+                  {/* Customer Number Start */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Customer Number Starting Point
+                    </label>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Set the starting number for customer IDs. New customers will be numbered starting from this value.
+                      Format: CUS-{customerNumberStart}
+                    </p>
+                    <input
+                      type="number"
+                      value={customerNumberStart}
+                      onChange={(e) => setCustomerNumberStart(e.target.value)}
+                      min="1"
+                      className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="1000"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Example: If set to 1000, the first customer will be CUS-1000, second will be CUS-1001, etc.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle size={16} className="text-yellow-600" />
+                      <h4 className="font-medium text-yellow-900">Important</h4>
+                    </div>
+                    <p className="text-sm text-yellow-800">
+                      This only affects new customers. Existing customer numbers will not change.
+                      Make sure this number is higher than your current highest customer number to avoid conflicts.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleSaveGeneralSettings}
+                    disabled={savingGeneralSettings}
+                    className="flex items-center gap-2 px-6 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                    style={{ backgroundColor: PRIMARY }}
+                  >
+                    <Settings size={16} />
+                    <span>{savingGeneralSettings ? 'Saving...' : 'Save Settings'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'email' && (
               <div className="space-y-6">
                 {/* Email Connection Status */}
