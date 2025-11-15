@@ -182,12 +182,11 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                     className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
                     style={{ focusRingColor: PRIMARY }}
                   >
-                    <option value="received">Received</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="waiting-parts">Waiting Parts</option>
-                    <option value="completed">Completed</option>
-                    <option value="unrepairable">Unrepairable</option>
-                    <option value="pending-customer-action">Pending Customer Action</option>
+                    {statuses.map((status) => (
+                      <option key={status.id} value={status.status_key}>
+                        {status.status_label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
