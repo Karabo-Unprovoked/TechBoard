@@ -169,16 +169,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     stats[statusKey] = tickets.filter(t => t.status === status.status_key).length;
   });
 
-  // Fallback for common status keys if statuses haven't loaded yet
-  if (statuses.length === 0) {
-    stats.inTransitTickets = tickets.filter(t => t.status === 'in-transit').length;
-    stats.receivedTickets = tickets.filter(t => t.status === 'received').length;
-    stats.inProgressTickets = tickets.filter(t => t.status === 'in-progress').length;
-    stats.invoicedTickets = tickets.filter(t => t.status === 'invoiced').length;
-    stats.completedTickets = tickets.filter(t => t.status === 'completed').length;
-    stats.unrepairableTickets = tickets.filter(t => t.status === 'unrepairable').length;
-    stats.pendingCustomerTickets = tickets.filter(t => t.status === 'pending-customer-action').length;
-  }
+  // Always ensure standard status keys exist for backwards compatibility
+  stats.inTransitTickets = stats.intransitTickets || tickets.filter(t => t.status === 'in-transit').length;
+  stats.receivedTickets = stats.receivedTickets || tickets.filter(t => t.status === 'received').length;
+  stats.inProgressTickets = stats.inprogressTickets || tickets.filter(t => t.status === 'in-progress').length;
+  stats.invoicedTickets = stats.invoicedTickets || tickets.filter(t => t.status === 'invoiced').length;
+  stats.completedTickets = stats.completedTickets || tickets.filter(t => t.status === 'completed').length;
+  stats.unrepairableTickets = stats.unrepairableTickets || tickets.filter(t => t.status === 'unrepairable').length;
+  stats.pendingCustomerTickets = stats.pendingcustomeractionTickets || tickets.filter(t => t.status === 'pending-customer-action').length;
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -356,12 +354,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     style={{ focusRingColor: PRIMARY }}
                   >
                     <option value="all">All Status</option>
-                    <option value="received">Received</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="waiting-parts">Waiting Parts</option>
-                    <option value="completed">Completed</option>
-                    <option value="unrepairable">Unrepairable</option>
-                    <option value="pending-customer-action">Pending Customer Action</option>
+                    {statuses.map((status) => (
+                      <option key={status.id} value={status.status_key}>
+                        {status.status_label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
@@ -513,12 +510,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                     onChange={(e) => updateTicketStatus(ticket.id, e.target.value)}
                                     className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
                                   >
-                                    <option value="received">Received</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="waiting-parts">Waiting Parts</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="unrepairable">Unrepairable</option>
-                                    <option value="pending-customer-action">Pending Customer Action</option>
+                                    {statuses.map((status) => (
+                                      <option key={status.id} value={status.status_key}>
+                                        {status.status_label}
+                                      </option>
+                                    ))}
                                   </select>
 
                                   <div className="text-right">
