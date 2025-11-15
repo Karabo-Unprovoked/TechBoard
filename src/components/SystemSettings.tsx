@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound } from 'lucide-react';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
+import type { TicketStatus } from '../lib/supabase';
 import { RecycleBin } from './RecycleBin';
 
 interface SystemSettingsProps {
@@ -17,7 +18,7 @@ interface User {
 }
 
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotification }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general' | 'statuses'>('email');
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,11 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [changingPassword, setChangingPassword] = useState(false);
   const [customerNumberStart, setCustomerNumberStart] = useState<string>('1000');
   const [savingGeneralSettings, setSavingGeneralSettings] = useState(false);
+  const [statuses, setStatuses] = useState<TicketStatus[]>([]);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
+  const [newStatusLabel, setNewStatusLabel] = useState('');
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  const [editingStatusLabel, setEditingStatusLabel] = useState('');
   const [emailSettings, setEmailSettings] = useState<{
     smtp_host: string;
     smtp_port: number;
@@ -410,7 +416,119 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     if (activeTab === 'users') {
       loadUsers();
     }
+    if (activeTab === 'statuses') {
+      loadStatuses();
+    }
   }, [activeTab]);
+
+  const loadStatuses = async () => {
+    setLoadingStatuses(true);
+    try {
+      const { data, error } = await supabase
+        .from('ticket_statuses')
+        .select('*')
+        .order('status_order', { ascending: true });
+
+      if (error) throw error;
+      setStatuses(data || []);
+    } catch (error: any) {
+      console.error('Error loading statuses:', error);
+      onNotification('error', 'Failed to load statuses');
+    } finally {
+      setLoadingStatuses(false);
+    }
+  };
+
+  const addStatus = async () => {
+    if (!newStatusLabel.trim()) {
+      onNotification('error', 'Status label is required');
+      return;
+    }
+
+    try {
+      const statusKey = newStatusLabel.toLowerCase().replace(/\s+/g, '-');
+      const maxOrder = Math.max(...statuses.map(s => s.status_order), 0);
+
+      const { error } = await supabase
+        .from('ticket_statuses')
+        .insert([{
+          status_key: statusKey,
+          status_label: newStatusLabel,
+          status_order: maxOrder + 1,
+          is_active: true
+        }]);
+
+      if (error) throw error;
+
+      onNotification('success', 'Status added successfully');
+      setNewStatusLabel('');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to add status: ' + error.message);
+    }
+  };
+
+  const updateStatus = async (statusId: string, updates: Partial<TicketStatus>) => {
+    try {
+      const { error } = await supabase
+        .from('ticket_statuses')
+        .update(updates)
+        .eq('id', statusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Status updated successfully');
+      setEditingStatusId(null);
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to update status: ' + error.message);
+    }
+  };
+
+  const deleteStatus = async (statusId: string, statusLabel: string) => {
+    if (!confirm(`Are you sure you want to delete the status "${statusLabel}"?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('ticket_statuses')
+        .delete()
+        .eq('id', statusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Status deleted successfully');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to delete status: ' + error.message);
+    }
+  };
+
+  const moveStatus = async (statusId: string, direction: 'up' | 'down') => {
+    const currentIndex = statuses.findIndex(s => s.id === statusId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= statuses.length) return;
+
+    const currentStatus = statuses[currentIndex];
+    const targetStatus = statuses[targetIndex];
+
+    try {
+      await supabase
+        .from('ticket_statuses')
+        .update({ status_order: targetStatus.status_order })
+        .eq('id', currentStatus.id);
+
+      await supabase
+        .from('ticket_statuses')
+        .update({ status_order: currentStatus.status_order })
+        .eq('id', targetStatus.id);
+
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to reorder statuses: ' + error.message);
+    }
+  };
 
   const handleChangeAdminPassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -472,6 +590,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   // Define tabs based on user role
   const getAllTabs = () => [
     { id: 'general', label: 'General', icon: Settings },
+    { id: 'statuses', label: 'Status Management', icon: List },
     { id: 'email', label: 'Email Settings', icon: Mail },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
@@ -487,7 +606,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
       case 'admin':
         return allTabs; // Admin can see everything
       case 'technician':
-        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general'); // No user management, security, recycle bin, or general
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general' && tab.id !== 'statuses'); // No user management, security, recycle bin, general, or statuses
       case 'viewer':
         return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
       default:
@@ -629,6 +748,150 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     <Settings size={16} />
                     <span>{savingGeneralSettings ? 'Saving...' : 'Save Settings'}</span>
                   </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'statuses' && userRole === 'admin' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    Ticket Status Management
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Manage the available statuses for repair tickets. You can add, edit, reorder, and remove statuses as needed.
+                  </p>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Add New Status
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newStatusLabel}
+                        onChange={(e) => setNewStatusLabel(e.target.value)}
+                        placeholder="Enter status name"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                        style={{ focusRingColor: PRIMARY }}
+                        onKeyPress={(e) => e.key === 'Enter' && addStatus()}
+                      />
+                      <button
+                        onClick={addStatus}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Plus size={16} />
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {loadingStatuses ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: PRIMARY }}></div>
+                      <p className="text-gray-600">Loading statuses...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {statuses.map((status, index) => (
+                        <div key={status.id} className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => moveStatus(status.id, 'up')}
+                              disabled={index === 0}
+                              className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="Move Up"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              onClick={() => moveStatus(status.id, 'down')}
+                              disabled={index === statuses.length - 1}
+                              className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="Move Down"
+                            >
+                              ▼
+                            </button>
+                          </div>
+
+                          <div className="flex-1">
+                            {editingStatusId === status.id ? (
+                              <input
+                                type="text"
+                                value={editingStatusLabel}
+                                onChange={(e) => setEditingStatusLabel(e.target.value)}
+                                className="w-full px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:border-transparent outline-none"
+                                style={{ focusRingColor: PRIMARY }}
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateStatus(status.id, { status_label: editingStatusLabel });
+                                  }
+                                }}
+                                autoFocus
+                              />
+                            ) : (
+                              <div>
+                                <p className="font-medium text-gray-900">{status.status_label}</p>
+                                <p className="text-xs text-gray-500">{status.status_key}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {editingStatusId === status.id ? (
+                              <>
+                                <button
+                                  onClick={() => updateStatus(status.id, { status_label: editingStatusLabel })}
+                                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingStatusId(null);
+                                    setEditingStatusLabel('');
+                                  }}
+                                  className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingStatusId(status.id);
+                                    setEditingStatusLabel(status.status_label);
+                                  }}
+                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                  title="Edit"
+                                >
+                                  <Edit3 size={16} />
+                                </button>
+                                <button
+                                  onClick={() => deleteStatus(status.id, status.status_label)}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Status Information</h4>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    <p><strong>In Progress:</strong> When a ticket is "In Progress", you can set internal statuses: Waiting for Part, Repairing, or Outsourced</p>
+                    <p><strong>Pending Customer Action:</strong> When a ticket is "Pending Customer Action", you can specify: Collect or Call Us Back</p>
+                    <p><strong>Order:</strong> Use the up/down arrows to change the order statuses appear in dropdowns</p>
+                  </div>
                 </div>
               </div>
             )}
