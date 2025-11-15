@@ -224,7 +224,6 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
 
             <div style={{
               borderTop: '1.5px solid #000',
-              borderBottom: '1.5px solid #000',
               padding: '1.5mm 0',
               marginLeft: '6mm',
               marginRight: '6mm',
@@ -264,7 +263,6 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
 
             <div style={{
               borderTop: '1.5px solid #000',
-              borderBottom: '1.5px solid #000',
               padding: '2mm 0',
               marginLeft: '6mm',
               marginRight: '6mm',
