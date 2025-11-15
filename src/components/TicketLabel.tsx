@@ -32,8 +32,7 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
   const [qrCode, setQrCode] = React.useState('');
 
   React.useEffect(() => {
-    const trackingUrl = `${window.location.origin}/#track-${ticket.ticket_number}`;
-    generateQRCode(trackingUrl).then(setQrCode);
+    generateQRCode(ticket.ticket_number).then(setQrCode);
   }, [ticket.ticket_number]);
 
   const handlePrint = () => {
@@ -244,9 +243,10 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
             <div style={{
               flex: 1,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: '4mm'
+              paddingBottom: '2mm'
             }}>
               {qrCode && (
                 <img
@@ -255,10 +255,20 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
                   style={{
                     width: '30mm',
                     height: '30mm',
-                    display: 'block'
+                    display: 'block',
+                    marginBottom: '2mm'
                   }}
                 />
               )}
+              <div style={{
+                fontSize: '7pt',
+                fontWeight: 400,
+                color: '#666',
+                textAlign: 'center',
+                lineHeight: 1.2
+              }}>
+                Scan for tracking number
+              </div>
             </div>
 
             <div style={{
@@ -291,15 +301,26 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-medium text-blue-900 mb-2">Brother TD-4100N Printing Instructions</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Label size: 4" x 4" (102mm x 102mm)</li>
-          <li>• Black and white thermal print optimized</li>
-          <li>• Ensure printer is set to correct paper size</li>
-          <li>• Print using "Actual Size" (no scaling)</li>
-          <li>• Attach label securely to device with QR code visible</li>
-        </ul>
+      <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="font-medium text-blue-900 mb-2">Brother TD-4100N Printing Instructions</h3>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Label size: 4" x 4" (102mm x 102mm)</li>
+            <li>• Black and white thermal print optimized</li>
+            <li>• Ensure printer is set to correct paper size</li>
+            <li>• Print using "Actual Size" (no scaling)</li>
+            <li>• Attach label securely to device with QR code visible</li>
+          </ul>
+        </div>
+
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h3 className="font-medium text-green-900 mb-2">How the QR Code Works</h3>
+          <p className="text-sm text-green-800">
+            The QR code contains the ticket number <strong>{ticket.ticket_number}</strong>.
+            Customers can scan it with their phone to quickly copy the tracking number,
+            then visit your repair shop's tracking page to check their repair status.
+          </p>
+        </div>
       </div>
     </div>
   );
