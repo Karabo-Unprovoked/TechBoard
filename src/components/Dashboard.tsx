@@ -441,10 +441,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       </div>
                     </div>
 
-                    {/* Quick Actions */}
+                    {/* Recent Tickets with Status Updates */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
-                        {/* Recent Tickets with Status Updates */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                           <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-gray-900">Latest Updates</h3>
@@ -455,7 +454,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                               View All →
                             </button>
                           </div>
-                          
+
                           <div className="space-y-3">
                             {tickets.slice(0, 5).map((ticket) => (
                               <div key={ticket.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-all">
@@ -475,7 +474,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                     <Eye size={16} />
                                   </button>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between">
                                   <select
                                     value={ticket.status}
@@ -502,72 +501,45 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         </div>
                       </div>
 
-                      {/* Quick Actions Panel */}
-                      <div className="space-y-6">
-                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-sm p-6 text-white">
-                          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4">
-                            <h4 className="text-sm font-medium mb-1">Open projects</h4>
-                            <p className="text-2xl font-bold">{stats.totalTickets}</p>
-                            <p className="text-xs text-green-100 mt-1">Complete tasks</p>
+                      {/* Status Overview */}
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              </div>
+                              <span className="text-sm text-gray-600 font-medium">Received</span>
+                            </div>
+                            <span className="font-bold text-gray-900">{stats.pendingTickets}</span>
                           </div>
-                          <div className="space-y-2">
-                            <button
-                              onClick={() => setCurrentView('new-ticket')}
-                              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 font-semibold transition-all text-sm"
-                            >
-                              <Plus size={18} />
-                              <span>New Ticket</span>
-                            </button>
-                            <button
-                              onClick={() => setCurrentView('new-customer')}
-                              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 font-semibold transition-all text-sm"
-                            >
-                              <Users size={18} />
-                              <span>Add Customer</span>
-                            </button>
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              </div>
+                              <span className="text-sm text-gray-600 font-medium">In Progress</span>
+                            </div>
+                            <span className="font-bold text-gray-900">{stats.inProgressTickets}</span>
                           </div>
-                        </div>
-
-                        {/* Status Overview */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                          <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between group">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                </div>
-                                <span className="text-sm text-gray-600 font-medium">Received</span>
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                               </div>
-                              <span className="font-bold text-gray-900">{stats.pendingTickets}</span>
+                              <span className="text-sm text-gray-600 font-medium">Waiting Parts</span>
                             </div>
-                            <div className="flex items-center justify-between group">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                </div>
-                                <span className="text-sm text-gray-600 font-medium">In Progress</span>
+                            <span className="font-bold text-gray-900">{stats.waitingPartsTickets}</span>
+                          </div>
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                               </div>
-                              <span className="font-bold text-gray-900">{stats.inProgressTickets}</span>
+                              <span className="text-sm text-gray-600 font-medium">Completed</span>
                             </div>
-                            <div className="flex items-center justify-between group">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
-                                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                </div>
-                                <span className="text-sm text-gray-600 font-medium">Waiting Parts</span>
-                              </div>
-                              <span className="font-bold text-gray-900">{stats.waitingPartsTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between group">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                </div>
-                                <span className="text-sm text-gray-600 font-medium">Completed</span>
-                              </div>
-                              <span className="font-bold text-gray-900">{stats.completedTickets}</span>
-                            </div>
+                            <span className="font-bold text-gray-900">{stats.completedTickets}</span>
                           </div>
                         </div>
                       </div>
