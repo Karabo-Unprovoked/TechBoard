@@ -32,7 +32,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       .eq('setting_key', 'customer_number_start')
       .maybeSingle();
 
-    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 1000;
+    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
 
     const { data: customers } = await supabase
       .from('customers')
@@ -41,13 +41,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       .limit(1);
 
     if (!customers || customers.length === 0) {
-      return `CUS-${startNumber}`;
+      return `CG${startNumber}`;
     }
 
     const lastNumber = customers[0].customer_number;
-    const numberPart = parseInt(lastNumber.replace('CUS-', ''), 10);
+    const numberPart = parseInt(lastNumber.replace('CG', ''), 10);
     const nextNumber = Math.max(numberPart + 1, startNumber);
-    return `CUS-${nextNumber}`;
+    return `CG${nextNumber}`;
   };
 
   React.useEffect(() => {
@@ -130,6 +130,17 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
 
       const customerNumber = await generateCustomerNumber();
 
+      // Check if customer number already exists (prevent duplicates)
+      const { data: existingNumber } = await supabase
+        .from('customers')
+        .select('customer_number')
+        .eq('customer_number', customerNumber)
+        .maybeSingle();
+
+      if (existingNumber) {
+        throw new Error('Customer number already exists. Please try again.');
+      }
+
       const customerData = {
         ...formData,
         name: `${formData.first_name} ${formData.last_name}`.trim() || formData.name,
@@ -142,7 +153,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Customer number already exists. Please try again.');
+        }
+        throw error;
+      }
 
       onCustomerCreated(data);
       setFormData({ first_name: '', last_name: '', name: '', email: '', phone: '', gender: '', referral_source: '' });

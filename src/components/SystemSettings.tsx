@@ -570,7 +570,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     </label>
                     <p className="text-sm text-gray-600 mb-3">
                       Set the starting number for customer IDs. New customers will be numbered starting from this value.
-                      Format: CUS-{customerNumberStart}
+                      Format: CG{customerNumberStart}
                     </p>
                     <input
                       type="number"
@@ -579,10 +579,10 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                       min="1"
                       className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
-                      placeholder="1000"
+                      placeholder="100"
                     />
                     <p className="text-xs text-gray-500 mt-2">
-                      Example: If set to 1000, the first customer will be CUS-1000, second will be CUS-1001, etc.
+                      Example: If set to 100, the first customer will be CG100, second will be CG101, etc.
                     </p>
                   </div>
 
@@ -1039,44 +1039,44 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     Add New User
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                      <input
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                        style={{ focusRingColor: PRIMARY }}
-                        placeholder="user@example.com"
-                      />
+                  <div className="space-y-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
+                        <input
+                          type="email"
+                          value={newUserEmail}
+                          onChange={(e) => setNewUserEmail(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                          placeholder="user@example.com"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Role</label>
+                        <select
+                          value={newUserRole}
+                          onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'technician' | 'viewer')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                        >
+                          <option value="technician">Technician</option>
+                          <option value="admin">Admin</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                      </div>
                     </div>
-                    
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Role</label>
-                      <select
-                        value={newUserRole}
-                        onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'technician' | 'viewer')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                        style={{ focusRingColor: PRIMARY }}
-                      >
-                        <option value="technician">Technician</option>
-                        <option value="admin">Admin</option>
-                        <option value="viewer">Viewer</option>
-                      </select>
-                    </div>
-                    
-                    <div className="flex items-end">
-                      <button
-                        onClick={createUser}
-                        disabled={!newUserEmail.trim()}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
-                        style={{ backgroundColor: PRIMARY }}
-                      >
-                        <Plus size={16} />
-                        <span>Add User</span>
-                      </button>
-                    </div>
+
+                    <button
+                      onClick={createUser}
+                      disabled={!newUserEmail.trim()}
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: PRIMARY }}
+                    >
+                      <Plus size={16} />
+                      <span>Add User</span>
+                    </button>
                   </div>
                   
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
