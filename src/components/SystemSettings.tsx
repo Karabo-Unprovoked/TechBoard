@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3 } from 'lucide-react';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
 import { RecycleBin } from './RecycleBin';
 
@@ -362,17 +362,17 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
   const deleteUser = async (userId: string, userEmail: string) => {
     if (!confirm(`Are you sure you want to delete user: ${userEmail}?`)) return;
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('user-management', {
-        body: { 
+        body: {
           action: 'delete',
           userId
         }
       });
-      
+
       if (error) throw error;
-      
+
       if (data.success) {
         loadUsers();
       } else {
@@ -380,6 +380,29 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
       }
     } catch (error: any) {
       alert('Error deleting user: ' + error.message);
+    }
+  };
+
+  const resetUserPassword = async (userId: string, userEmail: string) => {
+    if (!confirm(`Reset password for user: ${userEmail}?\n\nA new temporary password will be generated.`)) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'reset-password',
+          userId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        alert(`Password reset successfully!\n\nNew temporary password: ${data.tempPassword}\n\nPlease share this with the user. They should change it on first login.`);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      alert('Error resetting password: ' + error.message);
     }
   };
 
@@ -1146,7 +1169,15 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                               <option value="technician">Technician</option>
                               <option value="viewer">Viewer</option>
                             </select>
-                            
+
+                            <button
+                              onClick={() => resetUserPassword(user.id, user.email)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Reset Password"
+                            >
+                              <KeyRound size={16} />
+                            </button>
+
                             <button
                               onClick={() => deleteUser(user.id, user.email)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
