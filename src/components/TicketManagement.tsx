@@ -325,11 +325,23 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
                     >
-                      {statuses.map((status) => (
-                        <option key={status.id} value={status.status_key}>
-                          {status.status_label}
-                        </option>
-                      ))}
+                      {statuses.length === 0 ? (
+                        <>
+                          <option value="in-transit">In Transit</option>
+                          <option value="received">Received</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="invoiced">Invoiced</option>
+                          <option value="completed">Completed</option>
+                          <option value="unrepairable">Unrepairable</option>
+                          <option value="pending-customer-action">Pending Customer Action</option>
+                        </>
+                      ) : (
+                        statuses.map((status) => (
+                          <option key={status.id} value={status.status_key}>
+                            {status.status_label}
+                          </option>
+                        ))
+                      )}
                     </select>
                   ) : (
                     <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
