@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
@@ -32,6 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -39,7 +40,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
   useEffect(() => {
     loadData();
+    loadUserRole();
   }, []);
+
+  const loadUserRole = async () => {
+    try {
+      const role = await getUserRole();
+      setUserRole(role as 'admin' | 'technician' | 'viewer');
+    } catch (error) {
+      console.error('Error loading user role:', error);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -363,23 +374,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           <h3 className="text-2xl font-bold mb-2">Hello, Welcome back</h3>
                           <p className="text-orange-50 text-sm">Your dashboard is updated with the latest information</p>
                         </div>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => setCurrentView('new-customer')}
-                            className="flex items-center gap-2 px-5 py-3 bg-white/20 backdrop-blur-sm rounded-xl font-semibold hover:bg-white/30 transition-all"
-                          >
-                            <Users size={18} />
-                            <span className="text-sm">New Customer</span>
-                          </button>
-                          <button
-                            onClick={() => setCurrentView('new-ticket')}
-                            className="flex items-center gap-2 px-5 py-3 bg-white rounded-xl font-semibold hover:shadow-lg transition-all"
-                            style={{ color: PRIMARY }}
-                          >
-                            <Plus size={18} />
-                            <span className="text-sm">New Ticket</span>
-                          </button>
-                        </div>
+                        {userRole !== 'viewer' && (
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setCurrentView('new-customer')}
+                              className="flex items-center gap-2 px-5 py-3 bg-white/20 backdrop-blur-sm rounded-xl font-semibold hover:bg-white/30 transition-all"
+                            >
+                              <Users size={18} />
+                              <span className="text-sm">New Customer</span>
+                            </button>
+                            <button
+                              onClick={() => setCurrentView('new-ticket')}
+                              className="flex items-center gap-2 px-5 py-3 bg-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                              style={{ color: PRIMARY }}
+                            >
+                              <Plus size={18} />
+                              <span className="text-sm">New Ticket</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -564,12 +577,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     onNotification={onNotification}
                   />
                 )}
-                {currentView === 'new-customer' && (
+                {currentView === 'new-customer' && userRole !== 'viewer' && (
                   <CustomerForm onCustomerCreated={handleCustomerCreated} />
                 )}
-                {currentView === 'new-ticket' && (
-                  <TicketForm 
-                    customers={customers} 
+                {currentView === 'new-ticket' && userRole !== 'viewer' && (
+                  <TicketForm
+                    customers={customers}
                     onTicketCreated={handleTicketCreated}
                   />
                 )}
