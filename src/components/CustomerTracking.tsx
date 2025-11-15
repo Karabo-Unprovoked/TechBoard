@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
@@ -18,7 +18,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [trackingNumber, setTrackingNumber] = useState('');
   const [customerNotes, setCustomerNotes] = useState<any[]>([]);
 
-  const performSearch = async (term: string) => {
+  const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) return;
 
     setLoading(true);
@@ -61,7 +61,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
           .eq('ticket_id', ticketsData[0].id)
           .eq('note_type', 'customer')
           .order('created_at', { ascending: false });
-        
+
         setCustomerNotes(notesData || []);
       }
 
@@ -71,18 +71,20 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   React.useEffect(() => {
     const hash = window.location.hash;
+    console.log('Hash detected:', hash);
     if (hash && hash.startsWith('#track-')) {
       const ticketNumber = hash.replace('#track-', '');
+      console.log('Searching for ticket:', ticketNumber);
       if (ticketNumber) {
         setSearchTerm(ticketNumber);
         performSearch(ticketNumber);
       }
     }
-  }, []);
+  }, [performSearch]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
