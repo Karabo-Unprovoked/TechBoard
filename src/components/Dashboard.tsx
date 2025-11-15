@@ -147,10 +147,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   // Calculate dashboard stats
   const stats = {
     totalTickets: tickets.length,
-    pendingTickets: tickets.filter(t => t.status === 'received').length,
+    inTransitTickets: tickets.filter(t => t.status === 'in-transit').length,
+    receivedTickets: tickets.filter(t => t.status === 'received').length,
     inProgressTickets: tickets.filter(t => t.status === 'in-progress').length,
+    invoicedTickets: tickets.filter(t => t.status === 'invoiced').length,
     completedTickets: tickets.filter(t => t.status === 'completed').length,
-    waitingPartsTickets: tickets.filter(t => t.status === 'waiting-parts').length,
     unrepairableTickets: tickets.filter(t => t.status === 'unrepairable').length,
     pendingCustomerTickets: tickets.filter(t => t.status === 'pending-customer-action').length,
     totalCustomers: customers.length,
@@ -520,17 +521,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         <div className="space-y-4">
                           <div className="flex items-center justify-between group">
                             <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                              </div>
+                              <span className="text-sm text-gray-600 font-medium">In Transit</span>
+                            </div>
+                            <span className="font-bold text-gray-900">{stats.inTransitTickets}</span>
+                          </div>
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                               </div>
                               <span className="text-sm text-gray-600 font-medium">Received</span>
                             </div>
-                            <span className="font-bold text-gray-900">{stats.pendingTickets}</span>
+                            <span className="font-bold text-gray-900">{stats.receivedTickets}</span>
                           </div>
                           <div className="flex items-center justify-between group">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                               </div>
                               <span className="text-sm text-gray-600 font-medium">In Progress</span>
                             </div>
@@ -538,12 +548,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           </div>
                           <div className="flex items-center justify-between group">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center group-hover:bg-teal-100 transition-colors">
+                                <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
                               </div>
-                              <span className="text-sm text-gray-600 font-medium">Waiting Parts</span>
+                              <span className="text-sm text-gray-600 font-medium">Invoiced</span>
                             </div>
-                            <span className="font-bold text-gray-900">{stats.waitingPartsTickets}</span>
+                            <span className="font-bold text-gray-900">{stats.invoicedTickets}</span>
                           </div>
                           <div className="flex items-center justify-between group">
                             <div className="flex items-center gap-3">
@@ -553,6 +563,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                               <span className="text-sm text-gray-600 font-medium">Completed</span>
                             </div>
                             <span className="font-bold text-gray-900">{stats.completedTickets}</span>
+                          </div>
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              </div>
+                              <span className="text-sm text-gray-600 font-medium">Unrepairable</span>
+                            </div>
+                            <span className="font-bold text-gray-900">{stats.unrepairableTickets}</span>
+                          </div>
+                          <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                              </div>
+                              <span className="text-sm text-gray-600 font-medium">Pending Customer</span>
+                            </div>
+                            <span className="font-bold text-gray-900">{stats.pendingCustomerTickets}</span>
                           </div>
                         </div>
                       </div>
