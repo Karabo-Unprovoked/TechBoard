@@ -112,7 +112,11 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {tickets.map((ticket) => (
-            <div key={ticket.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div
+              key={ticket.id}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => onManageTicket && onManageTicket(ticket)}
+            >
               {/* Ticket Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -129,18 +133,11 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {onManageTicket && (
-                    <button
-                      onClick={() => onManageTicket(ticket)}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      style={{ color: PRIMARY }}
-                      title="Manage Ticket"
-                    >
-                      <Settings size={18} />
-                    </button>
-                  )}
                   <button
-                    onClick={() => onViewLabel(ticket)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewLabel(ticket);
+                    }}
                     className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                     style={{ color: PRIMARY }}
                     title="View Label"
@@ -182,7 +179,7 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
 
               {/* Status Update */}
               {onUpdateStatus && (
-                <div className="mb-4">
+                <div className="mb-4" onClick={(e) => e.stopPropagation()}>
                   <label className="block text-xs font-medium text-gray-500 mb-1">
                     Update Status
                   </label>
@@ -234,7 +231,11 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {tickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={ticket.id}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => onManageTicket && onManageTicket(ticket)}
+                >
                   <td className="px-6 py-4">
                     <div className="font-semibold text-gray-900">{ticket.ticket_number}</div>
                     {ticket.issue_description && (
@@ -256,7 +257,7 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     {onUpdateStatus ? (
                       <select
                         value={ticket.status}
@@ -286,18 +287,8 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-600">{formatDate(ticket.created_at)}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
-                      {onManageTicket && (
-                        <button
-                          onClick={() => onManageTicket(ticket)}
-                          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          style={{ color: PRIMARY }}
-                          title="Manage Ticket"
-                        >
-                          <Settings size={18} />
-                        </button>
-                      )}
                       <button
                         onClick={() => onViewLabel(ticket)}
                         className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
