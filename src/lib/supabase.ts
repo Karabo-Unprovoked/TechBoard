@@ -72,6 +72,9 @@ export type RepairTicket = {
   issue_description?: string;
   device_accessories?: string[];
   status: string;
+  internal_status?: string;
+  outsourced_to?: string;
+  pending_customer_action_type?: string;
   repair_notes?: string;
   priority?: string;
   estimated_cost?: number;
@@ -83,6 +86,28 @@ export type RepairTicket = {
   notes?: TicketNote[];
   emails?: TicketEmail[];
   attachments?: TicketAttachment[];
+}
+
+export type TicketStatus = {
+  id: string;
+  status_key: string;
+  status_label: string;
+  status_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  sub_statuses?: TicketSubStatus[];
+}
+
+export type TicketSubStatus = {
+  id: string;
+  parent_status_id: string;
+  sub_status_key: string;
+  sub_status_label: string;
+  sub_status_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export type TicketNote = {

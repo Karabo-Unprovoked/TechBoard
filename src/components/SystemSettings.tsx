@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3 } from 'lucide-react';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
+import type { TicketStatus, TicketSubStatus } from '../lib/supabase';
 import { RecycleBin } from './RecycleBin';
 
 interface SystemSettingsProps {
@@ -17,7 +18,7 @@ interface User {
 }
 
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotification }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general' | 'statuses'>('email');
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,17 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [customerNumberStart, setCustomerNumberStart] = useState<string>('1000');
+  const [savingGeneralSettings, setSavingGeneralSettings] = useState(false);
+  const [statuses, setStatuses] = useState<TicketStatus[]>([]);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
+  const [newStatusLabel, setNewStatusLabel] = useState('');
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  const [editingStatusLabel, setEditingStatusLabel] = useState('');
+  const [expandedStatusId, setExpandedStatusId] = useState<string | null>(null);
+  const [newSubStatusLabel, setNewSubStatusLabel] = useState<string>('');
+  const [editingSubStatusId, setEditingSubStatusId] = useState<string | null>(null);
+  const [editingSubStatusLabel, setEditingSubStatusLabel] = useState('');
   const [emailSettings, setEmailSettings] = useState<{
     smtp_host: string;
     smtp_port: number;
@@ -119,6 +131,52 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     }
   };
 
+  // Load general settings
+  const loadGeneralSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'customer_number_start')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setCustomerNumberStart(data.setting_value);
+      }
+    } catch (error) {
+      console.error('Error loading general settings:', error);
+    }
+  };
+
+  const handleSaveGeneralSettings = async () => {
+    const startNum = parseInt(customerNumberStart);
+    if (isNaN(startNum) || startNum < 1) {
+      onNotification('error', 'Customer number start must be a positive number');
+      return;
+    }
+
+    setSavingGeneralSettings(true);
+    try {
+      const { error } = await supabase
+        .from('admin_settings')
+        .update({
+          setting_value: customerNumberStart,
+          updated_at: new Date().toISOString()
+        })
+        .eq('setting_key', 'customer_number_start');
+
+      if (error) throw error;
+
+      onNotification('success', 'General settings saved successfully');
+    } catch (error: any) {
+      onNotification('error', 'Failed to save settings: ' + error.message);
+    } finally {
+      setSavingGeneralSettings(false);
+    }
+  };
+
   // Load user role on component mount
   React.useEffect(() => {
     const loadUserRole = async () => {
@@ -140,6 +198,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
     loadUserRole();
     loadEmailSettings();
+    loadGeneralSettings();
   }, []);
 
   const handleUpdateEmailPassword = async () => {
@@ -313,17 +372,17 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
   const deleteUser = async (userId: string, userEmail: string) => {
     if (!confirm(`Are you sure you want to delete user: ${userEmail}?`)) return;
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('user-management', {
-        body: { 
+        body: {
           action: 'delete',
           userId
         }
       });
-      
+
       if (error) throw error;
-      
+
       if (data.success) {
         loadUsers();
       } else {
@@ -334,11 +393,225 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     }
   };
 
+  const resetUserPassword = async (userId: string, userEmail: string) => {
+    if (!confirm(`Reset password for user: ${userEmail}?\n\nA new temporary password will be generated.`)) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('user-management', {
+        body: {
+          action: 'reset-password',
+          userId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        alert(`Password reset successfully!\n\nNew temporary password: ${data.tempPassword}\n\nPlease share this with the user. They should change it on first login.`);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      alert('Error resetting password: ' + error.message);
+    }
+  };
+
   React.useEffect(() => {
     if (activeTab === 'users') {
       loadUsers();
     }
+    if (activeTab === 'statuses') {
+      loadStatuses();
+    }
   }, [activeTab]);
+
+  const loadStatuses = async () => {
+    setLoadingStatuses(true);
+    try {
+      const { data: statusesData, error: statusesError } = await supabase
+        .from('ticket_statuses')
+        .select('*')
+        .order('status_order', { ascending: true });
+
+      if (statusesError) throw statusesError;
+
+      const { data: subStatusesData, error: subStatusesError } = await supabase
+        .from('ticket_sub_statuses')
+        .select('*')
+        .order('sub_status_order', { ascending: true });
+
+      if (subStatusesError) throw subStatusesError;
+
+      const statusesWithSubs = (statusesData || []).map(status => ({
+        ...status,
+        sub_statuses: (subStatusesData || []).filter(sub => sub.parent_status_id === status.id)
+      }));
+
+      setStatuses(statusesWithSubs);
+    } catch (error: any) {
+      console.error('Error loading statuses:', error);
+      onNotification('error', 'Failed to load statuses');
+    } finally {
+      setLoadingStatuses(false);
+    }
+  };
+
+  const addStatus = async () => {
+    if (!newStatusLabel.trim()) {
+      onNotification('error', 'Status label is required');
+      return;
+    }
+
+    try {
+      const statusKey = newStatusLabel.toLowerCase().replace(/\s+/g, '-');
+      const maxOrder = Math.max(...statuses.map(s => s.status_order), 0);
+
+      const { error } = await supabase
+        .from('ticket_statuses')
+        .insert([{
+          status_key: statusKey,
+          status_label: newStatusLabel,
+          status_order: maxOrder + 1,
+          is_active: true
+        }]);
+
+      if (error) throw error;
+
+      onNotification('success', 'Status added successfully');
+      setNewStatusLabel('');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to add status: ' + error.message);
+    }
+  };
+
+  const updateStatus = async (statusId: string, updates: Partial<TicketStatus>) => {
+    try {
+      const { error } = await supabase
+        .from('ticket_statuses')
+        .update(updates)
+        .eq('id', statusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Status updated successfully');
+      setEditingStatusId(null);
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to update status: ' + error.message);
+    }
+  };
+
+  const deleteStatus = async (statusId: string, statusLabel: string) => {
+    if (!confirm(`Are you sure you want to delete the status "${statusLabel}"?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('ticket_statuses')
+        .delete()
+        .eq('id', statusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Status deleted successfully');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to delete status: ' + error.message);
+    }
+  };
+
+  const moveStatus = async (statusId: string, direction: 'up' | 'down') => {
+    const currentIndex = statuses.findIndex(s => s.id === statusId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= statuses.length) return;
+
+    const currentStatus = statuses[currentIndex];
+    const targetStatus = statuses[targetIndex];
+
+    try {
+      await supabase
+        .from('ticket_statuses')
+        .update({ status_order: targetStatus.status_order })
+        .eq('id', currentStatus.id);
+
+      await supabase
+        .from('ticket_statuses')
+        .update({ status_order: currentStatus.status_order })
+        .eq('id', targetStatus.id);
+
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to reorder statuses: ' + error.message);
+    }
+  };
+
+  const addSubStatus = async (parentStatusId: string) => {
+    if (!newSubStatusLabel.trim()) {
+      onNotification('error', 'Sub-status label is required');
+      return;
+    }
+
+    try {
+      const subStatusKey = newSubStatusLabel.toLowerCase().replace(/\s+/g, '-');
+      const parentStatus = statuses.find(s => s.id === parentStatusId);
+      const maxOrder = Math.max(0, ...(parentStatus?.sub_statuses?.map(s => s.sub_status_order) || []));
+
+      const { error } = await supabase
+        .from('ticket_sub_statuses')
+        .insert({
+          parent_status_id: parentStatusId,
+          sub_status_key: subStatusKey,
+          sub_status_label: newSubStatusLabel,
+          sub_status_order: maxOrder + 1,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      onNotification('success', 'Sub-status added successfully');
+      setNewSubStatusLabel('');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to add sub-status: ' + error.message);
+    }
+  };
+
+  const updateSubStatus = async (subStatusId: string, updates: Partial<TicketSubStatus>) => {
+    try {
+      const { error } = await supabase
+        .from('ticket_sub_statuses')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', subStatusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Sub-status updated successfully');
+      setEditingSubStatusId(null);
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to update sub-status: ' + error.message);
+    }
+  };
+
+  const deleteSubStatus = async (subStatusId: string, subStatusLabel: string) => {
+    if (!confirm(`Are you sure you want to delete the sub-status "${subStatusLabel}"?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('ticket_sub_statuses')
+        .delete()
+        .eq('id', subStatusId);
+
+      if (error) throw error;
+
+      onNotification('success', 'Sub-status deleted successfully');
+      loadStatuses();
+    } catch (error: any) {
+      onNotification('error', 'Failed to delete sub-status: ' + error.message);
+    }
+  };
 
   const handleChangeAdminPassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -399,6 +672,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
   // Define tabs based on user role
   const getAllTabs = () => [
+    { id: 'general', label: 'General', icon: Settings },
+    { id: 'statuses', label: 'Status Management', icon: List },
     { id: 'email', label: 'Email Settings', icon: Mail },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
@@ -409,16 +684,16 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
   const getAvailableTabs = () => {
     const allTabs = getAllTabs();
-    
+
     switch (userRole) {
       case 'admin':
         return allTabs; // Admin can see everything
       case 'technician':
-        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle'); // No user management, security, or recycle bin
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general' && tab.id !== 'statuses'); // No user management, security, recycle bin, general, or statuses
       case 'viewer':
         return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
       default:
-        return [allTabs[0]]; // Default to just email
+        return [allTabs[1]]; // Default to email
     }
   };
 
@@ -486,17 +761,17 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                        activeTab === tab.id 
-                          ? 'text-white' 
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${
+                        activeTab === tab.id
+                          ? 'text-white'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
-                      style={{ 
+                      style={{
                         backgroundColor: activeTab === tab.id ? PRIMARY : 'transparent'
                       }}
                     >
-                      <Icon size={18} />
-                      <span>{tab.label}</span>
+                      <Icon size={18} className="flex-shrink-0" />
+                      <span className="flex-1">{tab.label}</span>
                     </button>
                   );
                 })}
@@ -506,6 +781,318 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
           {/* Main Content */}
           <div className="lg:col-span-3">
+            {activeTab === 'general' && userRole === 'admin' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                  General Settings
+                </h3>
+
+                <div className="space-y-6">
+                  {/* Customer Number Start */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Customer Number Starting Point
+                    </label>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Set the starting number for customer IDs. New customers will be numbered starting from this value.
+                      Format: CG{customerNumberStart}
+                    </p>
+                    <input
+                      type="number"
+                      value={customerNumberStart}
+                      onChange={(e) => setCustomerNumberStart(e.target.value)}
+                      min="1"
+                      className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="100"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Example: If set to 100, the first customer will be CG100, second will be CG101, etc.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle size={16} className="text-yellow-600" />
+                      <h4 className="font-medium text-yellow-900">Important</h4>
+                    </div>
+                    <p className="text-sm text-yellow-800">
+                      This only affects new customers. Existing customer numbers will not change.
+                      Make sure this number is higher than your current highest customer number to avoid conflicts.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleSaveGeneralSettings}
+                    disabled={savingGeneralSettings}
+                    className="flex items-center gap-2 px-6 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                    style={{ backgroundColor: PRIMARY }}
+                  >
+                    <Settings size={16} />
+                    <span>{savingGeneralSettings ? 'Saving...' : 'Save Settings'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'statuses' && userRole === 'admin' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-6" style={{ color: SECONDARY }}>
+                    Ticket Status Management
+                  </h3>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Add New Status
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newStatusLabel}
+                        onChange={(e) => setNewStatusLabel(e.target.value)}
+                        placeholder="Enter status name"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                        style={{ focusRingColor: PRIMARY }}
+                        onKeyPress={(e) => e.key === 'Enter' && addStatus()}
+                      />
+                      <button
+                        onClick={addStatus}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Plus size={16} />
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {loadingStatuses ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: PRIMARY }}></div>
+                      <p className="text-gray-600">Loading statuses...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {statuses.map((status, index) => (
+                        <div key={status.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                          <div className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex flex-col gap-1">
+                              <button
+                                onClick={() => moveStatus(status.id, 'up')}
+                                disabled={index === 0}
+                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move Up"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                onClick={() => moveStatus(status.id, 'down')}
+                                disabled={index === statuses.length - 1}
+                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move Down"
+                              >
+                                ▼
+                              </button>
+                            </div>
+
+                            <button
+                              onClick={() => setExpandedStatusId(expandedStatusId === status.id ? null : status.id)}
+                              className="p-2 hover:bg-gray-100 rounded transition-colors"
+                              title={expandedStatusId === status.id ? "Collapse" : "Expand sub-statuses"}
+                            >
+                              {expandedStatusId === status.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </button>
+
+                            <div className="flex-1">
+                              {editingStatusId === status.id ? (
+                                <input
+                                  type="text"
+                                  value={editingStatusLabel}
+                                  onChange={(e) => setEditingStatusLabel(e.target.value)}
+                                  className="w-full px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:border-transparent outline-none"
+                                  style={{ focusRingColor: PRIMARY }}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateStatus(status.id, { status_label: editingStatusLabel });
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-gray-900">{status.status_label}</p>
+                                  {status.sub_statuses && status.sub_statuses.length > 0 && (
+                                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                                      {status.sub_statuses.length} sub-status{status.sub_statuses.length === 1 ? '' : 'es'}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {editingStatusId === status.id ? (
+                                <>
+                                  <button
+                                    onClick={() => updateStatus(status.id, { status_label: editingStatusLabel })}
+                                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingStatusId(null);
+                                      setEditingStatusLabel('');
+                                    }}
+                                    className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setEditingStatusId(status.id);
+                                      setEditingStatusLabel(status.status_label);
+                                    }}
+                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit3 size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteStatus(status.id, status.status_label)}
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Sub-statuses section */}
+                          {expandedStatusId === status.id && (
+                            <div className="bg-gray-50 border-t border-gray-200 p-4">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-3">Sub-statuses for {status.status_label}</h4>
+
+                              {/* Add new sub-status */}
+                              <div className="flex gap-2 mb-4">
+                                <input
+                                  type="text"
+                                  value={newSubStatusLabel}
+                                  onChange={(e) => setNewSubStatusLabel(e.target.value)}
+                                  placeholder="Add sub-status..."
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+                                  style={{ focusRingColor: PRIMARY }}
+                                  onKeyPress={(e) => e.key === 'Enter' && addSubStatus(status.id)}
+                                />
+                                <button
+                                  onClick={() => addSubStatus(status.id)}
+                                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-white font-medium transition-colors text-sm"
+                                  style={{ backgroundColor: PRIMARY }}
+                                >
+                                  <Plus size={14} />
+                                  Add
+                                </button>
+                              </div>
+
+                              {/* Sub-status list */}
+                              {status.sub_statuses && status.sub_statuses.length > 0 ? (
+                                <div className="space-y-2">
+                                  {status.sub_statuses.map((subStatus) => (
+                                    <div key={subStatus.id} className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg">
+                                      <div className="flex-1">
+                                        {editingSubStatusId === subStatus.id ? (
+                                          <input
+                                            type="text"
+                                            value={editingSubStatusLabel}
+                                            onChange={(e) => setEditingSubStatusLabel(e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:border-transparent outline-none text-sm"
+                                            style={{ focusRingColor: PRIMARY }}
+                                            onKeyPress={(e) => {
+                                              if (e.key === 'Enter') {
+                                                updateSubStatus(subStatus.id, { sub_status_label: editingSubStatusLabel });
+                                              }
+                                            }}
+                                            autoFocus
+                                          />
+                                        ) : (
+                                          <div>
+                                            <p className="text-sm font-medium text-gray-900">{subStatus.sub_status_label}</p>
+                                            <p className="text-xs text-gray-500">{subStatus.sub_status_key}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        {editingSubStatusId === subStatus.id ? (
+                                          <>
+                                            <button
+                                              onClick={() => updateSubStatus(subStatus.id, { sub_status_label: editingSubStatusLabel })}
+                                              className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
+                                            >
+                                              Save
+                                            </button>
+                                            <button
+                                              onClick={() => {
+                                                setEditingSubStatusId(null);
+                                                setEditingSubStatusLabel('');
+                                              }}
+                                              className="px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-xs"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <button
+                                              onClick={() => {
+                                                setEditingSubStatusId(subStatus.id);
+                                                setEditingSubStatusLabel(subStatus.sub_status_label);
+                                              }}
+                                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                              title="Edit"
+                                            >
+                                              <Edit3 size={14} />
+                                            </button>
+                                            <button
+                                              onClick={() => deleteSubStatus(subStatus.id, subStatus.sub_status_label)}
+                                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                              title="Delete"
+                                            >
+                                              <Trash2 size={14} />
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500 italic">No sub-statuses added yet</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Status Information</h4>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    <p><strong>In Progress:</strong> When a ticket is "In Progress", you can set internal statuses: Waiting for Part, Repairing, or Outsourced</p>
+                    <p><strong>Pending Customer Action:</strong> When a ticket is "Pending Customer Action", you can specify: Collect or Call Us Back</p>
+                    <p><strong>Order:</strong> Use the up/down arrows to change the order statuses appear in dropdowns</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'email' && (
               <div className="space-y-6">
                 {/* Email Connection Status */}
@@ -935,44 +1522,44 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     Add New User
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                      <input
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                        style={{ focusRingColor: PRIMARY }}
-                        placeholder="user@example.com"
-                      />
+                  <div className="space-y-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
+                        <input
+                          type="email"
+                          value={newUserEmail}
+                          onChange={(e) => setNewUserEmail(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                          placeholder="user@example.com"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Role</label>
+                        <select
+                          value={newUserRole}
+                          onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'technician' | 'viewer')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                        >
+                          <option value="technician">Technician</option>
+                          <option value="admin">Admin</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                      </div>
                     </div>
-                    
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Role</label>
-                      <select
-                        value={newUserRole}
-                        onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'technician' | 'viewer')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                        style={{ focusRingColor: PRIMARY }}
-                      >
-                        <option value="technician">Technician</option>
-                        <option value="admin">Admin</option>
-                        <option value="viewer">Viewer</option>
-                      </select>
-                    </div>
-                    
-                    <div className="flex items-end">
-                      <button
-                        onClick={createUser}
-                        disabled={!newUserEmail.trim()}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
-                        style={{ backgroundColor: PRIMARY }}
-                      >
-                        <Plus size={16} />
-                        <span>Add User</span>
-                      </button>
-                    </div>
+
+                    <button
+                      onClick={createUser}
+                      disabled={!newUserEmail.trim()}
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: PRIMARY }}
+                    >
+                      <Plus size={16} />
+                      <span>Add User</span>
+                    </button>
                   </div>
                   
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1042,7 +1629,15 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                               <option value="technician">Technician</option>
                               <option value="viewer">Viewer</option>
                             </select>
-                            
+
+                            <button
+                              onClick={() => resetUserPassword(user.id, user.email)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Reset Password"
+                            >
+                              <KeyRound size={16} />
+                            </button>
+
                             <button
                               onClick={() => deleteUser(user.id, user.email)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

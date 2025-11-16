@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface UserManagementRequest {
-  action: 'list' | 'create' | 'update' | 'delete';
+  action: 'list' | 'create' | 'update' | 'delete' | 'reset-password';
   email?: string;
   role?: 'admin' | 'technician' | 'viewer';
   userId?: string;
@@ -135,6 +135,30 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, message: 'User deleted successfully' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'reset-password': {
+        if (!userId) {
+          throw new Error('User ID is required for password reset');
+        }
+
+        // Generate a new temporary password
+        const newTempPassword = 'TempPassword' + Math.floor(Math.random() * 10000) + '!';
+
+        const { error } = await supabase.auth.admin.updateUserById(userId, {
+          password: newTempPassword
+        });
+
+        if (error) throw error;
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Password reset successfully',
+            tempPassword: newTempPassword
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

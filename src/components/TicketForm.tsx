@@ -79,7 +79,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
       const ticketData = {
         ...formData,
         ticket_number: generateTicketNumber(),
-        status: 'received'
+        status: 'in-transit'
       };
 
       const { data, error } = await supabase

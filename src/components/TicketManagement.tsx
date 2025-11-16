@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CreditCard as Edit3, Save, X, Plus, Mail, FileText, Calendar, DollarSign, AlertTriangle, Clock, User, Laptop, Hash, MessageSquare, Send, Paperclip, Download, Trash2, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { RepairTicket, TicketNote, TicketEmail, Customer } from '../lib/supabase';
+import type { RepairTicket, TicketNote, TicketEmail, Customer, TicketStatus } from '../lib/supabase';
+import { loadStatuses as loadStatusesUtil, getSubStatusLabel } from '../lib/statusUtils';
 
 interface TicketManagementProps {
   ticket: RepairTicket;
@@ -19,6 +20,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
   const [emails, setEmails] = useState<TicketEmail[]>([]);
+  const [statuses, setStatuses] = useState<TicketStatus[]>([]);
   const [newNote, setNewNote] = useState('');
   const [noteType, setNoteType] = useState<'internal' | 'customer'>('internal');
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -35,17 +37,30 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
     serial_number: ticket.serial_number || '',
     issue_description: ticket.issue_description || '',
     status: ticket.status,
+    internal_status: ticket.internal_status || '',
+    outsourced_to: ticket.outsourced_to || '',
+    pending_customer_action_type: ticket.pending_customer_action_type || '',
     priority: ticket.priority || 'medium',
     estimated_cost: ticket.estimated_cost || 0,
     actual_cost: ticket.actual_cost || 0,
-    estimated_completion: ticket.estimated_completion ? 
+    estimated_completion: ticket.estimated_completion ?
       new Date(ticket.estimated_completion).toISOString().slice(0, 16) : '',
     repair_notes: ticket.repair_notes || ''
   });
 
   useEffect(() => {
     loadTicketDetails();
+    loadStatuses();
   }, [ticket.id]);
+
+  const loadStatuses = async () => {
+    try {
+      const data = await loadStatusesUtil();
+      setStatuses(data);
+    } catch (error) {
+      console.error('Error loading statuses:', error);
+    }
+  };
 
   const loadTicketDetails = async () => {
     try {
@@ -178,10 +193,11 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'in-transit': return 'bg-indigo-100 text-indigo-800';
       case 'received': return 'bg-blue-100 text-blue-800';
       case 'in-progress': return 'bg-yellow-100 text-yellow-800';
+      case 'invoiced': return 'bg-teal-100 text-teal-800';
       case 'completed': return 'bg-green-100 text-green-800';
-      case 'waiting-parts': return 'bg-orange-100 text-orange-800';
       case 'unrepairable': return 'bg-red-100 text-red-800';
       case 'pending-customer-action': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -304,19 +320,85 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
                     >
-                      <option value="received">Received</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="waiting-parts">Waiting Parts</option>
-                      <option value="completed">Completed</option>
-                      <option value="unrepairable">Unrepairable</option>
-                      <option value="pending-customer-action">Pending Customer Action</option>
+                      {statuses.length === 0 ? (
+                        <>
+                          <option value="in-transit">In Transit</option>
+                          <option value="received">Received</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="invoiced">Invoiced</option>
+                          <option value="completed">Completed</option>
+                          <option value="unrepairable">Unrepairable</option>
+                          <option value="pending-customer-action">Pending Customer Action</option>
+                        </>
+                      ) : (
+                        statuses.map((status) => (
+                          <option key={status.id} value={status.status_key}>
+                            {status.status_label}
+                          </option>
+                        ))
+                      )}
                     </select>
                   ) : (
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
-                      {ticket.status.replace('-', ' ').toUpperCase()}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
+                        {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
+                      </span>
+                      {ticket.internal_status && (
+                        <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                          {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
+
+                {/* Sub-Status (Internal Status) */}
+                {(() => {
+                  const currentStatus = statuses.find(s => s.status_key === (isEditing ? editData.status : ticket.status));
+                  if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
+                    return (
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Sub-Status</label>
+                        {isEditing ? (
+                          <select
+                            value={editData.internal_status}
+                            onChange={(e) => setEditData({ ...editData, internal_status: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                            style={{ focusRingColor: PRIMARY }}
+                          >
+                            <option value="">Select...</option>
+                            {currentStatus.sub_statuses.map((subStatus) => (
+                              <option key={subStatus.id} value={subStatus.sub_status_key}>
+                                {subStatus.sub_status_label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-sm text-gray-900">
+                            {ticket.internal_status ? getSubStatusLabel(statuses, ticket.status, ticket.internal_status) : 'Not set'}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Outsourced To */}
+                {editData.internal_status === 'outsourced' && isEditing && (
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Outsourced To</label>
+                    <input
+                      type="text"
+                      value={editData.outsourced_to}
+                      onChange={(e) => setEditData({ ...editData, outsourced_to: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="Company or person name"
+                    />
+                  </div>
+                )}
+
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Priority</label>

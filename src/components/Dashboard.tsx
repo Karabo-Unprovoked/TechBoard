@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import type { Customer, RepairTicket } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
+import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
+import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
 import { CustomerForm } from './CustomerForm';
 import { TicketForm } from './TicketForm';
 import { TicketsView } from './TicketsView';
@@ -32,6 +33,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
+  const [statuses, setStatuses] = useState<TicketStatus[]>([]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -39,7 +42,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
   useEffect(() => {
     loadData();
+    loadUserRole();
+    loadStatusesData();
   }, []);
+
+  const loadStatusesData = async () => {
+    const data = await loadStatuses();
+    setStatuses(data);
+  };
+
+  const loadUserRole = async () => {
+    try {
+      const role = await getUserRole();
+      setUserRole(role as 'admin' | 'technician' | 'viewer');
+    } catch (error) {
+      console.error('Error loading user role:', error);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -110,22 +129,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     setCurrentView('manage-customer');
   };
 
-  const updateTicketStatus = async (ticketId: string, newStatus: string) => {
+  const updateTicketStatus = async (ticketId: string, newStatus: string, internalStatus?: string) => {
     try {
+      const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      if (internalStatus !== undefined) {
+        updateData.internal_status = internalStatus;
+      }
+
       const { error } = await supabase
         .from('repair_tickets')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', ticketId);
 
       if (error) throw error;
 
       // Update local state
-      setTickets(prev => prev.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status: newStatus, updated_at: new Date().toISOString() }
+      setTickets(prev => prev.map(ticket =>
+        ticket.id === ticketId
+          ? { ...ticket, ...updateData }
           : ticket
       ));
     } catch (error) {
@@ -133,15 +158,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     }
   };
 
-  // Calculate dashboard stats
-  const stats = {
+  // Calculate dashboard stats dynamically based on loaded statuses
+  const stats: any = {
     totalTickets: tickets.length,
-    pendingTickets: tickets.filter(t => t.status === 'received').length,
-    inProgressTickets: tickets.filter(t => t.status === 'in-progress').length,
-    completedTickets: tickets.filter(t => t.status === 'completed').length,
-    waitingPartsTickets: tickets.filter(t => t.status === 'waiting-parts').length,
-    unrepairableTickets: tickets.filter(t => t.status === 'unrepairable').length,
-    pendingCustomerTickets: tickets.filter(t => t.status === 'pending-customer-action').length,
     totalCustomers: customers.length,
     todayTickets: tickets.filter(t => {
       const today = new Date().toDateString();
@@ -149,6 +168,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     }).length,
     weeklyRevenue: tickets.filter(t => t.status === 'completed').length * 150 // Mock calculation
   };
+
+  // Dynamically add stats for each status
+  statuses.forEach(status => {
+    const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+    stats[statusKey] = tickets.filter(t => t.status === status.status_key).length;
+  });
+
+  // Always ensure standard status keys exist for backwards compatibility
+  stats.inTransitTickets = stats.intransitTickets || tickets.filter(t => t.status === 'in-transit').length;
+  stats.receivedTickets = stats.receivedTickets || tickets.filter(t => t.status === 'received').length;
+  stats.inProgressTickets = stats.inprogressTickets || tickets.filter(t => t.status === 'in-progress').length;
+  stats.invoicedTickets = stats.invoicedTickets || tickets.filter(t => t.status === 'invoiced').length;
+  stats.completedTickets = stats.completedTickets || tickets.filter(t => t.status === 'completed').length;
+  stats.unrepairableTickets = stats.unrepairableTickets || tickets.filter(t => t.status === 'unrepairable').length;
+  stats.pendingCustomerTickets = stats.pendingcustomeractionTickets || tickets.filter(t => t.status === 'pending-customer-action').length;
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,8 +194,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     return matchesSearch && matchesStatus;
   });
 
-  const PRIMARY = '#5d5d5d';
-  const SECONDARY = '#5d5d5d';
+  const PRIMARY = '#ffb400';
+  const SIDEBAR_BG = '#2d3748';
+  const ACCENT_BLUE = '#3b82f6';
+  const ACCENT_GREEN = '#10b981';
+  const ACCENT_ORANGE = '#f59e0b';
 
   return (
     <>
@@ -175,98 +212,98 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         className="min-h-screen flex"
         style={{
           fontFamily: 'Montserrat, sans-serif',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: '#f1f5f9',
         }}
       >
         {/* Left Sidebar */}
         <div
-          className="w-80 flex flex-col"
-          style={{ backgroundColor: PRIMARY }}
+          className="w-72 flex flex-col shadow-xl"
+          style={{ backgroundColor: SIDEBAR_BG }}
         >
           {/* Logo and Brand */}
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-8">
-              <img 
-                src="/FinalWhite.png" 
-                alt="Guardian Assist Logo" 
-                className="w-12 h-12"
+          <div className="p-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <img
+                src="/FinalWhite.png"
+                alt="Guardian Assist Logo"
+                className="w-10 h-10"
               />
               <div>
-                <h1 className="text-xl font-bold text-white">Guardian Assist</h1>
-                <p className="text-sm text-white/80">Computer Repair Management</p>
+                <h1 className="text-lg font-bold text-white">Guardian Assist</h1>
+                <p className="text-xs text-white/60">Repair Management</p>
               </div>
             </div>
           </div>
 
           {/* Navigation Menu */}
-          <div className="flex-1 px-6">
-            <nav className="space-y-2">
+          <div className="flex-1 px-4 py-6">
+            <nav className="space-y-1">
               <button
                 onClick={() => setCurrentView('dashboard')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'dashboard' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'dashboard' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <BarChart3 size={20} />
-                <span>Dashboard</span>
+                <BarChart3 size={18} />
+                <span className="text-sm">Dashboard</span>
               </button>
               <button
                 onClick={() => setCurrentView('tickets')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'tickets' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'tickets' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Wrench size={20} />
-                <span>All Tickets</span>
+                <Wrench size={18} />
+                <span className="text-sm">All Tickets</span>
               </button>
               <button
                 onClick={() => setCurrentView('customers')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'customers' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'customers' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Users size={20} />
-                <span>All Customers</span>
+                <Users size={18} />
+                <span className="text-sm">All Customers</span>
               </button>
               <button
                 onClick={onTrackCustomer}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors font-medium"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all font-medium"
               >
-                <Search size={20} />
-                <span>Track Repair</span>
+                <Search size={18} />
+                <span className="text-sm">Track Repair</span>
               </button>
               <button
                 onClick={() => setCurrentView('settings')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'settings' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'settings' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Settings size={20} />
-                <span>Settings</span>
+                <Settings size={18} />
+                <span className="text-sm">Settings</span>
               </button>
               <button
                 onClick={() => setCurrentView('profile')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  currentView === 'profile' ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'profile' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <User size={20} />
-                <span>My Profile</span>
+                <User size={18} />
+                <span className="text-sm">My Profile</span>
               </button>
             </nav>
           </div>
 
           {/* Footer */}
-          <div className="p-6">
+          <div className="p-4 border-t border-white/10">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-medium"
             >
-              <LogOut size={20} />
-              <span>Logout</span>
+              <LogOut size={18} />
+              <span className="text-sm">Logout</span>
             </button>
-            <p className="text-xs text-white/60 text-center mt-4">
-              © 2025 Guardian Assist. All rights reserved.
+            <p className="text-xs text-white/40 text-center mt-3">
+              © 2025 Guardian Assist
             </p>
           </div>
         </div>
@@ -274,10 +311,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         {/* Right Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <div className="bg-white shadow-sm border-b border-gray-100 px-6 py-4">
+          <div className="bg-white/70 backdrop-blur-sm border-b border-gray-200/50 px-8 py-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
+                <h2 className="text-2xl font-bold text-gray-800">
                   {currentView === 'dashboard' && 'Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'customers' && 'Customer Management'}
@@ -289,8 +326,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'settings' && 'System Settings'}
                   {currentView === 'profile' && 'My Profile'}
                 </h2>
-                <p className="text-gray-600">
-                  {currentView === 'dashboard' && 'Monitor and manage all repair operations'}
+                <p className="text-sm text-gray-500 mt-1">
+                  {currentView === 'dashboard' && 'Welcome back! Here\'s your overview'}
                   {currentView === 'tickets' && 'Manage and track repair tickets'}
                   {currentView === 'customers' && 'View and manage customer information'}
                   {currentView === 'new-customer' && 'Add a new customer to the system'}
@@ -323,12 +360,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     style={{ focusRingColor: PRIMARY }}
                   >
                     <option value="all">All Status</option>
-                    <option value="received">Received</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="waiting-parts">Waiting Parts</option>
-                    <option value="completed">Completed</option>
-                    <option value="unrepairable">Unrepairable</option>
-                    <option value="pending-customer-action">Pending Customer Action</option>
+                    {statuses.map((status) => (
+                      <option key={status.id} value={status.status_key}>
+                        {status.status_label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
@@ -336,7 +372,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-8 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
@@ -348,24 +384,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <>
                 {currentView === 'dashboard' && (
                   <div className="space-y-6">
-                    {/* Quick Action Buttons */}
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => setCurrentView('new-customer')}
-                        className="flex items-center gap-2 px-6 py-3 bg-white border-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm"
-                        style={{ borderColor: PRIMARY, color: PRIMARY }}
-                      >
-                        <Users size={20} />
-                        <span>New Customer</span>
-                      </button>
-                      <button
-                        onClick={() => setCurrentView('new-ticket')}
-                        className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition-colors shadow-sm"
-                        style={{ backgroundColor: PRIMARY }}
-                      >
-                        <Plus size={20} />
-                        <span>New Ticket</span>
-                      </button>
+                    {/* Welcome Section */}
+                    <div
+                      className="rounded-2xl p-8 text-white shadow-lg"
+                      style={{
+                        background: `linear-gradient(135deg, ${PRIMARY} 0%, #ff9500 100%)`
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-2xl font-bold mb-2">Hello, Welcome back</h3>
+                          <p className="text-orange-50 text-sm">Your dashboard is updated with the latest information</p>
+                        </div>
+                        {userRole !== 'viewer' && (
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setCurrentView('new-customer')}
+                              className="flex items-center gap-2 px-5 py-3 bg-white/20 backdrop-blur-sm rounded-xl font-semibold hover:bg-white/30 transition-all"
+                            >
+                              <Users size={18} />
+                              <span className="text-sm">New Customer</span>
+                            </button>
+                            <button
+                              onClick={() => setCurrentView('new-ticket')}
+                              className="flex items-center gap-2 px-5 py-3 bg-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                              style={{ color: PRIMARY }}
+                            >
+                              <Plus size={18} />
+                              <span className="text-sm">New Ticket</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Supabase Configuration Warning */}
@@ -387,88 +437,122 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     )}
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      <StatCard
-                        title="Total Tickets"
-                        value={stats.totalTickets}
-                        change={`+${stats.todayTickets} today`}
-                        changeType="positive"
-                        icon={Wrench}
-                        color="blue"
-                      />
-                      <StatCard
-                        title="In Progress"
-                        value={stats.inProgressTickets}
-                        change={`${Math.round((stats.inProgressTickets / stats.totalTickets) * 100)}% of total`}
-                        changeType="neutral"
-                        icon={Clock}
-                        color="orange"
-                      />
-                      <StatCard
-                        title="Completed"
-                        value={stats.completedTickets}
-                        change={`${Math.round((stats.completedTickets / stats.totalTickets) * 100)}% success rate`}
-                        changeType="positive"
-                        icon={CheckCircle}
-                        color="green"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="bg-blue-50 p-3 rounded-xl">
+                            <Wrench size={24} className="text-blue-600" />
+                          </div>
+                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                            +{stats.todayTickets} today
+                          </span>
+                        </div>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Tickets</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.totalTickets}</p>
+                      </div>
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="bg-orange-50 p-3 rounded-xl">
+                            <Clock size={24} className="text-orange-600" />
+                          </div>
+                          <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                            {stats.totalTickets > 0 ? Math.round((stats.inProgressTickets / stats.totalTickets) * 100) : 0}%
+                          </span>
+                        </div>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">In Progress</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.inProgressTickets}</p>
+                      </div>
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="bg-green-50 p-3 rounded-xl">
+                            <CheckCircle size={24} className="text-green-600" />
+                          </div>
+                          <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                            {stats.totalTickets > 0 ? Math.round((stats.completedTickets / stats.totalTickets) * 100) : 0}%
+                          </span>
+                        </div>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Completed</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.completedTickets}</p>
+                      </div>
                     </div>
 
-                    {/* Quick Actions */}
+                    {/* Recent Tickets with Status Updates */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
-                        {/* Recent Tickets with Status Updates */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                           <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900">Recent Tickets</h3>
+                            <h3 className="text-lg font-bold text-gray-900">Latest Updates</h3>
                             <button
                               onClick={() => setCurrentView('tickets')}
-                              className="text-sm font-medium hover:underline"
-                              style={{ color: PRIMARY }}
+                              className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                             >
-                              View All
+                              View All →
                             </button>
                           </div>
-                          
-                          <div className="space-y-4">
+
+                          <div className="space-y-3">
                             {tickets.slice(0, 5).map((ticket) => (
-                              <div key={ticket.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                              <div key={ticket.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="flex items-center gap-3">
-                                    <span className="font-medium text-gray-900">{ticket.ticket_number}</span>
+                                    <div className="bg-gray-100 px-3 py-1 rounded-lg">
+                                      <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
+                                    </div>
                                     <span className="text-sm text-gray-600">
                                       {ticket.customer?.name} - {ticket.device_type}
                                     </span>
                                   </div>
                                   <button
                                     onClick={() => handleViewLabel(ticket)}
-                                    className="p-1 rounded hover:bg-gray-200 transition-colors"
-                                    style={{ color: PRIMARY }}
+                                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
                                   >
                                     <Eye size={16} />
                                   </button>
                                 </div>
-                                
-                                <div className="flex items-center justify-between">
-                                  <select
-                                    value={ticket.status}
-                                    onChange={(e) => updateTicketStatus(ticket.id, e.target.value)}
-                                    className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
-                                    style={{ focusRingColor: PRIMARY }}
-                                  >
-                                    <option value="received">Received</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="waiting-parts">Waiting Parts</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="unrepairable">Unrepairable</option>
-                                    <option value="pending-customer-action">Pending Customer Action</option>
-                                  </select>
-                                  
-                                  <div className="text-right">
-                                    <p className="text-xs text-gray-500">
-                                      {new Date(ticket.created_at).toLocaleDateString()}
-                                    </p>
+
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <select
+                                      value={ticket.status}
+                                      onChange={(e) => {
+                                        updateTicketStatus(ticket.id, e.target.value, '');
+                                      }}
+                                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
+                                    >
+                                      {statuses.map((status) => (
+                                        <option key={status.id} value={status.status_key}>
+                                          {status.status_label}
+                                        </option>
+                                      ))}
+                                    </select>
+
+                                    <div className="text-right">
+                                      <p className="text-xs text-gray-400 font-medium">
+                                        {new Date(ticket.created_at).toLocaleDateString()}
+                                      </p>
+                                    </div>
                                   </div>
+
+                                  {(() => {
+                                    const currentStatus = statuses.find(s => s.status_key === ticket.status);
+                                    if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
+                                      return (
+                                        <select
+                                          value={ticket.internal_status || ''}
+                                          onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
+                                          className="px-2 py-1 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                        >
+                                          <option value="">—</option>
+                                          {currentStatus.sub_statuses.map((subStatus) => (
+                                            <option key={subStatus.id} value={subStatus.sub_status_key}>
+                                              {subStatus.sub_status_label}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                               </div>
                             ))}
@@ -476,83 +560,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         </div>
                       </div>
 
-                      {/* Quick Actions Panel */}
-                      <div className="space-y-6">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                          <div className="space-y-3">
-                            <button
-                              onClick={() => setCurrentView('new-ticket')}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg text-white font-medium transition-colors"
-                              style={{ backgroundColor: PRIMARY }}
-                            >
-                              <Plus size={18} />
-                              <span>New Ticket</span>
-                            </button>
-                            <button
-                              onClick={() => setCurrentView('new-customer')}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
-                            >
-                              <Users size={18} />
-                              <span>Add Customer</span>
-                            </button>
-                            <button
-                              onClick={onTrackCustomer}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
-                            >
-                              <Search size={18} />
-                              <span>Track Device</span>
-                            </button>
-                          </div>
-                        </div>
+                      {/* Status Overview - Dynamic based on database */}
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
+                        <div className="space-y-4">
+                          {statuses.map((status) => {
+                            const colors = getStatusDisplayColors(status.status_key);
+                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+                            const count = stats[statusKey] || 0;
 
-                        {/* Status Overview */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Overview</h3>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Received</span>
+                            return (
+                              <div key={status.id} className="flex items-center justify-between group">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center group-hover:${colors.bg.replace('50', '100')} transition-colors`}>
+                                    <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
+                                  </div>
+                                  <span className="text-sm text-gray-600 font-medium">{status.status_label}</span>
+                                </div>
+                                <span className="font-bold text-gray-900">{count}</span>
                               </div>
-                              <span className="font-medium">{stats.pendingTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">In Progress</span>
-                              </div>
-                              <span className="font-medium">{stats.inProgressTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Waiting Parts</span>
-                              </div>
-                              <span className="font-medium">{stats.waitingPartsTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Completed</span>
-                              </div>
-                              <span className="font-medium">{stats.completedTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Unrepairable</span>
-                              </div>
-                              <span className="font-medium">{stats.unrepairableTickets}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Pending Customer</span>
-                              </div>
-                              <span className="font-medium">{stats.pendingCustomerTickets}</span>
-                            </div>
-                          </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -576,12 +604,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     onNotification={onNotification}
                   />
                 )}
-                {currentView === 'new-customer' && (
+                {currentView === 'new-customer' && userRole !== 'viewer' && (
                   <CustomerForm onCustomerCreated={handleCustomerCreated} />
                 )}
-                {currentView === 'new-ticket' && (
-                  <TicketForm 
-                    customers={customers} 
+                {currentView === 'new-ticket' && userRole !== 'viewer' && (
+                  <TicketForm
+                    customers={customers}
                     onTicketCreated={handleTicketCreated}
                   />
                 )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2 } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2, LayoutGrid, List } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
 import { AdminPasswordModal } from './AdminPasswordModal';
@@ -20,6 +20,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'customer_number'>('date');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -162,7 +163,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header with search and filter */}
+      {/* Header with search, filter, and view toggle */}
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
@@ -170,13 +171,41 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           </h3>
           <p className="text-sm text-gray-600">Manage customer information and view repair history</p>
         </div>
-        <button
-          onClick={onRefresh}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-        >
-          <RefreshCw size={16} />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-white shadow-sm'
+                  : 'hover:bg-gray-200'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid size={16} className={viewMode === 'grid' ? 'text-gray-900' : 'text-gray-600'} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white shadow-sm'
+                  : 'hover:bg-gray-200'
+              }`}
+              title="List View"
+            >
+              <List size={16} className={viewMode === 'list' ? 'text-gray-900' : 'text-gray-600'} />
+            </button>
+          </div>
+
+          <button
+            onClick={onRefresh}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw size={16} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Search and Sort Controls */}
@@ -215,7 +244,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
             {searchTerm ? 'Try adjusting your search terms' : 'Add a new customer to get started'}
           </p>
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredCustomers.map((customer) => (
             <div key={customer.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
@@ -303,6 +332,93 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Referral</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Added</th>
+                <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredCustomers.map((customer) => (
+                <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-semibold text-gray-900">{customer.customer_number}</div>
+                    <div className="text-sm text-gray-600">{customer.first_name} {customer.last_name}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {customer.email && (
+                      <div className="text-sm text-gray-900 truncate max-w-xs">{customer.email}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {customer.phone && (
+                      <div className="text-sm text-gray-900">{customer.phone}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {customer.gender && (
+                      <div className="text-sm text-gray-900">{customer.gender}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {customer.referral_source && (
+                      <div className="text-sm text-gray-900">{customer.referral_source}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-600">{formatDate(customer.created_at)}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => onViewCustomer(customer)}
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        style={{ color: PRIMARY }}
+                        title="View Customer Details"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      {deleteConfirm === customer.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleDeleteClick(customer.id)}
+                            disabled={deleting}
+                            className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(null)}
+                            disabled={deleting}
+                            className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setDeleteConfirm(customer.id)}
+                          className="p-2 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+                          title="Delete Customer"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

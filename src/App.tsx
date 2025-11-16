@@ -29,6 +29,14 @@ function App() {
     // Check if user is already logged in
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#track-')) {
+        setAppState('track-customer');
+        setLoading(false);
+        return;
+      }
+
       if (session) {
         setIsAuthenticated(true);
         setAppState('dashboard');
