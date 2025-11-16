@@ -36,6 +36,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -45,11 +46,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     loadData();
     loadUserRole();
     loadStatusesData();
+    loadPendingRequests();
   }, []);
 
   const loadStatusesData = async () => {
     const data = await loadStatuses();
     setStatuses(data);
+  };
+
+  const loadPendingRequests = async () => {
+    try {
+      if (!isSupabaseConfigured) return;
+
+      const { data, error } = await supabase
+        .from('registration_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      setPendingRequests(data?.length || 0);
+    } catch (error) {
+      console.error('Error loading pending requests:', error);
+    }
   };
 
   const loadUserRole = async () => {
@@ -458,31 +476,55 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           </span>
                         </div>
                         <h4 className="text-gray-600 text-sm font-medium mb-1">Total Tickets</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.totalTickets}</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-3">{stats.totalTickets}</p>
+
+                        {/* Status Breakdown */}
+                        <div className="space-y-2 pt-3 border-t border-gray-100">
+                          {statuses.slice(0, 3).map((status) => {
+                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+                            const count = stats[statusKey] || 0;
+                            const percentage = stats.totalTickets > 0 ? Math.round((count / stats.totalTickets) * 100) : 0;
+                            const colors = getStatusDisplayColors(status.status_key);
+
+                            return (
+                              <div key={status.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
+                                  <span className="text-xs text-gray-600">{status.status_label}</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-900">{percentage}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('registration-requests')}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="bg-orange-50 p-3 rounded-xl">
-                            <Clock size={24} className="text-orange-600" />
+                            <FileText size={24} className="text-orange-600" />
                           </div>
-                          <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                            {stats.totalTickets > 0 ? Math.round((stats.inProgressTickets / stats.totalTickets) * 100) : 0}%
-                          </span>
+                          {pendingRequests > 0 && (
+                            <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                              Needs Review
+                            </span>
+                          )}
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">In Progress</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.inProgressTickets}</p>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Pending Registrations</h4>
+                        <p className="text-3xl font-bold text-gray-900">{pendingRequests}</p>
+                        <p className="text-xs text-gray-500 mt-2">Click to review requests</p>
                       </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('customers')}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="bg-green-50 p-3 rounded-xl">
-                            <CheckCircle size={24} className="text-green-600" />
+                            <Users size={24} className="text-green-600" />
                           </div>
                           <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                            {stats.totalTickets > 0 ? Math.round((stats.completedTickets / stats.totalTickets) * 100) : 0}%
+                            Active
                           </span>
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Completed</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.completedTickets}</p>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Customers</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers}</p>
+                        <p className="text-xs text-gray-500 mt-2">Click to view all customers</p>
                       </div>
                     </div>
 
