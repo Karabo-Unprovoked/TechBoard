@@ -8,12 +8,14 @@ interface TicketManagementProps {
   ticket: RepairTicket;
   onBack: () => void;
   onTicketUpdated: (ticket: RepairTicket) => void;
+  onTicketDeleted?: () => void;
 }
 
-export const TicketManagement: React.FC<TicketManagementProps> = ({ 
-  ticket: initialTicket, 
-  onBack, 
-  onTicketUpdated 
+export const TicketManagement: React.FC<TicketManagementProps> = ({
+  ticket: initialTicket,
+  onBack,
+  onTicketUpdated,
+  onTicketDeleted
 }) => {
   const [ticket, setTicket] = useState<RepairTicket>(initialTicket);
   const [isEditing, setIsEditing] = useState(false);
@@ -25,6 +27,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
   const [noteType, setNoteType] = useState<'internal' | 'customer'>('internal');
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showVoidModal, setShowVoidModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [emailData, setEmailData] = useState({
     type: 'status_update',
     subject: '',
@@ -255,10 +258,19 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
           </div>
           
           <div className="flex items-center gap-3">
+            {!isEditing && ticket.status === 'void' && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+              >
+                <Trash2 size={16} />
+                <span>Delete Ticket</span>
+              </button>
+            )}
             {!isEditing && ticket.status !== 'void' && (
               <button
                 onClick={() => setShowVoidModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition-colors"
               >
                 <Ban size={16} />
                 <span>Void Ticket</span>
@@ -914,6 +926,63 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Voiding...' : 'Void Ticket'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Ticket Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 rounded-full">
+                  <Trash2 size={24} className="text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold" style={{ color: SECONDARY }}>
+                  Delete Ticket
+                </h3>
+              </div>
+
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to permanently delete this ticket? This action cannot be undone. All notes, emails, and attachments associated with this ticket will also be deleted.
+              </p>
+
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const { error } = await supabase
+                        .from('repair_tickets')
+                        .delete()
+                        .eq('id', ticket.id);
+
+                      if (error) throw error;
+
+                      setShowDeleteModal(false);
+                      if (onTicketDeleted) {
+                        onTicketDeleted();
+                      }
+                      onBack();
+                    } catch (error) {
+                      console.error('Error deleting ticket:', error);
+                      alert('Failed to delete ticket. Please try again.');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Deleting...' : 'Delete Ticket'}
                 </button>
               </div>
             </div>
