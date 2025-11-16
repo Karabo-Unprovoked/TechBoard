@@ -838,12 +838,9 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
             {activeTab === 'statuses' && userRole === 'admin' && (
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                  <h3 className="text-lg font-semibold mb-6" style={{ color: SECONDARY }}>
                     Ticket Status Management
                   </h3>
-                  <p className="text-sm text-gray-600 mb-6">
-                    Manage the available statuses for repair tickets. You can add, edit, reorder, and remove statuses as needed.
-                  </p>
 
                   <div className="mb-6">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
@@ -923,9 +920,13 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                                   autoFocus
                                 />
                               ) : (
-                                <div>
+                                <div className="flex items-center gap-2">
                                   <p className="font-medium text-gray-900">{status.status_label}</p>
-                                  <p className="text-xs text-gray-500">{status.status_key} {status.sub_statuses && status.sub_statuses.length > 0 && `• ${status.sub_statuses.length} sub-status${status.sub_statuses.length === 1 ? '' : 'es'}`}</p>
+                                  {status.sub_statuses && status.sub_statuses.length > 0 && (
+                                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                                      {status.sub_statuses.length} sub-status{status.sub_statuses.length === 1 ? '' : 'es'}
+                                    </span>
+                                  )}
                                 </div>
                               )}
                             </div>
