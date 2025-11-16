@@ -181,7 +181,8 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
           body: {
             to: request.email,
             subject: 'Registration Approved - Welcome!',
-            html: `
+            ticketNumber: nextTicketNumber,
+            content: `
               <h2>Registration Approved</h2>
               <p>Dear ${request.first_name} ${request.last_name},</p>
               <p>Your registration has been approved! We have created a customer profile and repair ticket for you.</p>
@@ -242,7 +243,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
           body: {
             to: selectedRequest.email,
             subject: 'Registration Update',
-            html: `
+            content: `
               <h2>Registration Update</h2>
               <p>Dear ${selectedRequest.first_name} ${selectedRequest.last_name},</p>
               <p>Thank you for your registration. Unfortunately, we are unable to proceed with your request at this time.</p>
