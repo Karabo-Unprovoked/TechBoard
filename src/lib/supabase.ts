@@ -80,6 +80,7 @@ export type RepairTicket = {
   serial_number?: string;
   issue_description?: string;
   device_accessories?: string[];
+  device_images?: string[];
   status: string;
   internal_status?: string;
   outsourced_to?: string;

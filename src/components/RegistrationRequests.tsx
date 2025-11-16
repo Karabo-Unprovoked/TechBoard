@@ -157,6 +157,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
           issue_description: request.laptop_problem,
           device_accessories: request.device_includes,
           repair_notes: request.additional_notes,
+          device_images: request.device_images,
           status: 'pending'
         })
         .select()

@@ -621,6 +621,30 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* Device Images */}
+              {ticket.device_images && ticket.device_images.length > 0 && (
+                <div className="mt-6">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Device Images</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {ticket.device_images.map((imageUrl, index) => (
+                      <a
+                        key={index}
+                        href={imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Device ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-300 hover:opacity-75 transition-opacity cursor-pointer"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Notes Section */}
