@@ -68,6 +68,20 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
   const loadTicketDetails = async () => {
     try {
+      // Load ticket with customer data
+      const { data: ticketData } = await supabase
+        .from('repair_tickets')
+        .select(`
+          *,
+          customer:customers(*)
+        `)
+        .eq('id', ticket.id)
+        .single();
+
+      if (ticketData) {
+        setTicket(ticketData);
+      }
+
       // Load notes
       const { data: notesData } = await supabase
         .from('ticket_notes')
