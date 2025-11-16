@@ -276,6 +276,18 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
     }
   };
 
+  const getReferralSourceLabel = (source: string) => {
+    const labels: Record<string, string> = {
+      'google': 'Google Search',
+      'facebook': 'Facebook',
+      'instagram': 'Instagram',
+      'friend': 'Friend/Family',
+      'repeat': 'Repeat Customer',
+      'other': 'Other'
+    };
+    return labels[source] || source;
+  };
+
   return (
     <>
       <link
@@ -431,8 +443,8 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                     <div className="flex items-start gap-3">
                       <UserIcon size={16} className="text-gray-400 mt-1" />
                       <div>
-                        <p className="text-sm font-medium text-gray-700">Referral Source</p>
-                        <p className="text-sm text-gray-600">{request.referral_source}</p>
+                        <p className="text-sm font-medium text-gray-700">How They Found Us</p>
+                        <p className="text-sm text-gray-600">{getReferralSourceLabel(request.referral_source)}</p>
                       </div>
                     </div>
                   )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash, Users } from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash, Users, MapPin, MessageCircle, Truck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
@@ -20,12 +20,21 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [customerTickets, setCustomerTickets] = useState<RepairTicket[]>([]);
 
   const [editData, setEditData] = useState({
+    title: customer.title || '',
     first_name: customer.first_name,
     last_name: customer.last_name,
     email: customer.email || '',
     phone: customer.phone || '',
     gender: customer.gender || '',
-    referral_source: customer.referral_source || ''
+    referral_source: customer.referral_source || '',
+    preferred_contact_method: customer.preferred_contact_method || 'email',
+    needs_collection: customer.needs_collection || false,
+    street_address: customer.street_address || '',
+    address_line_2: customer.address_line_2|| '',
+    city: customer.city || '',
+    province: customer.province || '',
+    postal_code: customer.postal_code || '',
+    country: customer.country || 'South Africa'
   });
 
   useEffect(() => {
@@ -144,12 +153,21 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   onClick={() => {
                     setIsEditing(false);
                     setEditData({
+                      title: customer.title || '',
                       first_name: customer.first_name,
                       last_name: customer.last_name,
                       email: customer.email || '',
                       phone: customer.phone || '',
                       gender: customer.gender || '',
-                      referral_source: customer.referral_source || ''
+                      referral_source: customer.referral_source || '',
+                      preferred_contact_method: customer.preferred_contact_method || 'email',
+                      needs_collection: customer.needs_collection || false,
+                      street_address: customer.street_address || '',
+                      address_line_2: customer.address_line_2 || '',
+                      city: customer.city || '',
+                      province: customer.province || '',
+                      postal_code: customer.postal_code || '',
+                      country: customer.country || 'South Africa'
                     });
                   }}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
@@ -179,6 +197,30 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       {customer.customer_number}
                     </span>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Title</label>
+                  {isEditing ? (
+                    <select
+                      value={editData.title}
+                      onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                    >
+                      <option value="">Select title</option>
+                      <option value="Mr">Mr</option>
+                      <option value="Mrs">Mrs</option>
+                      <option value="Ms">Ms</option>
+                      <option value="Dr">Dr</option>
+                      <option value="Prof">Prof</option>
+                    </select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-gray-400" />
+                      <span className="text-gray-900">{customer.title || 'Not specified'}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -281,7 +323,28 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">How did you know about us?</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Contact Method</label>
+                  {isEditing ? (
+                    <select
+                      value={editData.preferred_contact_method}
+                      onChange={(e) => setEditData({ ...editData, preferred_contact_method: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                    >
+                      <option value="email">Email</option>
+                      <option value="phone">Phone</option>
+                      <option value="whatsapp">WhatsApp</option>
+                    </select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <MessageCircle size={16} className="text-gray-400" />
+                      <span className="text-gray-900">{customer.preferred_contact_method || 'email'}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">How did you hear about us?</label>
                   {isEditing ? (
                     <select
                       value={editData.referral_source}
@@ -290,19 +353,41 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       style={{ focusRingColor: PRIMARY }}
                     >
                       <option value="">Select source</option>
-                      <option value="Friend/Family">Friend/Family</option>
-                      <option value="Google Search">Google Search</option>
-                      <option value="Social Media">Social Media</option>
-                      <option value="Advertisement">Advertisement</option>
-                      <option value="Walk-in">Walk-in</option>
-                      <option value="Other">Other</option>
+                      <option value="google">Google Search</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="friend">Friend/Family</option>
+                      <option value="repeat">Repeat Customer</option>
+                      <option value="other">Other</option>
                     </select>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-gray-400" />
+                      <Users size={16} className="text-gray-400" />
                       <span className="text-gray-900">{customer.referral_source || 'Not specified'}</span>
                     </div>
                   )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2">
+                    {isEditing ? (
+                      <input
+                        type="checkbox"
+                        checked={editData.needs_collection}
+                        onChange={(e) => setEditData({ ...editData, needs_collection: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-300"
+                        style={{ accentColor: PRIMARY }}
+                      />
+                    ) : (
+                      <Truck size={16} className="text-gray-400" />
+                    )}
+                    <div>
+                      <span className="text-sm font-bold text-gray-700">Collection & Delivery Service</span>
+                      {!isEditing && (
+                        <p className="text-sm text-gray-600">{customer.needs_collection ? 'Yes - Requested' : 'No'}</p>
+                      )}
+                    </div>
+                  </label>
                 </div>
 
                 <div>
@@ -311,6 +396,112 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     <Calendar size={16} className="text-gray-400" />
                     <span className="text-gray-900">{formatDate(customer.created_at)}</span>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: SECONDARY }}>
+                <MapPin size={20} />
+                Address Information
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Street Address</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.street_address}
+                      onChange={(e) => setEditData({ ...editData, street_address: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="Street address"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900">{customer.street_address || 'Not provided'}</span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Address Line 2</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.address_line_2}
+                      onChange={(e) => setEditData({ ...editData, address_line_2: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="Apt, suite, etc."
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900">{customer.address_line_2 || 'Not provided'}</span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">City</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.city}
+                      onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="City"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900">{customer.city || 'Not provided'}</span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Province</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.province}
+                      onChange={(e) => setEditData({ ...editData, province: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="Province"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900">{customer.province || 'Not provided'}</span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Postal Code</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.postal_code}
+                      onChange={(e) => setEditData({ ...editData, postal_code: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="Postal code"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900">{customer.postal_code || 'Not provided'}</span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Country</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.country}
+                      onChange={(e) => setEditData({ ...editData, country: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                      placeholder="Country"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900">{customer.country || 'Not provided'}</span>
+                  )}
                 </div>
               </div>
             </div>
