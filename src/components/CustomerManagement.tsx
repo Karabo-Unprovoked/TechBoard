@@ -392,7 +392,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                           </span>
                         </div>
                         
-                        {ticket.estimated_cost && (
+                        {ticket.estimated_cost > 0 && (
                           <div>
                             <span className="text-sm font-bold text-gray-700">Cost:</span>
                             <span className="ml-2 text-sm text-gray-900">
