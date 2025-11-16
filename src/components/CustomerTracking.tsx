@@ -105,6 +105,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         return 'bg-red-500 text-white';
       case 'pending-customer-action':
         return 'bg-purple-500 text-white';
+      case 'void':
+        return 'bg-gray-400 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -124,6 +126,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         return 4; // Final status
       case 'pending-customer-action':
         return 2; // Customer needs to take action
+      case 'void':
+        return 4; // Final status
       default:
         return 1;
     }

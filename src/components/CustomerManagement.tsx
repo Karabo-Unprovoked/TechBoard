@@ -76,6 +76,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       case 'waiting-parts': return 'bg-orange-100 text-orange-800';
       case 'unrepairable': return 'bg-red-100 text-red-800';
       case 'pending-customer-action': return 'bg-purple-100 text-purple-800';
+      case 'void': return 'bg-gray-400 text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };

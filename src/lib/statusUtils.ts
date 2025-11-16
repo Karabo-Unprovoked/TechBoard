@@ -8,7 +8,8 @@ const statusColorMap: Record<string, string> = {
   'invoiced': 'bg-teal-100 text-teal-800',
   'completed': 'bg-green-100 text-green-800',
   'unrepairable': 'bg-red-100 text-red-800',
-  'pending-customer-action': 'bg-purple-100 text-purple-800'
+  'pending-customer-action': 'bg-purple-100 text-purple-800',
+  'void': 'bg-gray-400 text-white'
 };
 
 const statusDisplayColorMap: Record<string, { bg: string; dot: string }> = {
@@ -18,7 +19,8 @@ const statusDisplayColorMap: Record<string, { bg: string; dot: string }> = {
   'invoiced': { bg: 'bg-teal-50', dot: 'bg-teal-500' },
   'completed': { bg: 'bg-green-50', dot: 'bg-green-500' },
   'unrepairable': { bg: 'bg-red-50', dot: 'bg-red-500' },
-  'pending-customer-action': { bg: 'bg-purple-50', dot: 'bg-purple-500' }
+  'pending-customer-action': { bg: 'bg-purple-50', dot: 'bg-purple-500' },
+  'void': { bg: 'bg-gray-50', dot: 'bg-gray-400' }
 };
 
 export const loadStatuses = async (): Promise<TicketStatus[]> => {
