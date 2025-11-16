@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Eye, Check, X, Mail, Phone, MapPin, Laptop, Calendar, User as UserIcon } from 'lucide-react';
+import { RefreshCw, Eye, Check, X, Mail, Phone, MapPin, Laptop, Calendar, User as UserIcon, Trash2, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { NotificationType } from './Notification';
 
@@ -45,6 +45,9 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [declineReason, setDeclineReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [clearType, setClearType] = useState<'approved' | 'declined'>('approved');
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
@@ -267,7 +270,42 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
     }
   };
 
-  const filteredRequests = requests.filter(r => filter === 'all' || r.status === filter);
+  const handleClearList = async () => {
+    if (!confirm(`Are you sure you want to delete all ${clearType} registration requests? This action cannot be undone.`)) {
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { error } = await supabase
+        .from('registration_requests')
+        .delete()
+        .eq('status', clearType);
+
+      if (error) throw error;
+
+      onNotification('success', `All ${clearType} requests cleared successfully`);
+      loadRequests();
+      setShowClearModal(false);
+    } catch (error: any) {
+      console.error('Error clearing requests:', error);
+      onNotification('error', 'Failed to clear requests: ' + error.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleReapprove = async (request: RegistrationRequest) => {
+    await handleApprove(request);
+  };
+
+  const filteredRequests = requests
+    .filter(r => filter === 'all' || r.status === filter)
+    .sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -305,31 +343,55 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
             </h2>
             <p className="text-gray-600">Review and approve customer registration requests</p>
           </div>
-          <button
-            onClick={loadRequests}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              title={`Currently showing ${sortOrder === 'newest' ? 'newest first' : 'oldest first'}`}
+            >
+              <ArrowUpDown size={16} />
+              <span>{sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}</span>
+            </button>
+            <button
+              onClick={loadRequests}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {(['all', 'pending', 'approved', 'declined'] as const).map(status => (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {(['all', 'pending', 'approved', 'declined'] as const).map(status => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  filter === status
+                    ? 'text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                style={filter === status ? { backgroundColor: PRIMARY } : {}}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)} ({requests.filter(r => status === 'all' || r.status === status).length})
+              </button>
+            ))}
+          </div>
+          {(filter === 'approved' || filter === 'declined') && filteredRequests.length > 0 && (
             <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === status
-                  ? 'text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              style={filter === status ? { backgroundColor: PRIMARY } : {}}
+              onClick={() => {
+                setClearType(filter);
+                setShowClearModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)} ({requests.filter(r => status === 'all' || r.status === status).length})
+              <Trash2 size={16} />
+              <span>Clear {filter.charAt(0).toUpperCase() + filter.slice(1)} List</span>
             </button>
-          ))}
+          )}
         </div>
 
         {loading ? (
@@ -394,9 +456,22 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                     </div>
                   )}
 
-                  {request.status === 'declined' && request.decline_reason && (
-                    <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                      <strong>Declined:</strong> {request.decline_reason}
+                  {request.status === 'declined' && (
+                    <div className="flex items-center gap-3">
+                      {request.decline_reason && (
+                        <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg flex-1">
+                          <strong>Declined:</strong> {request.decline_reason}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => handleReapprove(request)}
+                        disabled={processing}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-green-700 text-white transition-colors disabled:opacity-50"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        <Check size={16} />
+                        <span>Approve</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -537,6 +612,39 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                   className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
                 >
                   {processing ? 'Declining...' : 'Decline Request'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showClearModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+              <h3 className="text-xl font-bold mb-4" style={{ color: SECONDARY }}>
+                Clear {clearType.charAt(0).toUpperCase() + clearType.slice(1)} Requests
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to permanently delete all {clearType} registration requests? This action cannot be undone.
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-red-800">
+                  <strong>Warning:</strong> This will delete {requests.filter(r => r.status === clearType).length} {clearType} request(s) from the database.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  onClick={() => setShowClearModal(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleClearList}
+                  disabled={processing}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
+                >
+                  {processing ? 'Clearing...' : 'Yes, Clear List'}
                 </button>
               </div>
             </div>
