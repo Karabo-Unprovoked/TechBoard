@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2, LayoutGrid, List, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
 import { AdminPasswordModal } from './AdminPasswordModal';
 import type { NotificationType } from './Notification';
+import { exportCustomersToExcel } from '../lib/exportUtils';
 
 interface CustomersViewProps {
   customers: Customer[];
@@ -197,6 +198,15 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               <List size={16} className={viewMode === 'list' ? 'text-gray-900' : 'text-gray-600'} />
             </button>
           </div>
+
+          <button
+            onClick={() => exportCustomersToExcel(filteredCustomers)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            title="Export to Excel"
+          >
+            <Download size={16} />
+            <span>Export</span>
+          </button>
 
           <button
             onClick={onRefresh}

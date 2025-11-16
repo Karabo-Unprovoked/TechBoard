@@ -620,12 +620,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'manage-ticket' && selectedTicket && (
-                  <TicketManagement 
-                    ticket={selectedTicket} 
+                  <TicketManagement
+                    ticket={selectedTicket}
                     onBack={() => setCurrentView('tickets')}
                     onTicketUpdated={(updatedTicket) => {
                       setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
                       setSelectedTicket(updatedTicket);
+                    }}
+                    onTicketDeleted={() => {
+                      setTickets(prev => prev.filter(t => t.id !== selectedTicket.id));
+                      setSelectedTicket(null);
                     }}
                   />
                 )}

@@ -76,6 +76,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       case 'waiting-parts': return 'bg-orange-100 text-orange-800';
       case 'unrepairable': return 'bg-red-100 text-red-800';
       case 'pending-customer-action': return 'bg-purple-100 text-purple-800';
+      case 'void': return 'bg-gray-400 text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -344,9 +345,16 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           {/* Repair History */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold mb-6" style={{ color: SECONDARY }}>
-                Repair History ({customerTickets.length} tickets)
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold" style={{ color: SECONDARY }}>
+                  Repair History
+                </h3>
+                {customerTickets.length > 0 && (
+                  <span className="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">
+                    {customerTickets.length} ticket{customerTickets.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
               
               {customerTickets.length === 0 ? (
                 <div className="text-center py-12">
@@ -385,7 +393,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                           </span>
                         </div>
                         
-                        {ticket.estimated_cost && (
+                        {ticket.estimated_cost > 0 && (
                           <div>
                             <span className="text-sm font-bold text-gray-700">Cost:</span>
                             <span className="ml-2 text-sm text-gray-900">
