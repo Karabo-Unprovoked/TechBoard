@@ -54,10 +54,19 @@ export type Customer = {
   name: string;
   first_name?: string;
   last_name?: string;
+  title?: string;
   email?: string;
   phone?: string;
   gender?: string;
   referral_source?: string;
+  preferred_contact_method?: string;
+  needs_collection?: boolean;
+  street_address?: string;
+  address_line_2?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
+  country?: string;
   created_at: string;
 };
 

@@ -111,18 +111,58 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         .from('customers')
         .insert({
           customer_number: customerNumber,
+          title: request.title,
           first_name: request.first_name,
           last_name: request.last_name,
           name: `${request.first_name} ${request.last_name}`,
           email: request.email,
           phone: request.phone_number,
           gender: request.title === 'Mr' ? 'Male' : request.title === 'Mrs' || request.title === 'Ms' ? 'Female' : undefined,
-          referral_source: request.referral_source
+          referral_source: request.referral_source,
+          preferred_contact_method: request.preferred_contact_method,
+          needs_collection: request.needs_collection,
+          street_address: request.street_address,
+          address_line_2: request.address_line_2,
+          city: request.city,
+          province: request.province,
+          postal_code: request.postal_code,
+          country: request.country
         })
         .select()
         .single();
 
       if (customerError) throw customerError;
+
+      const { data: tickets } = await supabase
+        .from('repair_tickets')
+        .select('ticket_number')
+        .order('ticket_number', { ascending: false })
+        .limit(1);
+
+      let nextTicketNumber = 'TK1000';
+      if (tickets && tickets.length > 0) {
+        const lastNumber = parseInt(tickets[0].ticket_number.replace('TK', ''), 10);
+        nextTicketNumber = `TK${lastNumber + 1}`;
+      }
+
+      const { data: ticket, error: ticketError } = await supabase
+        .from('repair_tickets')
+        .insert({
+          ticket_number: nextTicketNumber,
+          customer_id: customer.id,
+          device_type: 'Laptop',
+          brand: request.laptop_brand,
+          model: request.laptop_model,
+          serial_number: request.serial_number,
+          issue_description: request.laptop_problem,
+          device_accessories: request.device_includes,
+          repair_notes: request.additional_notes,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (ticketError) throw ticketError;
 
       const { error: updateError } = await supabase
         .from('registration_requests')
@@ -143,7 +183,12 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
             html: `
               <h2>Registration Approved</h2>
               <p>Dear ${request.first_name} ${request.last_name},</p>
-              <p>Your registration has been approved! We will contact you shortly via ${request.preferred_contact_method} to discuss your device repair.</p>
+              <p>Your registration has been approved! We have created a customer profile and repair ticket for you.</p>
+              <p><strong>Your Details:</strong></p>
+              <ul>
+                <li>Customer Number: ${customerNumber}</li>
+                <li>Ticket Number: ${nextTicketNumber}</li>
+              </ul>
               <p><strong>Device Details:</strong></p>
               <ul>
                 <li>Brand: ${request.laptop_brand || 'Not specified'}</li>
@@ -151,13 +196,14 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                 <li>Problem: ${request.laptop_problem}</li>
               </ul>
               ${request.needs_collection ? '<p><strong>Collection & Delivery:</strong> You requested collection and delivery service. We will arrange this with you.</p>' : ''}
+              <p>We will contact you shortly via ${request.preferred_contact_method} to discuss your device repair.</p>
               <p>Thank you for choosing our services!</p>
             `
           }
         });
       }
 
-      onNotification('success', 'Registration approved successfully');
+      onNotification('success', 'Registration approved - Customer and ticket created successfully');
       loadRequests();
       setSelectedRequest(null);
     } catch (error: any) {
