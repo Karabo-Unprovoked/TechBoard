@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
@@ -13,6 +13,7 @@ import { SystemSettings } from './SystemSettings';
 import { CustomersView } from './CustomersView';
 import { CustomerManagement } from './CustomerManagement';
 import { UserProfile } from './UserProfile';
+import { RegistrationRequests } from './RegistrationRequests';
 import type { NotificationType } from './Notification';
 
 interface DashboardProps {
@@ -22,7 +23,7 @@ interface DashboardProps {
   onNotification: (type: NotificationType, message: string) => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile';
+type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile' | 'registration-requests';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer, onNotification }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
@@ -271,6 +272,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               >
                 <Search size={18} />
                 <span className="text-sm">Track Repair</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('registration-requests')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'registration-requests' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <FileText size={18} />
+                <span className="text-sm">Registration Requests</span>
               </button>
               <button
                 onClick={() => setCurrentView('settings')}
@@ -651,6 +661,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 )}
                 {currentView === 'profile' && (
                   <UserProfile />
+                )}
+                {currentView === 'registration-requests' && (
+                  <RegistrationRequests
+                    onNotification={onNotification}
+                  />
                 )}
               </>
             )}

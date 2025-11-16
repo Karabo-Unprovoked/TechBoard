@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { LoginForm } from './components/LoginForm';
 import { CustomerTracking } from './components/CustomerTracking';
 import { Dashboard } from './components/Dashboard';
+import { SelfRegistration } from './components/SelfRegistration';
 import { supabase } from './lib/supabase';
 import { NotificationContainer } from './components/Notification';
 import type { NotificationType } from './components/Notification';
 
-type AppState = 'login' | 'track-customer' | 'dashboard';
+type AppState = 'login' | 'track-customer' | 'dashboard' | 'self-registration';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('login');
@@ -74,6 +75,10 @@ function App() {
     setAppState('dashboard');
   };
 
+  const handleSelfRegistration = () => {
+    setAppState('self-registration');
+  };
+
   const handleBackToLogin = () => {
     setAppState('login');
   };
@@ -91,18 +96,21 @@ function App() {
 
   switch (appState) {
     case 'login':
-      return <LoginForm onTrackCustomer={handleTrackCustomer} onDashboard={handleDashboard} />;
-    
+      return <LoginForm onTrackCustomer={handleTrackCustomer} onDashboard={handleDashboard} onSelfRegistration={handleSelfRegistration} />;
+
     case 'track-customer':
       return (
-        <CustomerTracking 
+        <CustomerTracking
           onBack={isAuthenticated ? handleDashboard : handleBackToLogin}
           onLogout={handleLogout}
           isAuthenticated={isAuthenticated}
           onDashboard={isAuthenticated ? handleDashboard : undefined}
         />
       );
-    
+
+    case 'self-registration':
+      return <SelfRegistration onBack={handleBackToLogin} />;
+
     case 'dashboard':
       if (!isAuthenticated) {
         setAppState('login');
