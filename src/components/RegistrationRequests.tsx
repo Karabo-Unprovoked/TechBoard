@@ -71,6 +71,31 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
     }
   };
 
+  const generateCustomerNumber = async () => {
+    const { data: setting } = await supabase
+      .from('admin_settings')
+      .select('setting_value')
+      .eq('setting_key', 'customer_number_start')
+      .maybeSingle();
+
+    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
+
+    const { data: customers } = await supabase
+      .from('customers')
+      .select('customer_number')
+      .order('customer_number', { ascending: false })
+      .limit(1);
+
+    if (!customers || customers.length === 0) {
+      return `CG${startNumber}`;
+    }
+
+    const lastNumber = customers[0].customer_number;
+    const numberPart = parseInt(lastNumber.replace('CG', ''), 10);
+    const nextNumber = Math.max(numberPart + 1, startNumber);
+    return `CG${nextNumber}`;
+  };
+
   const handleApprove = async (request: RegistrationRequest) => {
     if (!confirm('Are you sure you want to approve this registration? This will create a customer and send them a confirmation email.')) {
       return;
@@ -80,20 +105,12 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error: updateError } = await supabase
-        .from('registration_requests')
-        .update({
-          status: 'approved',
-          reviewed_by: user?.id,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq('id', request.id);
-
-      if (updateError) throw updateError;
+      const customerNumber = await generateCustomerNumber();
 
       const { data: customer, error: customerError } = await supabase
         .from('customers')
         .insert({
+          customer_number: customerNumber,
           first_name: request.first_name,
           last_name: request.last_name,
           name: `${request.first_name} ${request.last_name}`,
@@ -106,6 +123,17 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         .single();
 
       if (customerError) throw customerError;
+
+      const { error: updateError } = await supabase
+        .from('registration_requests')
+        .update({
+          status: 'approved',
+          reviewed_by: user?.id,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', request.id);
+
+      if (updateError) throw updateError;
 
       if (request.email) {
         await supabase.functions.invoke('send-email', {
