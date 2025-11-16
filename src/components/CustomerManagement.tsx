@@ -7,12 +7,14 @@ interface CustomerManagementProps {
   customer: Customer;
   onBack: () => void;
   onCustomerUpdated: (customer: Customer) => void;
+  onViewTicket?: (ticket: RepairTicket) => void;
 }
 
-export const CustomerManagement: React.FC<CustomerManagementProps> = ({ 
-  customer: initialCustomer, 
-  onBack, 
-  onCustomerUpdated 
+export const CustomerManagement: React.FC<CustomerManagementProps> = ({
+  customer: initialCustomer,
+  onBack,
+  onCustomerUpdated,
+  onViewTicket
 }) => {
   const [customer, setCustomer] = useState<Customer>(initialCustomer);
   const [isEditing, setIsEditing] = useState(false);
@@ -558,7 +560,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               ) : (
                 <div className="space-y-4">
                   {customerTickets.map((ticket) => (
-                    <div key={ticket.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div
+                      key={ticket.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => onViewTicket && onViewTicket(ticket)}
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <span className="font-medium text-gray-900">{ticket.ticket_number}</span>

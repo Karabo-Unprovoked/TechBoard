@@ -686,13 +686,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'manage-customer' && selectedCustomer && (
-                  <CustomerManagement 
-                    customer={selectedCustomer} 
+                  <CustomerManagement
+                    customer={selectedCustomer}
                     onBack={() => setCurrentView('customers')}
                     onCustomerUpdated={(updatedCustomer) => {
                       setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
                       setSelectedCustomer(updatedCustomer);
                     }}
+                    onViewTicket={handleManageTicket}
                   />
                 )}
                 {currentView === 'settings' && (
