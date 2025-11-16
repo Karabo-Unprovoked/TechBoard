@@ -58,13 +58,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     try {
       if (!isSupabaseConfigured) return;
 
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('registration_requests')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
 
       if (error) throw error;
-      setPendingRequests(data?.length || 0);
+      setPendingRequests(count || 0);
     } catch (error) {
       console.error('Error loading pending requests:', error);
     }
