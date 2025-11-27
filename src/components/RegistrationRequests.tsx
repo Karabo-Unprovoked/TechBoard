@@ -48,6 +48,9 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearType, setClearType] = useState<'approved' | 'declined'>('approved');
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [existingCustomer, setExistingCustomer] = useState<any>(null);
+  const [pendingRequest, setPendingRequest] = useState<RegistrationRequest | null>(null);
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
@@ -94,7 +97,29 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   };
 
   const handleApprove = async (request: RegistrationRequest) => {
-    if (!confirm('Are you sure you want to approve this registration? This will create a customer and send them a confirmation email.')) {
+    // Check for duplicate email first
+    if (request.email?.trim()) {
+      const { data: existingCust } = await supabase
+        .from('customers')
+        .select('*')
+        .ilike('email', request.email.trim())
+        .maybeSingle();
+
+      if (existingCust) {
+        // Duplicate email found - show merge modal
+        setExistingCustomer(existingCust);
+        setPendingRequest(request);
+        setShowMergeModal(true);
+        return;
+      }
+    }
+
+    // No duplicate - proceed with normal approval
+    await proceedWithApproval(request, false, null);
+  };
+
+  const proceedWithApproval = async (request: RegistrationRequest, shouldMerge: boolean, existingCustomerId: string | null) => {
+    if (!shouldMerge && !confirm('Are you sure you want to approve this registration? This will create a customer and send them a confirmation email.')) {
       return;
     }
 
@@ -102,33 +127,67 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const customerNumber = await generateCustomerNumber();
+      let customer;
+      let customerNumber;
 
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .insert({
-          customer_number: customerNumber,
-          title: request.title,
-          first_name: request.first_name,
-          last_name: request.last_name,
-          name: `${request.first_name} ${request.last_name}`,
-          email: request.email,
-          phone: request.phone_number,
-          gender: request.title === 'Mr' ? 'Male' : request.title === 'Mrs' || request.title === 'Ms' ? 'Female' : undefined,
-          referral_source: request.referral_source,
-          preferred_contact_method: request.preferred_contact_method,
-          needs_collection: request.needs_collection,
-          street_address: request.street_address,
-          address_line_2: request.address_line_2,
-          city: request.city,
-          province: request.province,
-          postal_code: request.postal_code,
-          country: request.country
-        })
-        .select()
-        .single();
+      if (shouldMerge && existingCustomerId) {
+        // Merge: Update existing customer with new information
+        const { data: updatedCustomer, error: updateError } = await supabase
+          .from('customers')
+          .update({
+            title: request.title,
+            first_name: request.first_name,
+            last_name: request.last_name,
+            name: `${request.first_name} ${request.last_name}`,
+            phone: request.phone_number,
+            referral_source: request.referral_source || undefined,
+            preferred_contact_method: request.preferred_contact_method,
+            needs_collection: request.needs_collection,
+            street_address: request.street_address,
+            address_line_2: request.address_line_2,
+            city: request.city,
+            province: request.province,
+            postal_code: request.postal_code,
+            country: request.country
+          })
+          .eq('id', existingCustomerId)
+          .select()
+          .single();
 
-      if (customerError) throw customerError;
+        if (updateError) throw updateError;
+        customer = updatedCustomer;
+        customerNumber = customer.customer_number;
+      } else {
+        // Create new customer
+        customerNumber = await generateCustomerNumber();
+
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            customer_number: customerNumber,
+            title: request.title,
+            first_name: request.first_name,
+            last_name: request.last_name,
+            name: `${request.first_name} ${request.last_name}`,
+            email: request.email,
+            phone: request.phone_number,
+            gender: request.title === 'Mr' ? 'Male' : request.title === 'Mrs' || request.title === 'Ms' ? 'Female' : undefined,
+            referral_source: request.referral_source,
+            preferred_contact_method: request.preferred_contact_method,
+            needs_collection: request.needs_collection,
+            street_address: request.street_address,
+            address_line_2: request.address_line_2,
+            city: request.city,
+            province: request.province,
+            postal_code: request.postal_code,
+            country: request.country
+          })
+          .select()
+          .single();
+
+        if (customerError) throw customerError;
+        customer = newCustomer;
+      }
 
       const { data: tickets } = await supabase
         .from('repair_tickets')
@@ -202,9 +261,12 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         });
       }
 
-      onNotification('success', 'Registration approved - Customer and ticket created successfully');
+      onNotification('success', shouldMerge ? 'Registration approved - Customer merged and ticket created successfully' : 'Registration approved - Customer and ticket created successfully');
       loadRequests();
       setSelectedRequest(null);
+      setShowMergeModal(false);
+      setExistingCustomer(null);
+      setPendingRequest(null);
     } catch (error: any) {
       console.error('Error approving request:', error);
       onNotification('error', 'Failed to approve registration: ' + error.message);
@@ -291,6 +353,21 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
   const handleReapprove = async (request: RegistrationRequest) => {
     await handleApprove(request);
+  };
+
+  const handleMergeConfirm = async () => {
+    if (pendingRequest && existingCustomer) {
+      await proceedWithApproval(pendingRequest, true, existingCustomer.id);
+    }
+  };
+
+  const handleCreateNew = async () => {
+    if (pendingRequest) {
+      setShowMergeModal(false);
+      setExistingCustomer(null);
+      setPendingRequest(null);
+      onNotification('warning', 'Cannot create new customer with duplicate email. Please update the email in the registration request or merge with existing customer.');
+    }
   };
 
   const filteredRequests = requests
@@ -639,6 +716,67 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                   className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
                 >
                   {processing ? 'Clearing...' : 'Yes, Clear List'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showMergeModal && existingCustomer && pendingRequest && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 p-6">
+              <h3 className="text-xl font-bold mb-4" style={{ color: SECONDARY }}>
+                Duplicate Email Detected
+              </h3>
+              <p className="text-gray-600 mb-4">
+                A customer with this email address already exists. Would you like to merge this registration with the existing customer or cancel?
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Existing Customer</h4>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Number:</strong> {existingCustomer.customer_number}</p>
+                    <p><strong>Name:</strong> {existingCustomer.first_name} {existingCustomer.last_name}</p>
+                    <p><strong>Email:</strong> {existingCustomer.email}</p>
+                    <p><strong>Phone:</strong> {existingCustomer.phone}</p>
+                  </div>
+                </div>
+                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                  <h4 className="font-semibold text-gray-900 mb-2">New Registration</h4>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Name:</strong> {pendingRequest.first_name} {pendingRequest.last_name}</p>
+                    <p><strong>Email:</strong> {pendingRequest.email}</p>
+                    <p><strong>Phone:</strong> {pendingRequest.phone_number}</p>
+                    <p><strong>Device:</strong> {pendingRequest.laptop_brand} {pendingRequest.laptop_model}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Merge Action:</strong> The existing customer will be updated with new information from this registration, and a new ticket will be created for them.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowMergeModal(false);
+                    setExistingCustomer(null);
+                    setPendingRequest(null);
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMergeConfirm}
+                  disabled={processing}
+                  className="px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: PRIMARY }}
+                >
+                  {processing ? 'Merging...' : 'Merge & Approve'}
                 </button>
               </div>
             </div>
