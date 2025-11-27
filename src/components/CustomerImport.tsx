@@ -346,21 +346,60 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
       let processedCount = 0;
 
       for (const customerData of rowsWithNumbers) {
-        const { data: existingNumber } = await supabase
+        const { data: existingCustomer } = await supabase
           .from('customers')
-          .select('customer_number')
+          .select('*')
           .eq('customer_number', customerData.customer_number)
           .maybeSingle();
 
-        if (existingNumber) {
-          console.warn('Duplicate customer number found:', customerData.customer_number);
-          duplicateCount++;
-          errorCount++;
-          processedCount++;
-          setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
-          continue;
+        if (existingCustomer) {
+          // Customer number exists - check if it's the same customer by email
+          if (customerData.email?.trim() && existingCustomer.email?.toLowerCase() === customerData.email.trim().toLowerCase()) {
+            // Same customer - check conflict resolution
+            const resolution = conflictResolutions.get(customerData.email.trim());
+
+            if (resolution === 'skip') {
+              processedCount++;
+              setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+              continue;
+            }
+
+            if (resolution === 'merge') {
+              // Merge - update the existing customer
+              const { customer_number, id, created_at, ...updateData } = customerData;
+
+              const { error } = await supabase
+                .from('customers')
+                .update(updateData)
+                .eq('id', existingCustomer.id);
+
+              if (error) {
+                console.error('Merge error for row:', {
+                  error: error,
+                  errorMessage: error.message,
+                  errorCode: error.code,
+                  customerData: updateData
+                });
+                errorCount++;
+              } else {
+                successCount++;
+              }
+              processedCount++;
+              setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+              continue;
+            }
+          } else {
+            // Different customer with same number - skip
+            console.warn('Duplicate customer number found:', customerData.customer_number);
+            duplicateCount++;
+            errorCount++;
+            processedCount++;
+            setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+            continue;
+          }
         }
 
+        // Check for email conflicts if customer doesn't exist yet
         if (customerData.email?.trim()) {
           const resolution = conflictResolutions.get(customerData.email.trim());
 
