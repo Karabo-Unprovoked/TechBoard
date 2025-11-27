@@ -795,7 +795,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                     </label>
                     <p className="text-sm text-gray-600 mb-3">
                       Set the starting number for customer IDs. New customers will be numbered starting from this value.
-                      Format: CG{customerNumberStart}
+                      Format: C{customerNumberStart}
                     </p>
                     <input
                       type="number"
@@ -807,7 +807,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                       placeholder="100"
                     />
                     <p className="text-xs text-gray-500 mt-2">
-                      Example: If set to 100, the first customer will be CG100, second will be CG101, etc.
+                      Example: If set to 100, the first customer will be C100, second will be C101, etc.
                     </p>
                   </div>
 

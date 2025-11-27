@@ -41,13 +41,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       .limit(1);
 
     if (!customers || customers.length === 0) {
-      return `CG${startNumber}`;
+      return `C${startNumber}`;
     }
 
     const lastNumber = customers[0].customer_number;
-    const numberPart = parseInt(lastNumber.replace('CG', ''), 10);
+    const numberPart = parseInt(lastNumber.replace('C', ''), 10);
     const nextNumber = Math.max(numberPart + 1, startNumber);
-    return `CG${nextNumber}`;
+    return `C${nextNumber}`;
   };
 
   React.useEffect(() => {
