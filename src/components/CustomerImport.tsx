@@ -393,7 +393,12 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           .insert(customerData);
 
         if (error) {
-          console.error('Import error for row:', error, customerData);
+          console.error('Import error for row:', {
+            error: error,
+            errorMessage: error.message,
+            errorCode: error.code,
+            customerData: customerData
+          });
           errorCount++;
         } else {
           successCount++;
@@ -445,7 +450,12 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           .insert(customerData);
 
         if (error) {
-          console.error('Import error for row:', error, customerData);
+          console.error('Import error for row:', {
+            error: error,
+            errorMessage: error.message,
+            errorCode: error.code,
+            customerData: customerData
+          });
           errorCount++;
         } else {
           successCount++;
@@ -471,12 +481,19 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           onClose();
         }, 1500);
       } else {
-        onNotification('error', 'Failed to import customers. Please check your data and try again.');
+        let errorMessage = 'Failed to import customers.';
+        if (validRows.length === 0) {
+          errorMessage = 'No valid rows found. Please ensure First Name and Last Name are provided for all rows.';
+        } else if (errorCount > 0) {
+          errorMessage = `All ${errorCount} row${errorCount > 1 ? 's' : ''} failed to import. Check browser console for details.`;
+        }
+        onNotification('error', errorMessage);
         setStep('preview');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Import error:', error);
-      onNotification('error', 'An error occurred during import. Please try again.');
+      const errorMessage = error?.message || 'An error occurred during import. Please try again.';
+      onNotification('error', errorMessage);
       setStep('preview');
     }
   };
