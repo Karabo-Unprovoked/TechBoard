@@ -564,7 +564,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                       <QrCode size={16} />
                                     </button>
                                     <button
-                                      onClick={() => setSelectedTicket(ticket)}
+                                      onClick={() => {
+                                        setSelectedTicket(ticket);
+                                        setCurrentView('manage-ticket');
+                                      }}
                                       className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
                                       title="View Ticket"
                                     >
