@@ -201,6 +201,11 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         }
       });
 
+      // Generate name from first_name and last_name
+      if (mappedData.first_name?.trim() && mappedData.last_name?.trim()) {
+        mappedData.name = `${mappedData.first_name} ${mappedData.last_name}`;
+      }
+
       if (!mappedData.first_name?.trim()) {
         errors.push('First name is required');
       }
@@ -246,6 +251,11 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           }
         }
       });
+
+      // Generate name from first_name and last_name
+      if (mappedData.first_name?.trim() && mappedData.last_name?.trim()) {
+        mappedData.name = `${mappedData.first_name} ${mappedData.last_name}`;
+      }
 
       if (mappedData.email?.trim()) {
         const { data: existing } = await supabase
