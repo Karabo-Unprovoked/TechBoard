@@ -145,6 +145,34 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
     );
   };
 
+  const generateCustomerNumber = async (lastNumber?: string): Promise<string> => {
+    const { data: setting } = await supabase
+      .from('admin_settings')
+      .select('setting_value')
+      .eq('setting_key', 'customer_number_start')
+      .maybeSingle();
+
+    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
+
+    if (!lastNumber) {
+      const { data: customers } = await supabase
+        .from('customers')
+        .select('customer_number')
+        .order('customer_number', { ascending: false })
+        .limit(1);
+
+      if (!customers || customers.length === 0) {
+        return `CG${startNumber}`;
+      }
+
+      lastNumber = customers[0].customer_number;
+    }
+
+    const numberPart = parseInt(lastNumber.replace('CG', ''), 10);
+    const nextNumber = Math.max(numberPart + 1, startNumber);
+    return `CG${nextNumber}`;
+  };
+
   const handlePreview = () => {
     const hasFirstName = fieldMappings.some(m => m.customerField === 'first_name');
     const hasLastName = fieldMappings.some(m => m.customerField === 'last_name');
@@ -241,33 +269,38 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         errorCount++;
       }
 
-      setImportProgress(Math.round(((i + 1) / excelData.length) * 50));
+      setImportProgress(Math.round(((i + 1) / excelData.length) * 30));
     }
 
     try {
-      const batchSize = 100;
       let successCount = 0;
+      let lastCustomerNumber: string | undefined;
 
-      for (let i = 0; i < validRows.length; i += batchSize) {
-        const batch = validRows.slice(i, i + batchSize);
+      for (let i = 0; i < validRows.length; i++) {
+        const customerData = validRows[i];
+
+        const customerNumber = await generateCustomerNumber(lastCustomerNumber);
+        customerData.customer_number = customerNumber;
+        lastCustomerNumber = customerNumber;
 
         const { error } = await supabase
           .from('customers')
-          .insert(batch);
+          .insert(customerData);
 
         if (error) {
-          console.error('Batch import error:', error);
+          console.error('Import error for row:', error, customerData);
+          errorCount++;
         } else {
-          successCount += batch.length;
+          successCount++;
         }
 
-        setImportProgress(50 + Math.round(((i + batchSize) / validRows.length) * 50));
+        setImportProgress(30 + Math.round(((i + 1) / validRows.length) * 70));
       }
 
       setImportProgress(100);
 
       if (successCount > 0) {
-        onNotification('success', `Successfully imported ${successCount} customer${successCount > 1 ? 's' : ''}${errorCount > 0 ? `. ${errorCount} row${errorCount > 1 ? 's' : ''} skipped due to missing required fields.` : '.'}`);
+        onNotification('success', `Successfully imported ${successCount} customer${successCount > 1 ? 's' : ''}${errorCount > 0 ? `. ${errorCount} row${errorCount > 1 ? 's' : ''} skipped due to errors.` : '.'}`);
         setTimeout(() => {
           onImportComplete();
           onClose();
