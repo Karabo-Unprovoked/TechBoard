@@ -676,7 +676,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'new-customer' && userRole !== 'viewer' && (
-                  <CustomerForm onCustomerCreated={handleCustomerCreated} />
+                  <CustomerForm key={`customer-form-${customers.length}`} onCustomerCreated={handleCustomerCreated} />
                 )}
                 {currentView === 'new-ticket' && userRole !== 'viewer' && (
                   <TicketForm
