@@ -42,6 +42,9 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
 
     const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
 
+    // Add a small delay to ensure database replication is complete
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     const { data: customers } = await supabase
       .from('customers')
       .select('customer_number')
@@ -59,7 +62,11 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   };
 
   React.useEffect(() => {
-    generateCustomerNumber().then(setNextCustomerNumber);
+    const loadCustomerNumber = async () => {
+      const number = await generateCustomerNumber();
+      setNextCustomerNumber(number);
+    };
+    loadCustomerNumber();
   }, []);
 
   const checkEmailExists = async () => {
