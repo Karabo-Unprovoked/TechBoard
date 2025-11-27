@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
 
 interface CustomerFormProps {
-  onCustomerCreated: (customer: Customer) => void;
+  onCustomerCreated: (customer: Customer, createTicket: boolean) => void;
 }
 
 export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated }) => {
@@ -106,7 +106,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, createTicket: boolean = true) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -133,7 +133,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
         if (error) throw error;
 
         setSuccessMessage(`Customer information updated successfully!`);
-        onCustomerCreated(data);
+        onCustomerCreated(data, createTicket);
 
         setTimeout(() => {
           setFormData({ first_name: '', last_name: '', name: '', email: '', phone: '', gender: '', referral_source: '' });
@@ -176,7 +176,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
         throw error;
       }
 
-      onCustomerCreated(data);
+      onCustomerCreated(data, createTicket);
       setFormData({
         title: '',
         first_name: '',
@@ -524,13 +524,24 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
                 Cancel
               </button>
             )}
+            {!editMode && (
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e as any, false)}
+                disabled={loading}
+                className="flex-1 py-3 px-4 rounded-lg font-semibold text-gray-700 border-2 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                style={{ borderColor: PRIMARY }}
+              >
+                {loading ? 'Creating...' : 'Save Only'}
+              </button>
+            )}
             <button
               type="submit"
               disabled={loading}
               className="py-3 px-4 rounded-lg font-semibold text-white transition-colors disabled:opacity-50"
-              style={{ backgroundColor: PRIMARY, width: editMode ? '50%' : '100%' }}
+              style={{ backgroundColor: PRIMARY, width: editMode ? '50%' : '50%' }}
             >
-              {loading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Customer' : 'Create Customer')}
+              {loading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Customer' : 'Save & Add Ticket')}
             </button>
           </div>
         </form>

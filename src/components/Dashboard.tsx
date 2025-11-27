@@ -122,9 +122,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     }
   };
 
-  const handleCustomerCreated = (customer: Customer) => {
+  const handleCustomerCreated = (customer: Customer, createTicket: boolean = true) => {
     setCustomers(prev => [customer, ...prev]);
-    setCurrentView('new-ticket');
+    if (createTicket) {
+      setCurrentView('new-ticket');
+    } else {
+      setCurrentView('customers');
+      setNotification('success', 'Customer created successfully!');
+    }
   };
 
   const handleTicketCreated = (ticket: RepairTicket) => {
