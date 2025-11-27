@@ -373,13 +373,21 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           if (resolution === 'merge') {
             const conflict = emailConflicts.find(c => c.email === customerData.email.trim());
             if (conflict) {
+              // Remove fields that shouldn't be updated during merge
+              const { customer_number, id, created_at, ...updateData } = customerData;
+
               const { error } = await supabase
                 .from('customers')
-                .update(customerData)
+                .update(updateData)
                 .eq('id', conflict.existingCustomer.id);
 
               if (error) {
-                console.error('Merge error for row:', error, customerData);
+                console.error('Merge error for row:', {
+                  error: error,
+                  errorMessage: error.message,
+                  errorCode: error.code,
+                  customerData: updateData
+                });
                 errorCount++;
               } else {
                 successCount++;
@@ -426,13 +434,21 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           if (resolution === 'merge') {
             const conflict = emailConflicts.find(c => c.email === customerData.email.trim());
             if (conflict) {
+              // Remove fields that shouldn't be updated during merge
+              const { customer_number, id, created_at, ...updateData } = customerData;
+
               const { error } = await supabase
                 .from('customers')
-                .update(customerData)
+                .update(updateData)
                 .eq('id', conflict.existingCustomer.id);
 
               if (error) {
-                console.error('Merge error for row:', error, customerData);
+                console.error('Merge error for row:', {
+                  error: error,
+                  errorMessage: error.message,
+                  errorCode: error.code,
+                  customerData: updateData
+                });
                 errorCount++;
               } else {
                 successCount++;
