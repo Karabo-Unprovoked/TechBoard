@@ -98,6 +98,9 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
           country: existingCustomer.country || 'South Africa'
         });
         setSuccessMessage(`Customer found! You can now update their information.`);
+      } else {
+        setSuccessMessage(`Email available - you can proceed to create a new customer.`);
+        setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to check email');

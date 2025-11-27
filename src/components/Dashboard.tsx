@@ -37,6 +37,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
   const [pendingRequests, setPendingRequests] = useState(0);
+  const [customerFormKey, setCustomerFormKey] = useState(0);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -124,6 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
   const handleCustomerCreated = (customer: Customer, createTicket: boolean = true) => {
     setCustomers(prev => [customer, ...prev]);
+    setCustomerFormKey(prev => prev + 1);
     if (createTicket) {
       setCurrentView('new-ticket');
     } else {
@@ -676,7 +678,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'new-customer' && userRole !== 'viewer' && (
-                  <CustomerForm key={`customer-form-${customers.length}`} onCustomerCreated={handleCustomerCreated} />
+                  <CustomerForm key={customerFormKey} onCustomerCreated={handleCustomerCreated} />
                 )}
                 {currentView === 'new-ticket' && userRole !== 'viewer' && (
                   <TicketForm
