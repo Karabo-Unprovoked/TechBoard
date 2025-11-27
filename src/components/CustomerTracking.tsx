@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash } from 'lucide-react';
+import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Customer, RepairTicket } from '../lib/supabase';
+import type { Customer, RepairTicket, TicketNote } from '../lib/supabase';
 
 interface CustomerTrackingProps {
   onBack: () => void;
@@ -16,6 +16,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [error, setError] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [customerNotes, setCustomerNotes] = useState<TicketNote[]>([]);
 
   const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) return;
@@ -51,6 +52,18 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
       setTrackingNumber(term.toUpperCase());
       setTickets(ticketsData || []);
+
+      // Load customer-visible notes for the first ticket
+      if (ticketsData && ticketsData.length > 0) {
+        const { data: notesData } = await supabase
+          .from('ticket_notes')
+          .select('*')
+          .eq('ticket_id', ticketsData[0].id)
+          .eq('note_type', 'customer')
+          .order('created_at', { ascending: false });
+
+        setCustomerNotes(notesData || []);
+      }
 
     } catch (err) {
       console.error('Search error:', err);
@@ -398,7 +411,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                 </div>
 
                 {tickets[0].issue_description && (
-                  <div>
+                  <div className="mb-6">
                     <h4 className="text-lg font-semibold mb-2" style={{ color: SECONDARY }}>
                       Reported Issue
                     </h4>
@@ -406,6 +419,27 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       <p className="text-gray-700">
                         {tickets[0].issue_description}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Technician Notes */}
+                {customerNotes.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                      <MessageSquare className="inline mr-2" size={20} />
+                      Updates from Technician
+                    </h4>
+                    <div className="space-y-3">
+                      {customerNotes.map((note) => (
+                        <div key={note.id} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-blue-600">TECHNICIAN NOTE</span>
+                            <span className="text-xs text-gray-500">{formatDate(note.created_at)}</span>
+                          </div>
+                          <p className="text-gray-800">{note.content}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
