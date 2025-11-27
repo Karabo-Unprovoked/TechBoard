@@ -26,6 +26,12 @@ interface ImportRow {
   warnings: string[];
 }
 
+interface EmailConflict {
+  email: string;
+  importData: any;
+  existingCustomer: any;
+}
+
 const PRIMARY = '#ffb400';
 const SECONDARY = '#5d5d5d';
 
@@ -34,13 +40,15 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
   onImportComplete,
   onNotification
 }) => {
-  const [step, setStep] = useState<'upload' | 'map' | 'preview' | 'importing'>('upload');
+  const [step, setStep] = useState<'upload' | 'map' | 'preview' | 'conflicts' | 'importing'>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [excelColumns, setExcelColumns] = useState<ExcelColumn[]>([]);
   const [excelData, setExcelData] = useState<any[]>([]);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [previewData, setPreviewData] = useState<ImportRow[]>([]);
   const [importProgress, setImportProgress] = useState(0);
+  const [emailConflicts, setEmailConflicts] = useState<EmailConflict[]>([]);
+  const [conflictResolutions, setConflictResolutions] = useState<Map<string, 'skip' | 'merge'>>(new Map());
 
   const customerFields = [
     { value: '', label: '-- Do Not Import --' },
@@ -148,15 +156,7 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
     );
   };
 
-  const generateCustomerNumber = async (lastNumber?: string): Promise<string> => {
-    const { data: setting } = await supabase
-      .from('admin_settings')
-      .select('setting_value')
-      .eq('setting_key', 'customer_number_start')
-      .maybeSingle();
-
-    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
-
+  const generateCustomerNumber = async (lastNumber?: string, isImporting: boolean = false): Promise<string> => {
     if (!lastNumber) {
       const { data: customers } = await supabase
         .from('customers')
@@ -165,6 +165,12 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         .limit(1);
 
       if (!customers || customers.length === 0) {
+        const { data: setting } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'customer_number_start')
+          .maybeSingle();
+        const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
         return `C${startNumber}`;
       }
 
@@ -172,11 +178,22 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
     }
 
     const numberPart = parseInt(lastNumber.replace('C', ''), 10);
-    const nextNumber = Math.max(numberPart + 1, startNumber);
+    const nextNumber = numberPart + 1;
+
+    if (!isImporting) {
+      const { data: setting } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'customer_number_start')
+        .maybeSingle();
+      const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
+      return `C${Math.max(nextNumber, startNumber)}`;
+    }
+
     return `C${nextNumber}`;
   };
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     const hasFirstName = fieldMappings.some(m => m.customerField === 'first_name');
     const hasLastName = fieldMappings.some(m => m.customerField === 'last_name');
 
@@ -226,6 +243,48 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
 
     setPreviewData(preview);
     setStep('preview');
+  };
+
+  const checkEmailConflicts = async () => {
+    const conflicts: EmailConflict[] = [];
+
+    for (const row of excelData) {
+      const mappedData: any = {};
+      fieldMappings.forEach(mapping => {
+        if (mapping.customerField) {
+          const value = row[mapping.excelColumn];
+          if (value !== null && value !== undefined && value !== '') {
+            mappedData[mapping.customerField] = String(value).trim();
+          }
+        }
+      });
+
+      if (mappedData.email?.trim()) {
+        const { data: existing } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('email', mappedData.email.trim())
+          .maybeSingle();
+
+        if (existing) {
+          conflicts.push({
+            email: mappedData.email.trim(),
+            importData: mappedData,
+            existingCustomer: existing
+          });
+        }
+      }
+    }
+
+    if (conflicts.length > 0) {
+      setEmailConflicts(conflicts);
+      const initialResolutions = new Map<string, 'skip' | 'merge'>();
+      conflicts.forEach(c => initialResolutions.set(c.email, 'skip'));
+      setConflictResolutions(initialResolutions);
+      setStep('conflicts');
+    } else {
+      handleImport();
+    }
   };
 
   const handleImport = async () => {
@@ -286,27 +345,60 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
       let processedCount = 0;
 
       for (const customerData of rowsWithNumbers) {
-        const { data: existing } = await supabase
+        const { data: existingNumber } = await supabase
           .from('customers')
           .select('customer_number')
           .eq('customer_number', customerData.customer_number)
           .maybeSingle();
 
-        if (existing) {
+        if (existingNumber) {
           console.warn('Duplicate customer number found:', customerData.customer_number);
           duplicateCount++;
           errorCount++;
-        } else {
-          const { error } = await supabase
-            .from('customers')
-            .insert(customerData);
+          processedCount++;
+          setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+          continue;
+        }
 
-          if (error) {
-            console.error('Import error for row:', error, customerData);
-            errorCount++;
-          } else {
-            successCount++;
+        if (customerData.email?.trim()) {
+          const resolution = conflictResolutions.get(customerData.email.trim());
+
+          if (resolution === 'skip') {
+            processedCount++;
+            setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+            continue;
           }
+
+          if (resolution === 'merge') {
+            const conflict = emailConflicts.find(c => c.email === customerData.email.trim());
+            if (conflict) {
+              const { error } = await supabase
+                .from('customers')
+                .update(customerData)
+                .eq('id', conflict.existingCustomer.id);
+
+              if (error) {
+                console.error('Merge error for row:', error, customerData);
+                errorCount++;
+              } else {
+                successCount++;
+              }
+              processedCount++;
+              setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+              continue;
+            }
+          }
+        }
+
+        const { error } = await supabase
+          .from('customers')
+          .insert(customerData);
+
+        if (error) {
+          console.error('Import error for row:', error, customerData);
+          errorCount++;
+        } else {
+          successCount++;
         }
 
         processedCount++;
@@ -316,7 +408,37 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
       let lastCustomerNumber: string | undefined;
 
       for (const customerData of rowsWithoutNumbers) {
-        const customerNumber = await generateCustomerNumber(lastCustomerNumber);
+        if (customerData.email?.trim()) {
+          const resolution = conflictResolutions.get(customerData.email.trim());
+
+          if (resolution === 'skip') {
+            processedCount++;
+            setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+            continue;
+          }
+
+          if (resolution === 'merge') {
+            const conflict = emailConflicts.find(c => c.email === customerData.email.trim());
+            if (conflict) {
+              const { error } = await supabase
+                .from('customers')
+                .update(customerData)
+                .eq('id', conflict.existingCustomer.id);
+
+              if (error) {
+                console.error('Merge error for row:', error, customerData);
+                errorCount++;
+              } else {
+                successCount++;
+              }
+              processedCount++;
+              setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+              continue;
+            }
+          }
+        }
+
+        const customerNumber = await generateCustomerNumber(lastCustomerNumber, true);
         customerData.customer_number = customerNumber;
         lastCustomerNumber = customerNumber;
 
@@ -574,6 +696,108 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
             </div>
           )}
 
+          {step === 'conflicts' && (
+            <div className="space-y-6">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle size={20} className="text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-semibold mb-2">Email Conflicts Detected</p>
+                    <p>
+                      {emailConflicts.length} customer{emailConflicts.length > 1 ? 's' : ''} in your import file {emailConflicts.length > 1 ? 'have' : 'has'} email addresses that already exist in the database.
+                      Please choose how to handle each conflict.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {emailConflicts.map((conflict, index) => (
+                  <div key={conflict.email} className="border border-yellow-300 bg-yellow-50 rounded-lg p-4">
+                    <div className="mb-3">
+                      <p className="font-semibold text-gray-800 mb-1">
+                        Conflict {index + 1}: {conflict.email}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Choose to skip this import or merge with existing customer
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="bg-white border border-gray-300 rounded p-3">
+                        <p className="font-semibold text-sm mb-2 text-gray-700">Existing Customer</p>
+                        <div className="text-xs space-y-1 text-gray-600">
+                          <p><span className="font-semibold">Number:</span> {conflict.existingCustomer.customer_number}</p>
+                          <p><span className="font-semibold">Name:</span> {conflict.existingCustomer.name}</p>
+                          <p><span className="font-semibold">Phone:</span> {conflict.existingCustomer.phone || 'N/A'}</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-gray-300 rounded p-3">
+                        <p className="font-semibold text-sm mb-2 text-gray-700">Import Data</p>
+                        <div className="text-xs space-y-1 text-gray-600">
+                          <p><span className="font-semibold">Number:</span> {conflict.importData.customer_number || 'Auto-generate'}</p>
+                          <p><span className="font-semibold">Name:</span> {conflict.importData.name}</p>
+                          <p><span className="font-semibold">Phone:</span> {conflict.importData.phone || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <label className="flex-1 cursor-pointer">
+                        <div className={`border-2 rounded-lg p-3 transition-colors ${
+                          conflictResolutions.get(conflict.email) === 'skip'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`conflict-${conflict.email}`}
+                              checked={conflictResolutions.get(conflict.email) === 'skip'}
+                              onChange={() => {
+                                const newResolutions = new Map(conflictResolutions);
+                                newResolutions.set(conflict.email, 'skip');
+                                setConflictResolutions(newResolutions);
+                              }}
+                              className="w-4 h-4"
+                            />
+                            <span className="font-semibold text-sm">Skip Import</span>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1 ml-6">Keep existing customer unchanged</p>
+                        </div>
+                      </label>
+
+                      <label className="flex-1 cursor-pointer">
+                        <div className={`border-2 rounded-lg p-3 transition-colors ${
+                          conflictResolutions.get(conflict.email) === 'merge'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`conflict-${conflict.email}`}
+                              checked={conflictResolutions.get(conflict.email) === 'merge'}
+                              onChange={() => {
+                                const newResolutions = new Map(conflictResolutions);
+                                newResolutions.set(conflict.email, 'merge');
+                                setConflictResolutions(newResolutions);
+                              }}
+                              className="w-4 h-4"
+                            />
+                            <span className="font-semibold text-sm">Merge Data</span>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1 ml-6">Update existing customer with import data</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-12">
               <Upload size={64} className="text-gray-400 mb-4 animate-pulse" />
@@ -613,6 +837,14 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
                 Back
               </button>
             )}
+            {step === 'conflicts' && (
+              <button
+                onClick={() => setStep('preview')}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Back
+              </button>
+            )}
           </div>
 
           <div className="flex gap-3">
@@ -637,11 +869,21 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
 
             {step === 'preview' && (
               <button
+                onClick={checkEmailConflicts}
+                className="px-6 py-2 rounded-lg font-semibold text-white transition-colors"
+                style={{ backgroundColor: PRIMARY }}
+              >
+                Check & Import
+              </button>
+            )}
+
+            {step === 'conflicts' && (
+              <button
                 onClick={handleImport}
                 className="px-6 py-2 rounded-lg font-semibold text-white transition-colors"
                 style={{ backgroundColor: PRIMARY }}
               >
-                Import {excelData.length} Customer{excelData.length > 1 ? 's' : ''}
+                Proceed with Import
               </button>
             )}
           </div>
