@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2, LayoutGrid, List, Download } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2, LayoutGrid, List, Download, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
 import { AdminPasswordModal } from './AdminPasswordModal';
 import type { NotificationType } from './Notification';
 import { exportCustomersToExcel } from '../lib/exportUtils';
+import { CustomerImport } from './CustomerImport';
 
 interface CustomersViewProps {
   customers: Customer[];
@@ -26,6 +27,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   const [deleting, setDeleting] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [pendingDeleteCustomerId, setPendingDeleteCustomerId] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const handleDeleteClick = async (customerId: string) => {
     const { data: tickets } = await supabase
@@ -198,6 +200,15 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               <List size={16} className={viewMode === 'list' ? 'text-gray-900' : 'text-gray-600'} />
             </button>
           </div>
+
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            title="Import from Excel"
+          >
+            <Upload size={16} />
+            <span>Import</span>
+          </button>
 
           <button
             onClick={() => exportCustomersToExcel(filteredCustomers)}
@@ -442,6 +453,16 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
         title="Admin Authorization Required"
         message="This customer has completed tickets. Admin password is required to proceed with deletion."
       />
+
+      {showImportModal && (
+        <CustomerImport
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={() => {
+            onRefresh();
+          }}
+          onNotification={onNotification}
+        />
+      )}
     </div>
   );
 };
