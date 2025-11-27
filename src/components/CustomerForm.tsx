@@ -9,13 +9,21 @@ interface CustomerFormProps {
 
 export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated }) => {
   const [formData, setFormData] = useState({
+    title: '',
     first_name: '',
     last_name: '',
     name: '',
     email: '',
     phone: '',
     gender: '',
-    referral_source: ''
+    referral_source: '',
+    preferred_contact_method: 'email',
+    street_address: '',
+    address_line_2: '',
+    city: '',
+    province: '',
+    postal_code: '',
+    country: 'South Africa'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -73,13 +81,21 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
         setEditMode(true);
         setExistingCustomerId(existingCustomer.id);
         setFormData({
+          title: existingCustomer.title || '',
           first_name: existingCustomer.first_name || '',
           last_name: existingCustomer.last_name || '',
           name: existingCustomer.name || '',
           email: existingCustomer.email || '',
           phone: existingCustomer.phone || '',
           gender: existingCustomer.gender || '',
-          referral_source: existingCustomer.referral_source || ''
+          referral_source: existingCustomer.referral_source || '',
+          preferred_contact_method: existingCustomer.preferred_contact_method || 'email',
+          street_address: existingCustomer.street_address || '',
+          address_line_2: existingCustomer.address_line_2 || '',
+          city: existingCustomer.city || '',
+          province: existingCustomer.province || '',
+          postal_code: existingCustomer.postal_code || '',
+          country: existingCustomer.country || 'South Africa'
         });
         setSuccessMessage(`Customer found! You can now update their information.`);
       }
@@ -161,7 +177,23 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       }
 
       onCustomerCreated(data);
-      setFormData({ first_name: '', last_name: '', name: '', email: '', phone: '', gender: '', referral_source: '' });
+      setFormData({
+        title: '',
+        first_name: '',
+        last_name: '',
+        name: '',
+        email: '',
+        phone: '',
+        gender: '',
+        referral_source: '',
+        preferred_contact_method: 'email',
+        street_address: '',
+        address_line_2: '',
+        city: '',
+        province: '',
+        postal_code: '',
+        country: 'South Africa'
+      });
 
       const newCustomerNumber = await generateCustomerNumber();
       setNextCustomerNumber(newCustomerNumber);
@@ -175,7 +207,23 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   const handleCancelEdit = () => {
     setEditMode(false);
     setExistingCustomerId(null);
-    setFormData({ first_name: '', last_name: '', name: '', email: '', phone: '', gender: '', referral_source: '' });
+    setFormData({
+      title: '',
+      first_name: '',
+      last_name: '',
+      name: '',
+      email: '',
+      phone: '',
+      gender: '',
+      referral_source: '',
+      preferred_contact_method: 'email',
+      street_address: '',
+      address_line_2: '',
+      city: '',
+      province: '',
+      postal_code: '',
+      country: 'South Africa'
+    });
     setSuccessMessage('');
     setError('');
   };
@@ -201,7 +249,25 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
           )
         )}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Title
+              </label>
+              <select
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                style={{ focusRingColor: PRIMARY }}
+              >
+                <option value="">Select</option>
+                <option value="Mr">Mr</option>
+                <option value="Mrs">Mrs</option>
+                <option value="Ms">Ms</option>
+                <option value="Dr">Dr</option>
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 First Name *
@@ -288,7 +354,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
                 Gender
@@ -325,6 +391,112 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
                 <option value="Google">Google</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Preferred Contact
+              </label>
+              <select
+                value={formData.preferred_contact_method}
+                onChange={(e) => setFormData({ ...formData, preferred_contact_method: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                style={{ focusRingColor: PRIMARY }}
+              >
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="sms">SMS</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Street Address
+              </label>
+              <input
+                type="text"
+                value={formData.street_address}
+                onChange={(e) => setFormData({ ...formData, street_address: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                style={{ focusRingColor: PRIMARY }}
+                placeholder="Enter street address"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Address Line 2
+              </label>
+              <input
+                type="text"
+                value={formData.address_line_2}
+                onChange={(e) => setFormData({ ...formData, address_line_2: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                style={{ focusRingColor: PRIMARY }}
+                placeholder="Apartment, suite, etc. (optional)"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  City
+                </label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  style={{ focusRingColor: PRIMARY }}
+                  placeholder="Enter city"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Province
+                </label>
+                <input
+                  type="text"
+                  value={formData.province}
+                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  style={{ focusRingColor: PRIMARY }}
+                  placeholder="Enter province"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Postal Code
+                </label>
+                <input
+                  type="text"
+                  value={formData.postal_code}
+                  onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  style={{ focusRingColor: PRIMARY }}
+                  placeholder="Enter postal code"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  style={{ focusRingColor: PRIMARY }}
+                  placeholder="Enter country"
+                />
+              </div>
             </div>
           </div>
 
