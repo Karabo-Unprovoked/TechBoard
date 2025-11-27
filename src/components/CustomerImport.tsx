@@ -303,12 +303,15 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         if (mapping.customerField) {
           const value = row[mapping.excelColumn];
           if (value !== null && value !== undefined && value !== '') {
-            mappedData[mapping.customerField] = String(value).trim();
+            const trimmedValue = String(value).trim();
+            if (trimmedValue) {
+              mappedData[mapping.customerField] = trimmedValue;
+            }
           }
         }
       });
 
-      if (mappedData.first_name?.trim() && mappedData.last_name?.trim()) {
+      if (mappedData.first_name && mappedData.last_name) {
         mappedData.name = `${mappedData.first_name} ${mappedData.last_name}`;
 
         if (mappedData.gender) {
@@ -444,6 +447,8 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         const customerNumber = await generateCustomerNumber(lastCustomerNumber, true);
         customerData.customer_number = customerNumber;
         lastCustomerNumber = customerNumber;
+
+        console.log('Attempting to insert customer:', customerData);
 
         const { error } = await supabase
           .from('customers')
