@@ -5,9 +5,10 @@ import { supabase } from '../lib/supabase';
 interface LoginFormProps {
   onTrackCustomer: () => void;
   onDashboard: () => void;
+  onSelfRegistration: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboard }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboard, onSelfRegistration }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -169,6 +170,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                 <User size={20} />
                 <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Log in</span>
               </div>
+              <button
+                onClick={onSelfRegistration}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 group"
+              >
+                <User size={20} />
+                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Register Device</span>
+              </button>
               <button
                 onClick={onTrackCustomer}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 group"

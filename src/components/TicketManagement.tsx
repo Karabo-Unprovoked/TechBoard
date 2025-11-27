@@ -68,6 +68,20 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
   const loadTicketDetails = async () => {
     try {
+      // Load ticket with customer data
+      const { data: ticketData } = await supabase
+        .from('repair_tickets')
+        .select(`
+          *,
+          customer:customers(*)
+        `)
+        .eq('id', ticket.id)
+        .single();
+
+      if (ticketData) {
+        setTicket(ticketData);
+      }
+
       // Load notes
       const { data: notesData } = await supabase
         .from('ticket_notes')
@@ -239,88 +253,127 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
       />
 
       <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Tickets</span>
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: SECONDARY }}>
-                Manage Ticket: {ticket.ticket_number}
-              </h1>
-              <p className="text-gray-600">Complete ticket management and communication</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {!isEditing && ticket.status === 'void' && (
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
-              >
-                <Trash2 size={16} />
-                <span>Delete Ticket</span>
-              </button>
-            )}
-            {!isEditing && ticket.status !== 'void' && (
-              <button
-                onClick={() => setShowVoidModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition-colors"
-              >
-                <Ban size={16} />
-                <span>Void Ticket</span>
-              </button>
-            )}
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                disabled={ticket.status === 'void'}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: PRIMARY }}
-              >
-                <Edit3 size={16} />
-                <span>Edit Ticket</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-50"
-                >
-                  <Save size={16} />
-                  <span>{loading ? 'Saving...' : 'Save'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditData({
-                      device_type: ticket.device_type,
-                      brand: ticket.brand || '',
-                      model: ticket.model || '',
-                      serial_number: ticket.serial_number || '',
-                      issue_description: ticket.issue_description || '',
-                      status: ticket.status,
-                      priority: ticket.priority || 'medium',
-                      estimated_cost: ticket.estimated_cost || 0,
-                      actual_cost: ticket.actual_cost || 0,
-                      estimated_completion: ticket.estimated_completion ? 
-                        new Date(ticket.estimated_completion).toISOString().slice(0, 16) : '',
-                      repair_notes: ticket.repair_notes || ''
-                    });
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-                >
-                  <X size={16} />
-                  <span>Cancel</span>
-                </button>
+        {/* Back Button */}
+        <div className="mb-4">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft size={18} />
+            <span>Back</span>
+          </button>
+        </div>
+
+        {/* Modern Header Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <h1 className="text-3xl font-bold" style={{ color: SECONDARY }}>
+                  {ticket.ticket_number}
+                </h1>
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
+                  {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ')}
+                </span>
+                {ticket.internal_status && (
+                  <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                    {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
+                  </span>
+                )}
               </div>
-            )}
+
+              <div className="flex items-center gap-6 text-sm text-gray-600">
+                {ticket.customer && (
+                  <div className="flex items-center gap-2">
+                    <User size={16} />
+                    <span>{ticket.customer.first_name} {ticket.customer.last_name}</span>
+                  </div>
+                )}
+                {(ticket.brand || ticket.device_type) && (
+                  <div className="flex items-center gap-2">
+                    <Laptop size={16} />
+                    <span>{ticket.brand} {ticket.model || ticket.device_type}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} />
+                  <span>Created {new Date(ticket.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {!isEditing && ticket.status === 'void' && (
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+                >
+                  <Trash2 size={16} />
+                  <span>Delete</span>
+                </button>
+              )}
+              {!isEditing && ticket.status !== 'void' && (
+                <button
+                  onClick={() => setShowVoidModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-300 text-orange-600 hover:bg-orange-50 transition-colors"
+                >
+                  <Ban size={16} />
+                  <span>Void</span>
+                </button>
+              )}
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  disabled={ticket.status === 'void'}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: PRIMARY }}
+                >
+                  <Edit3 size={16} />
+                  <span>Edit</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditData({
+                        device_type: ticket.device_type,
+                        brand: ticket.brand || '',
+                        model: ticket.model || '',
+                        serial_number: ticket.serial_number || '',
+                        issue_description: ticket.issue_description || '',
+                        status: ticket.status,
+                        internal_status: ticket.internal_status || '',
+                        outsourced_to: ticket.outsourced_to || '',
+                        pending_customer_action_type: ticket.pending_customer_action_type || '',
+                        priority: ticket.priority || 'medium',
+                        estimated_cost: ticket.estimated_cost || 0,
+                        actual_cost: ticket.actual_cost || 0,
+                        estimated_completion: ticket.estimated_completion ?
+                          new Date(ticket.estimated_completion).toISOString().slice(0, 16) : '',
+                        repair_notes: ticket.repair_notes || ''
+                      });
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                  >
+                    <X size={16} />
+                    <span>Cancel</span>
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-50"
+                  >
+                    <Save size={16} />
+                    <span>{loading ? 'Saving...' : 'Save Changes'}</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -621,6 +674,30 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* Device Images */}
+              {ticket.device_images && ticket.device_images.length > 0 && (
+                <div className="mt-6">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Device Images</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {ticket.device_images.map((imageUrl, index) => (
+                      <a
+                        key={index}
+                        href={imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Device ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-300 hover:opacity-75 transition-opacity cursor-pointer"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Notes Section */}

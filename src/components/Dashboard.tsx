@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
@@ -13,6 +13,7 @@ import { SystemSettings } from './SystemSettings';
 import { CustomersView } from './CustomersView';
 import { CustomerManagement } from './CustomerManagement';
 import { UserProfile } from './UserProfile';
+import { RegistrationRequests } from './RegistrationRequests';
 import type { NotificationType } from './Notification';
 
 interface DashboardProps {
@@ -22,7 +23,7 @@ interface DashboardProps {
   onNotification: (type: NotificationType, message: string) => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile';
+type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile' | 'registration-requests';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer, onNotification }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
@@ -35,6 +36,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -44,11 +46,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     loadData();
     loadUserRole();
     loadStatusesData();
+    loadPendingRequests();
   }, []);
 
   const loadStatusesData = async () => {
     const data = await loadStatuses();
     setStatuses(data);
+  };
+
+  const loadPendingRequests = async () => {
+    try {
+      if (!isSupabaseConfigured) return;
+
+      const { count, error } = await supabase
+        .from('registration_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      setPendingRequests(count || 0);
+    } catch (error) {
+      console.error('Error loading pending requests:', error);
+    }
   };
 
   const loadUserRole = async () => {
@@ -273,6 +292,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span className="text-sm">Track Repair</span>
               </button>
               <button
+                onClick={() => setCurrentView('registration-requests')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'registration-requests' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <FileText size={18} />
+                <span className="text-sm">Registration Requests</span>
+              </button>
+              <button
                 onClick={() => setCurrentView('settings')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'settings' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -448,31 +476,55 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           </span>
                         </div>
                         <h4 className="text-gray-600 text-sm font-medium mb-1">Total Tickets</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.totalTickets}</p>
+                        <p className="text-3xl font-bold text-gray-900 mb-3">{stats.totalTickets}</p>
+
+                        {/* Status Breakdown */}
+                        <div className="space-y-2 pt-3 border-t border-gray-100">
+                          {statuses.slice(0, 3).map((status) => {
+                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+                            const count = stats[statusKey] || 0;
+                            const percentage = stats.totalTickets > 0 ? Math.round((count / stats.totalTickets) * 100) : 0;
+                            const colors = getStatusDisplayColors(status.status_key);
+
+                            return (
+                              <div key={status.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
+                                  <span className="text-xs text-gray-600">{status.status_label}</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-900">{percentage}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('registration-requests')}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="bg-orange-50 p-3 rounded-xl">
-                            <Clock size={24} className="text-orange-600" />
+                            <FileText size={24} className="text-orange-600" />
                           </div>
-                          <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                            {stats.totalTickets > 0 ? Math.round((stats.inProgressTickets / stats.totalTickets) * 100) : 0}%
-                          </span>
+                          {pendingRequests > 0 && (
+                            <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                              Needs Review
+                            </span>
+                          )}
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">In Progress</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.inProgressTickets}</p>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Pending Registrations</h4>
+                        <p className="text-3xl font-bold text-gray-900">{pendingRequests}</p>
+                        <p className="text-xs text-gray-500 mt-2">Click to review requests</p>
                       </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('customers')}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="bg-green-50 p-3 rounded-xl">
-                            <CheckCircle size={24} className="text-green-600" />
+                            <Users size={24} className="text-green-600" />
                           </div>
                           <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                            {stats.totalTickets > 0 ? Math.round((stats.completedTickets / stats.totalTickets) * 100) : 0}%
+                            Active
                           </span>
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Completed</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.completedTickets}</p>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Customers</h4>
+                        <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers}</p>
+                        <p className="text-xs text-gray-500 mt-2">Click to view all customers</p>
                       </div>
                     </div>
 
@@ -502,12 +554,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                       {ticket.customer?.name} - {ticket.device_type}
                                     </span>
                                   </div>
-                                  <button
-                                    onClick={() => handleViewLabel(ticket)}
-                                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-                                  >
-                                    <Eye size={16} />
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleViewLabel(ticket)}
+                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                      style={{ color: '#ffb400' }}
+                                      title="View QR Label"
+                                    >
+                                      <QrCode size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedTicket(ticket);
+                                        setCurrentView('manage-ticket');
+                                      }}
+                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+                                      title="View Ticket"
+                                    >
+                                      <Eye size={16} />
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div className="space-y-2">
@@ -634,13 +700,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   />
                 )}
                 {currentView === 'manage-customer' && selectedCustomer && (
-                  <CustomerManagement 
-                    customer={selectedCustomer} 
+                  <CustomerManagement
+                    customer={selectedCustomer}
                     onBack={() => setCurrentView('customers')}
                     onCustomerUpdated={(updatedCustomer) => {
                       setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
                       setSelectedCustomer(updatedCustomer);
                     }}
+                    onViewTicket={handleManageTicket}
                   />
                 )}
                 {currentView === 'settings' && (
@@ -651,6 +718,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 )}
                 {currentView === 'profile' && (
                   <UserProfile />
+                )}
+                {currentView === 'registration-requests' && (
+                  <RegistrationRequests
+                    onNotification={onNotification}
+                  />
                 )}
               </>
             )}
