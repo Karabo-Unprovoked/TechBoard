@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
@@ -554,12 +554,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                       {ticket.customer?.name} - {ticket.device_type}
                                     </span>
                                   </div>
-                                  <button
-                                    onClick={() => handleViewLabel(ticket)}
-                                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-                                  >
-                                    <Eye size={16} />
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleViewLabel(ticket)}
+                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                      style={{ color: '#ffb400' }}
+                                      title="View QR Label"
+                                    >
+                                      <QrCode size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => setSelectedTicket(ticket)}
+                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+                                      title="View Ticket"
+                                    >
+                                      <Eye size={16} />
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div className="space-y-2">
