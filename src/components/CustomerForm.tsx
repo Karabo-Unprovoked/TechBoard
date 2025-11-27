@@ -33,15 +33,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
   const [existingCustomerId, setExistingCustomerId] = useState<string | null>(null);
 
   const generateCustomerNumber = async () => {
-    // Get the starting point from settings
-    const { data: setting } = await supabase
-      .from('admin_settings')
-      .select('setting_value')
-      .eq('setting_key', 'customer_number_start')
-      .maybeSingle();
-
-    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
-
     // Add a small delay to ensure database replication is complete
     await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -52,12 +43,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       .limit(1);
 
     if (!customers || customers.length === 0) {
-      return `C${startNumber}`;
+      return 'C1';
     }
 
     const lastNumber = customers[0].customer_number;
     const numberPart = parseInt(lastNumber.replace('C', ''), 10);
-    const nextNumber = Math.max(numberPart + 1, startNumber);
+    const nextNumber = numberPart + 1;
     return `C${nextNumber}`;
   };
 

@@ -75,14 +75,6 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   };
 
   const generateCustomerNumber = async () => {
-    const { data: setting } = await supabase
-      .from('admin_settings')
-      .select('setting_value')
-      .eq('setting_key', 'customer_number_start')
-      .maybeSingle();
-
-    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
-
     const { data: customers } = await supabase
       .from('customers')
       .select('customer_number')
@@ -90,12 +82,12 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
       .limit(1);
 
     if (!customers || customers.length === 0) {
-      return `C${startNumber}`;
+      return 'C1';
     }
 
     const lastNumber = customers[0].customer_number;
     const numberPart = parseInt(lastNumber.replace('C', ''), 10);
-    const nextNumber = Math.max(numberPart + 1, startNumber);
+    const nextNumber = numberPart + 1;
     return `C${nextNumber}`;
   };
 

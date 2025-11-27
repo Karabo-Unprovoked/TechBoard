@@ -165,13 +165,7 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         .limit(1);
 
       if (!customers || customers.length === 0) {
-        const { data: setting } = await supabase
-          .from('admin_settings')
-          .select('setting_value')
-          .eq('setting_key', 'customer_number_start')
-          .maybeSingle();
-        const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
-        return `C${startNumber}`;
+        return 'C1';
       }
 
       lastNumber = customers[0].customer_number;
@@ -179,16 +173,6 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
 
     const numberPart = parseInt(lastNumber.replace('C', ''), 10);
     const nextNumber = numberPart + 1;
-
-    if (!isImporting) {
-      const { data: setting } = await supabase
-        .from('admin_settings')
-        .select('setting_value')
-        .eq('setting_key', 'customer_number_start')
-        .maybeSingle();
-      const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
-      return `C${Math.max(nextNumber, startNumber)}`;
-    }
 
     return `C${nextNumber}`;
   };
