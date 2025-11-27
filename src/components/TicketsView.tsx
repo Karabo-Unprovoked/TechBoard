@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, RefreshCw, Calendar, User, Laptop, FileText, Settings, LayoutGrid, List, Download } from 'lucide-react';
+import { QrCode, RefreshCw, Calendar, User, Laptop, FileText, Settings, LayoutGrid, List, Download } from 'lucide-react';
 import type { RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusColor as getStatusColorUtil, getStatusLabel, getSubStatusLabel } from '../lib/statusUtils';
 import { exportTicketsToExcel } from '../lib/exportUtils';
@@ -142,7 +142,7 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                     style={{ color: PRIMARY }}
                     title="View Label"
                   >
-                    <Eye size={18} />
+                    <QrCode size={18} />
                   </button>
                 </div>
               </div>
@@ -295,7 +295,7 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                         style={{ color: PRIMARY }}
                         title="View Label"
                       >
-                        <Eye size={18} />
+                        <QrCode size={18} />
                       </button>
                     </div>
                   </td>
