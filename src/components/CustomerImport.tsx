@@ -251,7 +251,7 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         const { data: existing } = await supabase
           .from('customers')
           .select('*')
-          .eq('email', mappedData.email.trim())
+          .ilike('email', mappedData.email.trim())
           .maybeSingle();
 
         if (existing) {

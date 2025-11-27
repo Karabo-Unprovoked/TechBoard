@@ -72,7 +72,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
       const { data: existingCustomer, error: checkError } = await supabase
         .from('customers')
         .select('*')
-        .eq('email', formData.email)
+        .ilike('email', formData.email)
         .maybeSingle();
 
       if (checkError) throw checkError;
