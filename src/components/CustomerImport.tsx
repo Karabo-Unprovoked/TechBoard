@@ -44,6 +44,7 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
 
   const customerFields = [
     { value: '', label: '-- Do Not Import --' },
+    { value: 'customer_number', label: 'Customer Number' },
     { value: 'title', label: 'Title (Mr/Mrs/Ms/Dr)' },
     { value: 'first_name', label: 'First Name *' },
     { value: 'last_name', label: 'Last Name *' },
@@ -94,7 +95,9 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           const lowerField = col.field.toLowerCase().replace(/[_\s-]/g, '');
           let matchedField = '';
 
-          if (lowerField.includes('firstname') || lowerField === 'fname') {
+          if (lowerField.includes('customernumber') || lowerField.includes('customerid') || lowerField === 'customernum') {
+            matchedField = 'customer_number';
+          } else if (lowerField.includes('firstname') || lowerField === 'fname') {
             matchedField = 'first_name';
           } else if (lowerField.includes('lastname') || lowerField === 'lname' || lowerField === 'surname') {
             matchedField = 'last_name';
@@ -269,16 +272,50 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         errorCount++;
       }
 
-      setImportProgress(Math.round(((i + 1) / excelData.length) * 30));
+      setImportProgress(Math.round(((i + 1) / excelData.length) * 20));
     }
 
     try {
       let successCount = 0;
+      let duplicateCount = 0;
+
+      const rowsWithNumbers = validRows.filter(row => row.customer_number?.trim());
+      const rowsWithoutNumbers = validRows.filter(row => !row.customer_number?.trim());
+
+      const totalRows = rowsWithNumbers.length + rowsWithoutNumbers.length;
+      let processedCount = 0;
+
+      for (const customerData of rowsWithNumbers) {
+        const { data: existing } = await supabase
+          .from('customers')
+          .select('customer_number')
+          .eq('customer_number', customerData.customer_number)
+          .maybeSingle();
+
+        if (existing) {
+          console.warn('Duplicate customer number found:', customerData.customer_number);
+          duplicateCount++;
+          errorCount++;
+        } else {
+          const { error } = await supabase
+            .from('customers')
+            .insert(customerData);
+
+          if (error) {
+            console.error('Import error for row:', error, customerData);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        }
+
+        processedCount++;
+        setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
+      }
+
       let lastCustomerNumber: string | undefined;
 
-      for (let i = 0; i < validRows.length; i++) {
-        const customerData = validRows[i];
-
+      for (const customerData of rowsWithoutNumbers) {
         const customerNumber = await generateCustomerNumber(lastCustomerNumber);
         customerData.customer_number = customerNumber;
         lastCustomerNumber = customerNumber;
@@ -294,13 +331,21 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
           successCount++;
         }
 
-        setImportProgress(30 + Math.round(((i + 1) / validRows.length) * 70));
+        processedCount++;
+        setImportProgress(20 + Math.round((processedCount / totalRows) * 70));
       }
 
       setImportProgress(100);
 
       if (successCount > 0) {
-        onNotification('success', `Successfully imported ${successCount} customer${successCount > 1 ? 's' : ''}${errorCount > 0 ? `. ${errorCount} row${errorCount > 1 ? 's' : ''} skipped due to errors.` : '.'}`);
+        let message = `Successfully imported ${successCount} customer${successCount > 1 ? 's' : ''}`;
+        if (duplicateCount > 0) {
+          message += `. ${duplicateCount} duplicate${duplicateCount > 1 ? 's' : ''} skipped`;
+        }
+        if (errorCount - duplicateCount > 0) {
+          message += `. ${errorCount - duplicateCount} error${errorCount - duplicateCount > 1 ? 's' : ''}`;
+        }
+        onNotification('success', message);
         setTimeout(() => {
           onImportComplete();
           onClose();
@@ -318,6 +363,7 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
 
   const downloadTemplate = () => {
     const templateData = [{
+      'Customer Number': 'C100',
       'First Name': 'John',
       'Last Name': 'Doe',
       'Title': 'Mr',
@@ -375,6 +421,8 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
                     <ul className="list-disc list-inside space-y-1">
                       <li>Ensure your Excel file has column headers in the first row</li>
                       <li>First Name and Last Name are required fields</li>
+                      <li>Customer Number is optional - leave blank to auto-generate</li>
+                      <li>Duplicate customer numbers will be skipped</li>
                       <li>Remove any empty rows from your spreadsheet</li>
                       <li>You can download our template to see the correct format</li>
                     </ul>
