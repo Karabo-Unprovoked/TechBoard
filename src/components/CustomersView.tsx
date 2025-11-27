@@ -156,7 +156,10 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
       if (sortBy === 'name') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'customer_number') {
-        return a.customer_number.localeCompare(b.customer_number);
+        // Extract numeric part for proper numerical sorting
+        const numA = parseInt(a.customer_number.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.customer_number.replace(/\D/g, '')) || 0;
+        return numA - numB;
       } else {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
