@@ -16,7 +16,6 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [error, setError] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
-  const [customerNotes, setCustomerNotes] = useState<any[]>([]);
 
   const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) return;
@@ -52,18 +51,6 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
       setTrackingNumber(term.toUpperCase());
       setTickets(ticketsData || []);
-
-      // Load customer-visible notes for the ticket
-      if (ticketsData && ticketsData.length > 0) {
-        const { data: notesData } = await supabase
-          .from('ticket_notes')
-          .select('*')
-          .eq('ticket_id', ticketsData[0].id)
-          .eq('note_type', 'customer')
-          .order('created_at', { ascending: false });
-
-        setCustomerNotes(notesData || []);
-      }
 
     } catch (err) {
       console.error('Search error:', err);
@@ -423,38 +410,6 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   </div>
                 )}
 
-                {/* Customer Notes Section */}
-                {customerNotes.length > 0 && (
-                  <div className="mt-8">
-                    <h4 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
-                      Updates & Notes
-                    </h4>
-
-                    <div className="space-y-4">
-                      {customerNotes.map((note) => (
-                        <div key={note.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: PRIMARY }}
-                              />
-                              <span className="text-sm font-medium" style={{ color: SECONDARY }}>
-                                Update from Guardian Assist
-                              </span>
-                            </div>
-                            <span className="text-sm text-gray-500">
-                              {formatDate(note.created_at)}
-                            </span>
-                          </div>
-                          <p className="text-gray-700 leading-relaxed">
-                            {note.content}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Estimated Timeline */}
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
