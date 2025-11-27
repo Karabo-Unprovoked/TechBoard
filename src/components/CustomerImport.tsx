@@ -160,15 +160,19 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
     if (!lastNumber) {
       const { data: customers } = await supabase
         .from('customers')
-        .select('customer_number')
-        .order('customer_number', { ascending: false })
-        .limit(1);
+        .select('customer_number');
 
       if (!customers || customers.length === 0) {
         return 'C1';
       }
 
-      lastNumber = customers[0].customer_number;
+      // Find the highest numeric value
+      const numbers = customers
+        .map(c => parseInt(c.customer_number.replace('C', ''), 10))
+        .filter(n => !isNaN(n));
+
+      const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+      lastNumber = `C${maxNumber}`;
     }
 
     const numberPart = parseInt(lastNumber.replace('C', ''), 10);

@@ -38,17 +38,19 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
 
     const { data: customers } = await supabase
       .from('customers')
-      .select('customer_number')
-      .order('customer_number', { ascending: false })
-      .limit(1);
+      .select('customer_number');
 
     if (!customers || customers.length === 0) {
       return 'C1';
     }
 
-    const lastNumber = customers[0].customer_number;
-    const numberPart = parseInt(lastNumber.replace('C', ''), 10);
-    const nextNumber = numberPart + 1;
+    // Find the highest numeric value
+    const numbers = customers
+      .map(c => parseInt(c.customer_number.replace('C', ''), 10))
+      .filter(n => !isNaN(n));
+
+    const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+    const nextNumber = maxNumber + 1;
     return `C${nextNumber}`;
   };
 
