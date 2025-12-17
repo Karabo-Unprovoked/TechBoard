@@ -239,53 +239,77 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
   };
 
   const checkEmailConflicts = async () => {
-    const conflicts: EmailConflict[] = [];
+    try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        onNotification('error', 'You must be logged in to import customers');
+        return;
+      }
 
-    for (const row of excelData) {
-      const mappedData: any = {};
-      fieldMappings.forEach(mapping => {
-        if (mapping.customerField) {
-          const value = row[mapping.excelColumn];
-          if (value !== null && value !== undefined && value !== '') {
-            mappedData[mapping.customerField] = String(value).trim();
+      const conflicts: EmailConflict[] = [];
+
+      for (const row of excelData) {
+        const mappedData: any = {};
+        fieldMappings.forEach(mapping => {
+          if (mapping.customerField) {
+            const value = row[mapping.excelColumn];
+            if (value !== null && value !== undefined && value !== '') {
+              mappedData[mapping.customerField] = String(value).trim();
+            }
+          }
+        });
+
+        // Generate name from first_name and last_name
+        if (mappedData.first_name?.trim() && mappedData.last_name?.trim()) {
+          mappedData.name = `${mappedData.first_name} ${mappedData.last_name}`;
+        }
+
+        if (mappedData.email?.trim()) {
+          const { data: existing, error } = await supabase
+            .from('customers')
+            .select('*')
+            .ilike('email', mappedData.email.trim())
+            .maybeSingle();
+
+          if (error) {
+            console.error('Error checking email conflict:', error);
+            throw error;
+          }
+
+          if (existing) {
+            conflicts.push({
+              email: mappedData.email.trim(),
+              importData: mappedData,
+              existingCustomer: existing
+            });
           }
         }
-      });
-
-      // Generate name from first_name and last_name
-      if (mappedData.first_name?.trim() && mappedData.last_name?.trim()) {
-        mappedData.name = `${mappedData.first_name} ${mappedData.last_name}`;
       }
 
-      if (mappedData.email?.trim()) {
-        const { data: existing } = await supabase
-          .from('customers')
-          .select('*')
-          .ilike('email', mappedData.email.trim())
-          .maybeSingle();
-
-        if (existing) {
-          conflicts.push({
-            email: mappedData.email.trim(),
-            importData: mappedData,
-            existingCustomer: existing
-          });
-        }
+      if (conflicts.length > 0) {
+        setEmailConflicts(conflicts);
+        const initialResolutions = new Map<string, 'skip' | 'merge'>();
+        conflicts.forEach(c => initialResolutions.set(c.email, 'skip'));
+        setConflictResolutions(initialResolutions);
+        setStep('conflicts');
+      } else {
+        handleImport();
       }
-    }
-
-    if (conflicts.length > 0) {
-      setEmailConflicts(conflicts);
-      const initialResolutions = new Map<string, 'skip' | 'merge'>();
-      conflicts.forEach(c => initialResolutions.set(c.email, 'skip'));
-      setConflictResolutions(initialResolutions);
-      setStep('conflicts');
-    } else {
-      handleImport();
+    } catch (error: any) {
+      console.error('Error checking email conflicts:', error);
+      onNotification('error', 'Failed to check for conflicts. Please make sure you are logged in and try again.');
     }
   };
 
   const handleImport = async () => {
+    // Check if user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      onNotification('error', 'You must be logged in to import customers');
+      return;
+    }
+
     setStep('importing');
     setImportProgress(0);
 
