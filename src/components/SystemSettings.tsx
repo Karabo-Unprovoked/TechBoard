@@ -30,7 +30,6 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
-  const [customerNumberStart, setCustomerNumberStart] = useState<string>('1000');
   const [savingGeneralSettings, setSavingGeneralSettings] = useState(false);
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState(false);
@@ -41,6 +40,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [newSubStatusLabel, setNewSubStatusLabel] = useState<string>('');
   const [editingSubStatusId, setEditingSubStatusId] = useState<string | null>(null);
   const [editingSubStatusLabel, setEditingSubStatusLabel] = useState('');
+  const [customerNumberStart, setCustomerNumberStart] = useState<string>('1');
   const [emailSettings, setEmailSettings] = useState<{
     smtp_host: string;
     smtp_port: number;
@@ -150,32 +150,6 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     }
   };
 
-  const handleSaveGeneralSettings = async () => {
-    const startNum = parseInt(customerNumberStart);
-    if (isNaN(startNum) || startNum < 1) {
-      onNotification('error', 'Customer number start must be a positive number');
-      return;
-    }
-
-    setSavingGeneralSettings(true);
-    try {
-      const { error } = await supabase
-        .from('admin_settings')
-        .update({
-          setting_value: customerNumberStart,
-          updated_at: new Date().toISOString()
-        })
-        .eq('setting_key', 'customer_number_start');
-
-      if (error) throw error;
-
-      onNotification('success', 'General settings saved successfully');
-    } catch (error: any) {
-      onNotification('error', 'Failed to save settings: ' + error.message);
-    } finally {
-      setSavingGeneralSettings(false);
-    }
-  };
 
   // Load user role on component mount
   React.useEffect(() => {
@@ -788,49 +762,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                 </h3>
 
                 <div className="space-y-6">
-                  {/* Customer Number Start */}
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Customer Number Starting Point
-                    </label>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Set the starting number for customer IDs. New customers will be numbered starting from this value.
-                      Format: CG{customerNumberStart}
-                    </p>
-                    <input
-                      type="number"
-                      value={customerNumberStart}
-                      onChange={(e) => setCustomerNumberStart(e.target.value)}
-                      min="1"
-                      className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                      style={{ focusRingColor: PRIMARY }}
-                      placeholder="100"
-                    />
-                    <p className="text-xs text-gray-500 mt-2">
-                      Example: If set to 100, the first customer will be CG100, second will be CG101, etc.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle size={16} className="text-yellow-600" />
-                      <h4 className="font-medium text-yellow-900">Important</h4>
-                    </div>
-                    <p className="text-sm text-yellow-800">
-                      This only affects new customers. Existing customer numbers will not change.
-                      Make sure this number is higher than your current highest customer number to avoid conflicts.
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={handleSaveGeneralSettings}
-                    disabled={savingGeneralSettings}
-                    className="flex items-center gap-2 px-6 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
-                    style={{ backgroundColor: PRIMARY }}
-                  >
-                    <Settings size={16} />
-                    <span>{savingGeneralSettings ? 'Saving...' : 'Save Settings'}</span>
-                  </button>
+                  <p className="text-gray-600">General settings will be added here in the future.</p>
                 </div>
               </div>
             )}

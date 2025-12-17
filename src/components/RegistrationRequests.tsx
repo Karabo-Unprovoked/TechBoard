@@ -35,9 +35,10 @@ interface RegistrationRequest {
 
 interface RegistrationRequestsProps {
   onNotification: (type: NotificationType, message: string) => void;
+  onRequestsChanged?: () => void;
 }
 
-export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNotification }) => {
+export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNotification, onRequestsChanged }) => {
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
@@ -48,6 +49,11 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearType, setClearType] = useState<'approved' | 'declined'>('approved');
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [existingCustomer, setExistingCustomer] = useState<any>(null);
+  const [pendingRequest, setPendingRequest] = useState<RegistrationRequest | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showMassDeleteModal, setShowMassDeleteModal] = useState(false);
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
@@ -55,6 +61,10 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   useEffect(() => {
     loadRequests();
   }, []);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [filter]);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -75,32 +85,48 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   };
 
   const generateCustomerNumber = async () => {
-    const { data: setting } = await supabase
-      .from('admin_settings')
-      .select('setting_value')
-      .eq('setting_key', 'customer_number_start')
-      .maybeSingle();
-
-    const startNumber = setting?.setting_value ? parseInt(setting.setting_value) : 100;
-
     const { data: customers } = await supabase
       .from('customers')
-      .select('customer_number')
-      .order('customer_number', { ascending: false })
-      .limit(1);
+      .select('customer_number');
 
     if (!customers || customers.length === 0) {
-      return `CG${startNumber}`;
+      return 'C1';
     }
 
-    const lastNumber = customers[0].customer_number;
-    const numberPart = parseInt(lastNumber.replace('CG', ''), 10);
-    const nextNumber = Math.max(numberPart + 1, startNumber);
-    return `CG${nextNumber}`;
+    // Find the highest numeric value
+    const numbers = customers
+      .map(c => parseInt(c.customer_number.replace('C', ''), 10))
+      .filter(n => !isNaN(n));
+
+    const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+    const nextNumber = maxNumber + 1;
+    return `C${nextNumber}`;
   };
 
   const handleApprove = async (request: RegistrationRequest) => {
-    if (!confirm('Are you sure you want to approve this registration? This will create a customer and send them a confirmation email.')) {
+    // Check for duplicate email first
+    if (request.email?.trim()) {
+      const { data: existingCust } = await supabase
+        .from('customers')
+        .select('*')
+        .ilike('email', request.email.trim())
+        .maybeSingle();
+
+      if (existingCust) {
+        // Duplicate email found - show merge modal
+        setExistingCustomer(existingCust);
+        setPendingRequest(request);
+        setShowMergeModal(true);
+        return;
+      }
+    }
+
+    // No duplicate - proceed with normal approval
+    await proceedWithApproval(request, false, null);
+  };
+
+  const proceedWithApproval = async (request: RegistrationRequest, shouldMerge: boolean, existingCustomerId: string | null) => {
+    if (!shouldMerge && !confirm('Are you sure you want to approve this registration? This will create a customer and send them a confirmation email.')) {
       return;
     }
 
@@ -108,33 +134,67 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const customerNumber = await generateCustomerNumber();
+      let customer;
+      let customerNumber;
 
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .insert({
-          customer_number: customerNumber,
-          title: request.title,
-          first_name: request.first_name,
-          last_name: request.last_name,
-          name: `${request.first_name} ${request.last_name}`,
-          email: request.email,
-          phone: request.phone_number,
-          gender: request.title === 'Mr' ? 'Male' : request.title === 'Mrs' || request.title === 'Ms' ? 'Female' : undefined,
-          referral_source: request.referral_source,
-          preferred_contact_method: request.preferred_contact_method,
-          needs_collection: request.needs_collection,
-          street_address: request.street_address,
-          address_line_2: request.address_line_2,
-          city: request.city,
-          province: request.province,
-          postal_code: request.postal_code,
-          country: request.country
-        })
-        .select()
-        .single();
+      if (shouldMerge && existingCustomerId) {
+        // Merge: Update existing customer with new information
+        const { data: updatedCustomer, error: updateError } = await supabase
+          .from('customers')
+          .update({
+            title: request.title,
+            first_name: request.first_name,
+            last_name: request.last_name,
+            name: `${request.first_name} ${request.last_name}`,
+            phone: request.phone_number,
+            referral_source: request.referral_source || undefined,
+            preferred_contact_method: request.preferred_contact_method,
+            needs_collection: request.needs_collection,
+            street_address: request.street_address,
+            address_line_2: request.address_line_2,
+            city: request.city,
+            province: request.province,
+            postal_code: request.postal_code,
+            country: request.country
+          })
+          .eq('id', existingCustomerId)
+          .select()
+          .single();
 
-      if (customerError) throw customerError;
+        if (updateError) throw updateError;
+        customer = updatedCustomer;
+        customerNumber = customer.customer_number;
+      } else {
+        // Create new customer
+        customerNumber = await generateCustomerNumber();
+
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            customer_number: customerNumber,
+            title: request.title,
+            first_name: request.first_name,
+            last_name: request.last_name,
+            name: `${request.first_name} ${request.last_name}`,
+            email: request.email,
+            phone: request.phone_number,
+            gender: request.title === 'Mr' ? 'Male' : request.title === 'Mrs' || request.title === 'Ms' ? 'Female' : undefined,
+            referral_source: request.referral_source,
+            preferred_contact_method: request.preferred_contact_method,
+            needs_collection: request.needs_collection,
+            street_address: request.street_address,
+            address_line_2: request.address_line_2,
+            city: request.city,
+            province: request.province,
+            postal_code: request.postal_code,
+            country: request.country
+          })
+          .select()
+          .single();
+
+        if (customerError) throw customerError;
+        customer = newCustomer;
+      }
 
       const { data: tickets } = await supabase
         .from('repair_tickets')
@@ -208,9 +268,13 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         });
       }
 
-      onNotification('success', 'Registration approved - Customer and ticket created successfully');
+      onNotification('success', shouldMerge ? 'Registration approved - Customer merged and ticket created successfully' : 'Registration approved - Customer and ticket created successfully');
       loadRequests();
+      onRequestsChanged?.();
       setSelectedRequest(null);
+      setShowMergeModal(false);
+      setExistingCustomer(null);
+      setPendingRequest(null);
     } catch (error: any) {
       console.error('Error approving request:', error);
       onNotification('error', 'Failed to approve registration: ' + error.message);
@@ -259,6 +323,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
       onNotification('success', 'Registration declined');
       loadRequests();
+      onRequestsChanged?.();
       setSelectedRequest(null);
       setShowDeclineModal(false);
       setDeclineReason('');
@@ -286,6 +351,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
       onNotification('success', `All ${clearType} requests cleared successfully`);
       loadRequests();
+      onRequestsChanged?.();
       setShowClearModal(false);
     } catch (error: any) {
       console.error('Error clearing requests:', error);
@@ -297,6 +363,66 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
   const handleReapprove = async (request: RegistrationRequest) => {
     await handleApprove(request);
+  };
+
+  const handleMergeConfirm = async () => {
+    if (pendingRequest && existingCustomer) {
+      await proceedWithApproval(pendingRequest, true, existingCustomer.id);
+    }
+  };
+
+  const handleCreateNew = async () => {
+    if (pendingRequest) {
+      setShowMergeModal(false);
+      setExistingCustomer(null);
+      setPendingRequest(null);
+      onNotification('warning', 'Cannot create new customer with duplicate email. Please update the email in the registration request or merge with existing customer.');
+    }
+  };
+
+  const toggleSelectRequest = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredRequests.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRequests.map(r => r.id)));
+    }
+  };
+
+  const handleMassDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    setProcessing(true);
+    try {
+      const { error } = await supabase
+        .from('registration_requests')
+        .delete()
+        .in('id', Array.from(selectedIds));
+
+      if (error) throw error;
+
+      onNotification('success', `Successfully deleted ${selectedIds.size} request(s)`);
+      setSelectedIds(new Set());
+      loadRequests();
+      onRequestsChanged?.();
+      setShowMassDeleteModal(false);
+    } catch (error: any) {
+      console.error('Error deleting requests:', error);
+      onNotification('error', 'Failed to delete requests: ' + error.message);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const filteredRequests = requests
@@ -380,19 +506,47 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
               </button>
             ))}
           </div>
-          {(filter === 'approved' || filter === 'declined') && filteredRequests.length > 0 && (
-            <button
-              onClick={() => {
-                setClearType(filter);
-                setShowClearModal(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
-            >
-              <Trash2 size={16} />
-              <span>Clear {filter.charAt(0).toUpperCase() + filter.slice(1)} List</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {(filter === 'approved' || filter === 'declined') && filteredRequests.length > 0 && (
+              <button
+                onClick={() => {
+                  setClearType(filter);
+                  setShowClearModal(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                <Trash2 size={16} />
+                <span>Clear {filter.charAt(0).toUpperCase() + filter.slice(1)} List</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {filteredRequests.length > 0 && (
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedIds.size === filteredRequests.length && filteredRequests.length > 0}
+                onChange={toggleSelectAll}
+                className="w-5 h-5 rounded border-gray-300 focus:ring-2 cursor-pointer"
+                style={{ accentColor: PRIMARY }}
+              />
+              <span className="font-medium text-gray-700">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select All'}
+              </span>
+            </label>
+            {selectedIds.size > 0 && (
+              <button
+                onClick={() => setShowMassDeleteModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                <Trash2 size={16} />
+                <span>Delete Selected</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12">
@@ -406,6 +560,15 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
           <div className="grid grid-cols-1 gap-6">
             {filteredRequests.map(request => (
               <div key={request.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-start gap-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(request.id)}
+                    onChange={() => toggleSelectRequest(request.id)}
+                    className="mt-1 w-5 h-5 rounded border-gray-300 focus:ring-2 cursor-pointer flex-shrink-0"
+                    style={{ accentColor: PRIMARY }}
+                  />
+                  <div className="flex-1">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -574,6 +737,8 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                     </div>
                   </div>
                 )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -645,6 +810,100 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                   className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
                 >
                   {processing ? 'Clearing...' : 'Yes, Clear List'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showMergeModal && existingCustomer && pendingRequest && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 p-6">
+              <h3 className="text-xl font-bold mb-4" style={{ color: SECONDARY }}>
+                Duplicate Email Detected
+              </h3>
+              <p className="text-gray-600 mb-4">
+                A customer with this email address already exists. Would you like to merge this registration with the existing customer or cancel?
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Existing Customer</h4>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Number:</strong> {existingCustomer.customer_number}</p>
+                    <p><strong>Name:</strong> {existingCustomer.first_name} {existingCustomer.last_name}</p>
+                    <p><strong>Email:</strong> {existingCustomer.email}</p>
+                    <p><strong>Phone:</strong> {existingCustomer.phone}</p>
+                  </div>
+                </div>
+                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                  <h4 className="font-semibold text-gray-900 mb-2">New Registration</h4>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Name:</strong> {pendingRequest.first_name} {pendingRequest.last_name}</p>
+                    <p><strong>Email:</strong> {pendingRequest.email}</p>
+                    <p><strong>Phone:</strong> {pendingRequest.phone_number}</p>
+                    <p><strong>Device:</strong> {pendingRequest.laptop_brand} {pendingRequest.laptop_model}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Merge Action:</strong> The existing customer will be updated with new information from this registration, and a new ticket will be created for them.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowMergeModal(false);
+                    setExistingCustomer(null);
+                    setPendingRequest(null);
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMergeConfirm}
+                  disabled={processing}
+                  className="px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: PRIMARY }}
+                >
+                  {processing ? 'Merging...' : 'Merge & Approve'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showMassDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+              <h3 className="text-xl font-bold mb-4" style={{ color: SECONDARY }}>
+                Delete Selected Requests
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to permanently delete {selectedIds.size} selected request(s)? This action cannot be undone.
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-red-800">
+                  <strong>Warning:</strong> This will permanently remove the selected registration requests from the database.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  onClick={() => setShowMassDeleteModal(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMassDelete}
+                  disabled={processing}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
+                >
+                  {processing ? 'Deleting...' : 'Yes, Delete Selected'}
                 </button>
               </div>
             </div>

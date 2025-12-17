@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2, LayoutGrid, List, Download } from 'lucide-react';
+import { Eye, RefreshCw, Calendar, User, Mail, Phone, FileText, Settings, Search, Trash2, LayoutGrid, List, Download, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer } from '../lib/supabase';
 import { AdminPasswordModal } from './AdminPasswordModal';
 import type { NotificationType } from './Notification';
 import { exportCustomersToExcel } from '../lib/exportUtils';
+import { CustomerImport } from './CustomerImport';
 
 interface CustomersViewProps {
   customers: Customer[];
@@ -26,6 +27,11 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   const [deleting, setDeleting] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [pendingDeleteCustomerId, setPendingDeleteCustomerId] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showMassDeleteModal, setShowMassDeleteModal] = useState(false);
+  const [massDeleteStep, setMassDeleteStep] = useState<'confirm' | 'admin'>('confirm');
+  const [customersRequiringAdmin, setCustomersRequiringAdmin] = useState<string[]>([]);
 
   const handleDeleteClick = async (customerId: string) => {
     const { data: tickets } = await supabase
@@ -130,6 +136,157 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
     }
   };
 
+  const toggleSelectCustomer = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredCustomers.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredCustomers.map(c => c.id)));
+    }
+  };
+
+  const handleMassDeleteClick = async () => {
+    if (selectedIds.size === 0) return;
+
+    const customersWithCompletedTickets: string[] = [];
+
+    for (const customerId of Array.from(selectedIds)) {
+      const { data: tickets } = await supabase
+        .from('repair_tickets')
+        .select('*')
+        .eq('customer_id', customerId);
+
+      if (tickets && tickets.length > 0) {
+        const hasActiveTickets = tickets.some(
+          (t) => !['completed', 'cancelled'].includes(t.status)
+        );
+
+        if (hasActiveTickets) {
+          const customer = customers.find(c => c.id === customerId);
+          onNotification(
+            'warning',
+            `Cannot delete ${customer?.name || 'customer'} - has active tickets`
+          );
+          setSelectedIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(customerId);
+            return newSet;
+          });
+          continue;
+        }
+
+        const hasCompletedTickets = tickets.some(
+          (t) => ['completed', 'cancelled'].includes(t.status)
+        );
+
+        if (hasCompletedTickets) {
+          customersWithCompletedTickets.push(customerId);
+        }
+      }
+    }
+
+    setCustomersRequiringAdmin(customersWithCompletedTickets);
+    setMassDeleteStep('confirm');
+    setShowMassDeleteModal(true);
+  };
+
+  const handleMassDeleteConfirm = async () => {
+    if (customersRequiringAdmin.length > 0) {
+      setMassDeleteStep('admin');
+    } else {
+      await executeMassDelete();
+    }
+  };
+
+  const handleMassDeleteAdminConfirm = async (password: string) => {
+    try {
+      const { data: setting, error } = await supabase
+        .from('admin_settings')
+        .select('setting_value')
+        .eq('setting_key', 'admin_password')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const adminPassword = setting?.setting_value || 'admin123';
+
+      if (password !== adminPassword) {
+        onNotification('error', 'Incorrect admin password');
+        return;
+      }
+
+      await executeMassDelete();
+    } catch (error: any) {
+      onNotification('error', 'Failed to verify password: ' + error.message);
+    }
+  };
+
+  const executeMassDelete = async () => {
+    setDeleting(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      let successCount = 0;
+
+      for (const customerId of Array.from(selectedIds)) {
+        const customer = customers.find((c) => c.id === customerId);
+        if (!customer) continue;
+
+        const { data: tickets } = await supabase
+          .from('repair_tickets')
+          .select('*')
+          .eq('customer_id', customerId)
+          .in('status', ['completed', 'cancelled']);
+
+        await supabase.from('deleted_customers').insert({
+          customer_id: customer.id,
+          customer_number: customer.customer_number,
+          first_name: customer.first_name,
+          last_name: customer.last_name,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          gender: customer.gender,
+          referral_source: customer.referral_source,
+          original_created_at: customer.created_at,
+          deleted_by: session?.session?.user?.id,
+          tickets_data: tickets || []
+        });
+
+        if (tickets && tickets.length > 0) {
+          await supabase
+            .from('repair_tickets')
+            .delete()
+            .eq('customer_id', customerId);
+        }
+
+        await supabase.from('customers').delete().eq('id', customerId);
+        successCount++;
+      }
+
+      onNotification('success', `${successCount} customer(s) moved to recycle bin. Can be restored within 30 days.`);
+      setSelectedIds(new Set());
+      setShowMassDeleteModal(false);
+      setMassDeleteStep('confirm');
+      setCustomersRequiringAdmin([]);
+      onRefresh();
+    } catch (error: any) {
+      onNotification('error', 'Failed to delete customers: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -154,7 +311,10 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
       if (sortBy === 'name') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'customer_number') {
-        return a.customer_number.localeCompare(b.customer_number);
+        // Extract numeric part for proper numerical sorting
+        const numA = parseInt(a.customer_number.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.customer_number.replace(/\D/g, '')) || 0;
+        return numA - numB;
       } else {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
@@ -200,6 +360,15 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           </div>
 
           <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            title="Import from Excel"
+          >
+            <Upload size={16} />
+            <span>Import</span>
+          </button>
+
+          <button
             onClick={() => exportCustomersToExcel(filteredCustomers)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
             title="Export to Excel"
@@ -243,6 +412,34 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
         </select>
       </div>
 
+      {/* Mass Selection Controls */}
+      {filteredCustomers.length > 0 && (
+        <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selectedIds.size === filteredCustomers.length && filteredCustomers.length > 0}
+              onChange={toggleSelectAll}
+              className="w-5 h-5 rounded border-gray-300 focus:ring-2 cursor-pointer"
+              style={{ accentColor: PRIMARY }}
+            />
+            <span className="font-medium text-gray-700">
+              {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select All'}
+            </span>
+          </label>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleMassDeleteClick}
+              disabled={deleting}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              <span>Delete Selected</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Customers Grid */}
       {filteredCustomers.length === 0 ? (
         <div className="text-center py-12">
@@ -259,12 +456,20 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           {filteredCustomers.map((customer) => (
             <div key={customer.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
               {/* Customer Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900">{customer.customer_number}</h4>
-                  <p className="text-sm text-gray-600">{customer.first_name} {customer.last_name}</p>
-                </div>
-                <div className="flex items-center gap-2">
+              <div className="flex items-start gap-3 mb-4">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(customer.id)}
+                  onChange={() => toggleSelectCustomer(customer.id)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 focus:ring-2 cursor-pointer flex-shrink-0"
+                  style={{ accentColor: PRIMARY }}
+                />
+                <div className="flex items-center justify-between flex-1">
+                  <div>
+                    <h4 className="font-semibold text-gray-900">{customer.customer_number}</h4>
+                    <p className="text-sm text-gray-600">{customer.first_name} {customer.last_name}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
                   <button
                     onClick={() => onViewCustomer(customer)}
                     className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -299,6 +504,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                       <Trash2 size={18} />
                     </button>
                   )}
+                </div>
                 </div>
               </div>
 
@@ -348,6 +554,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="w-12 px-6 py-3"></th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
@@ -360,6 +567,15 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
             <tbody className="divide-y divide-gray-200">
               {filteredCustomers.map((customer) => (
                 <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(customer.id)}
+                      onChange={() => toggleSelectCustomer(customer.id)}
+                      className="w-5 h-5 rounded border-gray-300 focus:ring-2 cursor-pointer"
+                      style={{ accentColor: PRIMARY }}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="font-semibold text-gray-900">{customer.customer_number}</div>
                     <div className="text-sm text-gray-600">{customer.first_name} {customer.last_name}</div>
@@ -442,6 +658,74 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
         title="Admin Authorization Required"
         message="This customer has completed tickets. Admin password is required to proceed with deletion."
       />
+
+      {showImportModal && (
+        <CustomerImport
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={() => {
+            onRefresh();
+          }}
+          onNotification={onNotification}
+        />
+      )}
+
+      {showMassDeleteModal && massDeleteStep === 'confirm' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-xl font-bold mb-4 text-gray-900">
+              Delete Selected Customers
+            </h3>
+            <p className="text-gray-600 mb-4">
+              You are about to delete {selectedIds.size} customer(s). They will be moved to the recycle bin and can be restored within 30 days.
+            </p>
+            {customersRequiringAdmin.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> {customersRequiringAdmin.length} customer(s) have completed tickets and will require admin password confirmation.
+                </p>
+              </div>
+            )}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-red-800">
+                <strong>Warning:</strong> This will also delete all completed tickets associated with these customers.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowMassDeleteModal(false);
+                  setMassDeleteStep('confirm');
+                  setCustomersRequiringAdmin([]);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMassDeleteConfirm}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMassDeleteModal && massDeleteStep === 'admin' && (
+        <AdminPasswordModal
+          isOpen={true}
+          onClose={() => {
+            setShowMassDeleteModal(false);
+            setMassDeleteStep('confirm');
+            setCustomersRequiringAdmin([]);
+          }}
+          onConfirm={handleMassDeleteAdminConfirm}
+          title="Admin Authorization Required"
+          message="Some customers have completed tickets. Admin password is required to proceed with mass deletion."
+        />
+      )}
     </div>
   );
 };
