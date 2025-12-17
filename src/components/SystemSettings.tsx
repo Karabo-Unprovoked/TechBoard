@@ -40,6 +40,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
   const [newSubStatusLabel, setNewSubStatusLabel] = useState<string>('');
   const [editingSubStatusId, setEditingSubStatusId] = useState<string | null>(null);
   const [editingSubStatusLabel, setEditingSubStatusLabel] = useState('');
+  const [customerNumberStart, setCustomerNumberStart] = useState<string>('1');
   const [emailSettings, setEmailSettings] = useState<{
     smtp_host: string;
     smtp_port: number;
