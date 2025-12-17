@@ -35,9 +35,10 @@ interface RegistrationRequest {
 
 interface RegistrationRequestsProps {
   onNotification: (type: NotificationType, message: string) => void;
+  onRequestsChanged?: () => void;
 }
 
-export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNotification }) => {
+export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNotification, onRequestsChanged }) => {
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
@@ -263,6 +264,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
       onNotification('success', shouldMerge ? 'Registration approved - Customer merged and ticket created successfully' : 'Registration approved - Customer and ticket created successfully');
       loadRequests();
+      onRequestsChanged?.();
       setSelectedRequest(null);
       setShowMergeModal(false);
       setExistingCustomer(null);
@@ -315,6 +317,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
       onNotification('success', 'Registration declined');
       loadRequests();
+      onRequestsChanged?.();
       setSelectedRequest(null);
       setShowDeclineModal(false);
       setDeclineReason('');
@@ -342,6 +345,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
       onNotification('success', `All ${clearType} requests cleared successfully`);
       loadRequests();
+      onRequestsChanged?.();
       setShowClearModal(false);
     } catch (error: any) {
       console.error('Error clearing requests:', error);

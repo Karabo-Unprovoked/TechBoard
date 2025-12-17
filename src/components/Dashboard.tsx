@@ -130,7 +130,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
       setCurrentView('new-ticket');
     } else {
       setCurrentView('customers');
-      setNotification('success', 'Customer created successfully!');
+      onNotification('success', 'Customer created successfully!');
     }
   };
 
@@ -729,6 +729,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 {currentView === 'registration-requests' && (
                   <RegistrationRequests
                     onNotification={onNotification}
+                    onRequestsChanged={loadPendingRequests}
                   />
                 )}
               </>
