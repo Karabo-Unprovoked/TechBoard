@@ -52,6 +52,8 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [existingCustomer, setExistingCustomer] = useState<any>(null);
   const [pendingRequest, setPendingRequest] = useState<RegistrationRequest | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showMassDeleteModal, setShowMassDeleteModal] = useState(false);
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
@@ -59,6 +61,10 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   useEffect(() => {
     loadRequests();
   }, []);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [filter]);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -374,6 +380,51 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
     }
   };
 
+  const toggleSelectRequest = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredRequests.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRequests.map(r => r.id)));
+    }
+  };
+
+  const handleMassDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    setProcessing(true);
+    try {
+      const { error } = await supabase
+        .from('registration_requests')
+        .delete()
+        .in('id', Array.from(selectedIds));
+
+      if (error) throw error;
+
+      onNotification('success', `Successfully deleted ${selectedIds.size} request(s)`);
+      setSelectedIds(new Set());
+      loadRequests();
+      onRequestsChanged?.();
+      setShowMassDeleteModal(false);
+    } catch (error: any) {
+      console.error('Error deleting requests:', error);
+      onNotification('error', 'Failed to delete requests: ' + error.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const filteredRequests = requests
     .filter(r => filter === 'all' || r.status === filter)
     .sort((a, b) => {
@@ -455,19 +506,47 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
               </button>
             ))}
           </div>
-          {(filter === 'approved' || filter === 'declined') && filteredRequests.length > 0 && (
-            <button
-              onClick={() => {
-                setClearType(filter);
-                setShowClearModal(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
-            >
-              <Trash2 size={16} />
-              <span>Clear {filter.charAt(0).toUpperCase() + filter.slice(1)} List</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {(filter === 'approved' || filter === 'declined') && filteredRequests.length > 0 && (
+              <button
+                onClick={() => {
+                  setClearType(filter);
+                  setShowClearModal(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                <Trash2 size={16} />
+                <span>Clear {filter.charAt(0).toUpperCase() + filter.slice(1)} List</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {filteredRequests.length > 0 && (
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedIds.size === filteredRequests.length && filteredRequests.length > 0}
+                onChange={toggleSelectAll}
+                className="w-5 h-5 rounded border-gray-300 focus:ring-2 cursor-pointer"
+                style={{ accentColor: PRIMARY }}
+              />
+              <span className="font-medium text-gray-700">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select All'}
+              </span>
+            </label>
+            {selectedIds.size > 0 && (
+              <button
+                onClick={() => setShowMassDeleteModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                <Trash2 size={16} />
+                <span>Delete Selected</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12">
@@ -481,6 +560,15 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
           <div className="grid grid-cols-1 gap-6">
             {filteredRequests.map(request => (
               <div key={request.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-start gap-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(request.id)}
+                    onChange={() => toggleSelectRequest(request.id)}
+                    className="mt-1 w-5 h-5 rounded border-gray-300 focus:ring-2 cursor-pointer flex-shrink-0"
+                    style={{ accentColor: PRIMARY }}
+                  />
+                  <div className="flex-1">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -649,6 +737,8 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                     </div>
                   </div>
                 )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -781,6 +871,39 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
                   style={{ backgroundColor: PRIMARY }}
                 >
                   {processing ? 'Merging...' : 'Merge & Approve'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showMassDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+              <h3 className="text-xl font-bold mb-4" style={{ color: SECONDARY }}>
+                Delete Selected Requests
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to permanently delete {selectedIds.size} selected request(s)? This action cannot be undone.
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-red-800">
+                  <strong>Warning:</strong> This will permanently remove the selected registration requests from the database.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  onClick={() => setShowMassDeleteModal(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMassDelete}
+                  disabled={processing}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
+                >
+                  {processing ? 'Deleting...' : 'Yes, Delete Selected'}
                 </button>
               </div>
             </div>
