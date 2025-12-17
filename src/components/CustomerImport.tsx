@@ -48,6 +48,7 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
   const [previewData, setPreviewData] = useState<ImportRow[]>([]);
   const [importProgress, setImportProgress] = useState(0);
   const [emailConflicts, setEmailConflicts] = useState<EmailConflict[]>([]);
+  const [isChecking, setIsChecking] = useState(false);
   const [conflictResolutions, setConflictResolutions] = useState<Map<string, 'skip' | 'merge'>>(new Map());
 
   const customerFields = [
@@ -239,14 +240,29 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
   };
 
   const checkEmailConflicts = async () => {
+    console.log('Check & Import button clicked');
+    setIsChecking(true);
+
     try {
       // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        onNotification('error', 'You must be logged in to import customers');
+      console.log('Checking authentication...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        onNotification('error', 'Authentication error. Please try logging out and back in.');
+        setIsChecking(false);
         return;
       }
 
+      if (!session) {
+        console.log('No active session found');
+        onNotification('error', 'You must be logged in to import customers');
+        setIsChecking(false);
+        return;
+      }
+
+      console.log('User authenticated. Checking for email conflicts...');
       const conflicts: EmailConflict[] = [];
 
       for (const row of excelData) {
@@ -287,6 +303,8 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         }
       }
 
+      console.log(`Found ${conflicts.length} email conflicts`);
+
       if (conflicts.length > 0) {
         setEmailConflicts(conflicts);
         const initialResolutions = new Map<string, 'skip' | 'merge'>();
@@ -294,11 +312,15 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
         setConflictResolutions(initialResolutions);
         setStep('conflicts');
       } else {
+        console.log('No conflicts found. Proceeding with import...');
         handleImport();
       }
     } catch (error: any) {
       console.error('Error checking email conflicts:', error);
-      onNotification('error', 'Failed to check for conflicts. Please make sure you are logged in and try again.');
+      const errorMsg = error?.message || 'Failed to check for conflicts';
+      onNotification('error', `${errorMsg}. Please make sure you are logged in and try again.`);
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -969,10 +991,11 @@ export const CustomerImport: React.FC<CustomerImportProps> = ({
             {step === 'preview' && (
               <button
                 onClick={checkEmailConflicts}
-                className="px-6 py-2 rounded-lg font-semibold text-white transition-colors"
+                disabled={isChecking}
+                className="px-6 py-2 rounded-lg font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: PRIMARY }}
               >
-                Check & Import
+                {isChecking ? 'Checking...' : 'Check & Import'}
               </button>
             )}
 
