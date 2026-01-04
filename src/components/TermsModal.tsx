@@ -15,11 +15,11 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{ fontFamily: 'Montserrat, sans-serif' }}
       >
-        <div className="flex items-center justify-between p-6 border-b" style={{ backgroundColor: PRIMARY }}>
+        <div className="flex items-center justify-between p-6 border-b flex-shrink-0" style={{ backgroundColor: PRIMARY }}>
           <h2 className="text-2xl font-bold text-white">Terms & Conditions</h2>
           <button
             onClick={onClose}
@@ -29,9 +29,9 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="prose prose-sm max-w-none" style={{ color: SECONDARY }}>
-            <div className="text-center mb-6">
+            <div className="text-right mb-6">
               <h3 className="text-xl font-bold" style={{ color: SECONDARY }}>COMPUTER GUARDIAN (PTY) LTD</h3>
               <h4 className="text-lg font-semibold" style={{ color: SECONDARY }}>TERMS & CONDITIONS – REPAIRS & SALES</h4>
               <p className="text-sm text-gray-600 mt-2">
@@ -197,7 +197,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 p-6 border-t">
+        <div className="flex justify-end gap-3 p-6 border-t flex-shrink-0 bg-white">
           <button
             onClick={onClose}
             className="px-6 py-2 rounded-lg text-white font-medium transition-colors"
