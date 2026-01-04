@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Upload, X, Laptop, User, Mail, Phone, MapPin, FileText, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { TermsModal } from './TermsModal';
 
 interface SelfRegistrationProps {
   onBack: () => void;
@@ -11,6 +12,7 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
   const [submitted, setSubmitted] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -658,16 +660,18 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
                     />
                     <span className="text-sm text-gray-700">
                       I accept Computer Guardian's{' '}
-                      <a
-                        href="/Computer-Guardian-Terms-and-Conditions.pdf"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
                         className="font-semibold underline hover:opacity-80"
                         style={{ color: PRIMARY }}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowTermsModal(true);
+                        }}
                       >
                         Terms & Conditions
-                      </a>
+                      </button>
                     </span>
                   </label>
                 </div>
@@ -701,6 +705,8 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
           </div>
         </div>
       </div>
+
+      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </>
   );
 };
