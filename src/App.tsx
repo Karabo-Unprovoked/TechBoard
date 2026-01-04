@@ -38,6 +38,12 @@ function App() {
         return;
       }
 
+      if (hash === '#register' || hash === '#book') {
+        setAppState('self-registration');
+        setLoading(false);
+        return;
+      }
+
       if (session) {
         setIsAuthenticated(true);
         setAppState('dashboard');
@@ -80,6 +86,7 @@ function App() {
   };
 
   const handleBackToLogin = () => {
+    window.location.hash = '';
     setAppState('login');
   };
 

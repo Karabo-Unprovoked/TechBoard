@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText, Link as LinkIcon, Copy, Check } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
@@ -38,9 +38,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
   const [pendingRequests, setPendingRequests] = useState(0);
   const [customerFormKey, setCustomerFormKey] = useState(0);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const copyBookingLink = () => {
+    const bookingUrl = `${window.location.origin}${window.location.pathname}#register`;
+    navigator.clipboard.writeText(bookingUrl);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   useEffect(() => {
@@ -450,6 +458,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                             </button>
                           </div>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Shareable Booking Link */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <LinkIcon size={20} className="text-blue-600" />
+                            <h4 className="font-semibold text-gray-900">Share Device Booking Page</h4>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Share this link with customers so they can register their devices for repair online.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-700 font-mono">
+                              {window.location.origin}{window.location.pathname}#register
+                            </div>
+                            <button
+                              onClick={copyBookingLink}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm whitespace-nowrap"
+                            >
+                              {linkCopied ? (
+                                <>
+                                  <Check size={16} />
+                                  Copied!
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={16} />
+                                  Copy Link
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
