@@ -31,7 +31,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
 
         <div className="p-6 overflow-y-auto flex-1">
           <div className="prose prose-sm max-w-none" style={{ color: SECONDARY }}>
-            <div className="text-right mb-6">
+            <div className="text-left mb-6">
               <h3 className="text-xl font-bold" style={{ color: SECONDARY }}>COMPUTER GUARDIAN (PTY) LTD</h3>
               <h4 className="text-lg font-semibold" style={{ color: SECONDARY }}>TERMS & CONDITIONS – REPAIRS & SALES</h4>
               <p className="text-sm text-gray-600 mt-2">
