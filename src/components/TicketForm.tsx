@@ -16,7 +16,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
     model: '',
     serial_number: '',
     issue_description: '',
-    device_accessories: [] as string[]
+    device_accessories: [] as string[],
+    customer_declarations: {
+      legal_owner: false,
+      diagnostics_nonrefundable: false,
+      timeline_estimate: false,
+      data_backup: false,
+      terms_accepted: false
+    }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -101,7 +108,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
         model: '',
         serial_number: '',
         issue_description: '',
-        device_accessories: []
+        device_accessories: [],
+        customer_declarations: {
+          legal_owner: false,
+          diagnostics_nonrefundable: false,
+          timeline_estimate: false,
+          data_backup: false,
+          terms_accepted: false
+        }
       });
     } catch (err: any) {
       setError(err.message || 'Failed to create ticket');
@@ -311,6 +325,135 @@ export const TicketForm: React.FC<TicketFormProps> = ({ customers, onTicketCreat
                   <span className="text-sm text-gray-700">{accessory}</span>
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Important Declarations
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Please read and tick all boxes to proceed. These declarations are mandatory.
+              </p>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.customer_declarations.legal_owner}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    customer_declarations: {
+                      ...formData.customer_declarations,
+                      legal_owner: e.target.checked
+                    }
+                  })}
+                  className="w-5 h-5 mt-0.5 rounded border-gray-300 flex-shrink-0"
+                  style={{ accentColor: PRIMARY }}
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I am the legal owner or authorised user of this device
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.customer_declarations.diagnostics_nonrefundable}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    customer_declarations: {
+                      ...formData.customer_declarations,
+                      diagnostics_nonrefundable: e.target.checked
+                    }
+                  })}
+                  className="w-5 h-5 mt-0.5 rounded border-gray-300 flex-shrink-0"
+                  style={{ accentColor: PRIMARY }}
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I understand diagnostics are non-refundable
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.customer_declarations.timeline_estimate}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    customer_declarations: {
+                      ...formData.customer_declarations,
+                      timeline_estimate: e.target.checked
+                    }
+                  })}
+                  className="w-5 h-5 mt-0.5 rounded border-gray-300 flex-shrink-0"
+                  style={{ accentColor: PRIMARY }}
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I understand repair timelines are estimates
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.customer_declarations.data_backup}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    customer_declarations: {
+                      ...formData.customer_declarations,
+                      data_backup: e.target.checked
+                    }
+                  })}
+                  className="w-5 h-5 mt-0.5 rounded border-gray-300 flex-shrink-0"
+                  style={{ accentColor: PRIMARY }}
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I have backed up my data
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.customer_declarations.terms_accepted}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    customer_declarations: {
+                      ...formData.customer_declarations,
+                      terms_accepted: e.target.checked
+                    }
+                  })}
+                  className="w-5 h-5 mt-0.5 rounded border-gray-300 flex-shrink-0"
+                  style={{ accentColor: PRIMARY }}
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I accept Computer Guardian's{' '}
+                  <a
+                    href="/Computer-Guardian-Terms-and-Conditions.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold underline hover:opacity-80"
+                    style={{ color: PRIMARY }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms & Conditions
+                  </a>
+                </span>
+              </label>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-800">
+                By ticking these boxes and submitting this form, you acknowledge that you have read and understood all declarations above, including the Terms & Conditions document.
+              </p>
             </div>
           </div>
 
