@@ -175,7 +175,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 group"
               >
                 <User size={20} />
-                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Register Device</span>
+                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Book Device</span>
               </button>
               <button
                 onClick={onTrackCustomer}
