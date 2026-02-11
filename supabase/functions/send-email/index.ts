@@ -264,14 +264,19 @@ Deno.serve(async (req: Request) => {
           .email-wrapper { max-width: 650px; margin: 0 auto; background: white; }
           .header {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            padding: 30px 40px;
+            padding: 40px;
             text-align: center;
+          }
+          .logo-img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 10px;
           }
           .logo-text {
             color: #ffb400;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
-            margin: 0;
+            margin: 15px 0 0 0;
             text-transform: uppercase;
             letter-spacing: 2px;
           }
@@ -320,6 +325,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
+            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Logo.png" alt="Computer Guardian Logo" class="logo-img">
             <h1 class="logo-text">Computer Guardian</h1>
             <p class="tagline">Professional Repair Services</p>
           </div>
@@ -368,15 +374,20 @@ Deno.serve(async (req: Request) => {
           }
           .header {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            padding: 30px 40px;
+            padding: 40px;
             text-align: center;
             position: relative;
           }
+          .logo-img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 10px;
+          }
           .logo-text {
             color: #ffb400;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
-            margin: 0;
+            margin: 15px 0 0 0;
             text-transform: uppercase;
             letter-spacing: 2px;
           }
@@ -488,6 +499,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
+            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Logo.png" alt="Computer Guardian Logo" class="logo-img">
             <h1 class="logo-text">Computer Guardian</h1>
             <p class="tagline">Professional Repair Services</p>
           </div>
@@ -497,23 +509,6 @@ Deno.serve(async (req: Request) => {
           <div class="content">
             ${ticketNumber ? `<div class="ticket-badge">📋 Ticket #${ticketNumber}</div>` : ''}
             <div>${content}</div>
-            <div class="contact-section">
-              <h4>📞 Contact Us</h4>
-              <div class="contact-grid">
-                <div class="contact-item">
-                  <span><strong>📧 Email:</strong></span>
-                  <span>info@computerguardian.co.za</span>
-                </div>
-                <div class="contact-item">
-                  <span><strong>📞 Phone:</strong></span>
-                  <span>+27 86 120 3203</span>
-                </div>
-                <div class="contact-item">
-                  <span><strong>🌐 Website:</strong></span>
-                  <span>computerguardian.co.za</span>
-                </div>
-              </div>
-            </div>
           </div>
           <div class="footer">
             <p class="footer-logo">COMPUTER GUARDIAN</p>
