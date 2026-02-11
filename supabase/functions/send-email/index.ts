@@ -245,40 +245,102 @@ Deno.serve(async (req: Request) => {
   try {
     const { to, subject, content, ticketNumber, isTest } = await req.json()
 
-    // Create email content with professional template
+    // Create email content with professional branded template
     const emailHtml = isTest ? `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #ffb400; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; }
-          .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #666; }
-          .test-badge { background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; display: inline-block; margin: 10px 0; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #f5f5f5;
+            padding: 20px;
+          }
+          .email-wrapper { max-width: 650px; margin: 0 auto; background: white; }
+          .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 30px 40px;
+            text-align: center;
+          }
+          .logo-text {
+            color: #ffb400;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+          }
+          .tagline {
+            color: #ffffff;
+            font-size: 14px;
+            margin-top: 5px;
+            letter-spacing: 1px;
+          }
+          .content {
+            padding: 40px;
+            background: white;
+          }
+          .test-badge {
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          .success-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f9f4;
+            border-left: 4px solid #28a745;
+            border-radius: 6px;
+          }
+          .footer {
+            background: #1a1a1a;
+            color: #999;
+            padding: 30px 40px;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.8;
+          }
+          .footer a { color: #ffb400; text-decoration: none; }
+          h2 { color: #1a1a1a; margin-bottom: 20px; }
+          p { margin-bottom: 15px; }
         </style>
       </head>
       <body>
-        <div class="container">
+        <div class="email-wrapper">
           <div class="header">
-            <h1>Guardian Assist</h1>
-            <p>Computer Repair Services</p>
+            <h1 class="logo-text">Computer Guardian</h1>
+            <p class="tagline">Professional Repair Services</p>
           </div>
           <div class="content">
-            <div class="test-badge">✅ TEST EMAIL</div>
+            <div class="test-badge">✓ TEST EMAIL</div>
             <h2>Email Configuration Test</h2>
-            <div style="white-space: pre-line;">${content}</div>
-            <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 4px;">
-              <p><strong>✅ Success!</strong> Your SMTP configuration is working correctly.</p>
-              <p>Server: computerguardian.co.za:465 (SSL)</p>
-              <p>From: info@computerguardian.co.za</p>
+            <div>${content}</div>
+            <div class="success-box">
+              <p><strong>✓ Success!</strong> Your SMTP configuration is working correctly.</p>
+              <p style="margin-bottom: 0;"><strong>Server:</strong> computerguardian.co.za:465 (SSL)<br>
+              <strong>From:</strong> info@computerguardian.co.za</p>
             </div>
           </div>
           <div class="footer">
-            <p>© 2025 Guardian Assist. All rights reserved.</p>
-            <p>This is a test email from your repair management system.</p>
+            <p style="margin-bottom: 10px;"><strong style="color: #ffb400;">COMPUTER GUARDIAN</strong></p>
+            <p>📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
+            <p>🌐 <a href="https://computerguardian.co.za">computerguardian.co.za</a></p>
+            <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
+              © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
+              This is a test email from your repair management system.
+            </p>
           </div>
         </div>
       </body>
@@ -288,35 +350,180 @@ Deno.serve(async (req: Request) => {
       <html>
       <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #ffb400; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; }
-          .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #666; }
-          .ticket-number { background: #ffb400; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; display: inline-block; margin: 10px 0; }
-          .contact-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #f5f5f5;
+            padding: 20px;
+          }
+          .email-wrapper {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 30px 40px;
+            text-align: center;
+            position: relative;
+          }
+          .logo-text {
+            color: #ffb400;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+          }
+          .tagline {
+            color: #ffffff;
+            font-size: 14px;
+            margin-top: 5px;
+            letter-spacing: 1px;
+          }
+          .proof-banner {
+            background: #ffb400;
+            color: #1a1a1a;
+            padding: 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          .content {
+            padding: 40px;
+            background: white;
+          }
+          .ticket-badge {
+            background: #ffb400;
+            color: #1a1a1a;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 25px;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+          }
+          .info-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+          }
+          .info-box h3 {
+            color: #ffb400;
+            margin-bottom: 15px;
+            font-size: 18px;
+          }
+          .ticket-details {
+            background: white;
+            border: 2px solid #ffb400;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+          }
+          .ticket-details h3 {
+            color: #ffb400;
+            margin-bottom: 15px;
+            font-size: 18px;
+          }
+          .contact-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+          }
+          .contact-section h4 {
+            color: #1a1a1a;
+            margin-bottom: 15px;
+          }
+          .contact-grid {
+            display: table;
+            width: 100%;
+            margin-top: 15px;
+          }
+          .contact-item {
+            display: table-row;
+          }
+          .contact-item > span {
+            display: table-cell;
+            padding: 8px;
+            text-align: left;
+          }
+          .footer {
+            background: #1a1a1a;
+            color: #999;
+            padding: 30px 40px;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.8;
+          }
+          .footer a { color: #ffb400; text-decoration: none; }
+          .footer-logo {
+            color: #ffb400;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+          }
+          h2 { color: #1a1a1a; margin-bottom: 20px; font-size: 24px; }
+          p { margin-bottom: 12px; }
+          strong { color: #1a1a1a; }
+          @media only screen and (max-width: 600px) {
+            .email-wrapper { margin: 0; }
+            .header, .content, .footer { padding: 20px !important; }
+            .logo-text { font-size: 24px; }
+          }
         </style>
       </head>
       <body>
-        <div class="container">
+        <div class="email-wrapper">
           <div class="header">
-            <h1>Guardian Assist</h1>
-            <p>Computer Repair Services</p>
+            <h1 class="logo-text">Computer Guardian</h1>
+            <p class="tagline">Professional Repair Services</p>
+          </div>
+          <div class="proof-banner">
+            ✓ Official Service Document - Keep for Your Records
           </div>
           <div class="content">
-            ${ticketNumber ? `<div class="ticket-number">Ticket: ${ticketNumber}</div>` : ''}
-            <div style="white-space: pre-line;">${content}</div>
-            <div class="contact-info">
-              <p><strong>Need assistance?</strong></p>
-              <p>📧 Email: info@computerguardian.co.za</p>
-              <p>📞 Phone: +27 86 120 3203</p>
-              <p>🌐 Website: computerguardian.co.za</p>
+            ${ticketNumber ? `<div class="ticket-badge">📋 Ticket #${ticketNumber}</div>` : ''}
+            <div>${content}</div>
+            <div class="contact-section">
+              <h4>📞 Contact Us</h4>
+              <div class="contact-grid">
+                <div class="contact-item">
+                  <span><strong>📧 Email:</strong></span>
+                  <span>info@computerguardian.co.za</span>
+                </div>
+                <div class="contact-item">
+                  <span><strong>📞 Phone:</strong></span>
+                  <span>+27 86 120 3203</span>
+                </div>
+                <div class="contact-item">
+                  <span><strong>🌐 Website:</strong></span>
+                  <span>computerguardian.co.za</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="footer">
-            <p>© 2025 Guardian Assist. All rights reserved.</p>
-            <p>This email was sent regarding your computer repair service.</p>
+            <p class="footer-logo">COMPUTER GUARDIAN</p>
+            <p>Professional Computer Repair Services</p>
+            <p>📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
+            <p>🌐 <a href="https://computerguardian.co.za">computerguardian.co.za</a></p>
+            <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
+              © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
+              This email serves as official documentation of your repair service.
+            </p>
           </div>
         </div>
       </body>
