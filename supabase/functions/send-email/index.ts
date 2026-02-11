@@ -156,21 +156,38 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
       }
     }
 
-    // Email headers and content
+    // Generate unique Message-ID
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    const messageId = `<${timestamp}.${random}@computerguardian.co.za>`;
+
+    // Current date in RFC 2822 format
+    const emailDate = new Date().toUTCString();
+
+    // Email headers and content with anti-spam headers
     const emailContent = [
-      `From: Guardian Assist <${smtpConfig.username}>`,
+      `Date: ${emailDate}`,
+      `From: Computer Guardian <${smtpConfig.username}>`,
+      `Reply-To: ${smtpConfig.username}`,
       `To: ${to}`,
       `Subject: ${subject}`,
+      `Message-ID: ${messageId}`,
       'MIME-Version: 1.0',
       'Content-Type: multipart/alternative; boundary="boundary123"',
+      'X-Mailer: Guardian Assist Repair System',
+      'X-Priority: 3',
+      'Importance: Normal',
+      `List-Unsubscribe: <mailto:${smtpConfig.username}?subject=Unsubscribe>`,
       '',
       '--boundary123',
       'Content-Type: text/plain; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
       '',
       textContent,
       '',
       '--boundary123',
       'Content-Type: text/html; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
       '',
       htmlContent,
       '',
