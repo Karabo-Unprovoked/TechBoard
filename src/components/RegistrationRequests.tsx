@@ -240,32 +240,47 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
       if (updateError) throw updateError;
 
       if (request.email) {
-        await supabase.functions.invoke('send-email', {
-          body: {
-            to: request.email,
-            subject: 'Registration Approved - Welcome!',
-            ticketNumber: nextTicketNumber,
-            content: `
-              <h2>Registration Approved</h2>
-              <p>Dear ${request.first_name} ${request.last_name},</p>
-              <p>Your registration has been approved! We have created a customer profile and repair ticket for you.</p>
-              <p><strong>Your Details:</strong></p>
-              <ul>
-                <li>Customer Number: ${customerNumber}</li>
-                <li>Ticket Number: ${nextTicketNumber}</li>
-              </ul>
-              <p><strong>Device Details:</strong></p>
-              <ul>
-                <li>Brand: ${request.laptop_brand || 'Not specified'}</li>
-                <li>Model: ${request.laptop_model || 'Not specified'}</li>
-                <li>Problem: ${request.laptop_problem}</li>
-              </ul>
-              ${request.needs_collection ? '<p><strong>Collection & Delivery:</strong> You requested collection and delivery service. We will arrange this with you.</p>' : ''}
-              <p>We will contact you shortly via ${request.preferred_contact_method} to discuss your device repair.</p>
-              <p>Thank you for choosing our services!</p>
-            `
+        try {
+          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {
+            body: {
+              to: request.email,
+              subject: 'Registration Approved - Welcome!',
+              ticketNumber: nextTicketNumber,
+              content: `
+                <h2>Registration Approved</h2>
+                <p>Dear ${request.first_name} ${request.last_name},</p>
+                <p>Your registration has been approved! We have created a customer profile and repair ticket for you.</p>
+                <p><strong>Your Details:</strong></p>
+                <ul>
+                  <li>Customer Number: ${customerNumber}</li>
+                  <li>Ticket Number: ${nextTicketNumber}</li>
+                </ul>
+                <p><strong>Device Details:</strong></p>
+                <ul>
+                  <li>Brand: ${request.laptop_brand || 'Not specified'}</li>
+                  <li>Model: ${request.laptop_model || 'Not specified'}</li>
+                  <li>Problem: ${request.laptop_problem}</li>
+                </ul>
+                ${request.needs_collection ? '<p><strong>Collection & Delivery:</strong> You requested collection and delivery service. We will arrange this with you.</p>' : ''}
+                <p>We will contact you shortly via ${request.preferred_contact_method} to discuss your device repair.</p>
+                <p>Thank you for choosing our services!</p>
+              `
+            }
+          });
+
+          if (emailError) {
+            console.error('Email sending error:', emailError);
+            onNotification('warning', 'Registration approved but email notification failed. Please contact customer manually.');
+          } else if (emailResult && !emailResult.success) {
+            console.error('Email failed:', emailResult);
+            onNotification('warning', 'Registration approved but email notification failed. Please contact customer manually.');
+          } else {
+            console.log('Email sent successfully:', emailResult);
           }
-        });
+        } catch (emailErr) {
+          console.error('Email exception:', emailErr);
+          onNotification('warning', 'Registration approved but email notification failed. Please contact customer manually.');
+        }
       }
 
       onNotification('success', shouldMerge ? 'Registration approved - Customer merged and ticket created successfully' : 'Registration approved - Customer and ticket created successfully');
@@ -306,19 +321,34 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
       if (updateError) throw updateError;
 
       if (selectedRequest.email) {
-        await supabase.functions.invoke('send-email', {
-          body: {
-            to: selectedRequest.email,
-            subject: 'Registration Update',
-            content: `
-              <h2>Registration Update</h2>
-              <p>Dear ${selectedRequest.first_name} ${selectedRequest.last_name},</p>
-              <p>Thank you for your registration. Unfortunately, we are unable to proceed with your request at this time.</p>
-              <p><strong>Reason:</strong> ${declineReason}</p>
-              <p>If you have any questions, please feel free to contact us.</p>
-            `
+        try {
+          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {
+            body: {
+              to: selectedRequest.email,
+              subject: 'Registration Update',
+              content: `
+                <h2>Registration Update</h2>
+                <p>Dear ${selectedRequest.first_name} ${selectedRequest.last_name},</p>
+                <p>Thank you for your registration. Unfortunately, we are unable to proceed with your request at this time.</p>
+                <p><strong>Reason:</strong> ${declineReason}</p>
+                <p>If you have any questions, please feel free to contact us.</p>
+              `
+            }
+          });
+
+          if (emailError) {
+            console.error('Email sending error:', emailError);
+            onNotification('warning', 'Registration declined but email notification failed. Please contact customer manually.');
+          } else if (emailResult && !emailResult.success) {
+            console.error('Email failed:', emailResult);
+            onNotification('warning', 'Registration declined but email notification failed. Please contact customer manually.');
+          } else {
+            console.log('Decline email sent successfully:', emailResult);
           }
-        });
+        } catch (emailErr) {
+          console.error('Email exception:', emailErr);
+          onNotification('warning', 'Registration declined but email notification failed. Please contact customer manually.');
+        }
       }
 
       onNotification('success', 'Registration declined');
