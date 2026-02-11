@@ -30,6 +30,8 @@ export const RecycleBin: React.FC<RecycleBinProps> = ({ onClose, onRefresh, onNo
   const [deletedCustomers, setDeletedCustomers] = useState<DeletedCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState(false);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadDeletedCustomers();
@@ -125,15 +127,93 @@ export const RecycleBin: React.FC<RecycleBinProps> = ({ onClose, onRefresh, onNo
       return;
     }
 
+    setDeleting(true);
     try {
       const { error } = await supabase.from('deleted_customers').delete().eq('id', id);
 
       if (error) throw error;
 
       onNotification('success', 'Customer permanently deleted');
+      setSelectedCustomers(selectedCustomers.filter(sid => sid !== id));
       loadDeletedCustomers();
     } catch (error: any) {
       onNotification('error', 'Failed to delete: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedCustomers.length === 0) {
+      onNotification('error', 'No customers selected');
+      return;
+    }
+
+    if (!confirm(`Permanently delete ${selectedCustomers.length} selected customer(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('deleted_customers')
+        .delete()
+        .in('id', selectedCustomers);
+
+      if (error) throw error;
+
+      onNotification('success', `${selectedCustomers.length} customer(s) permanently deleted`);
+      setSelectedCustomers([]);
+      loadDeletedCustomers();
+    } catch (error: any) {
+      onNotification('error', 'Failed to delete customers: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleEmptyRecycleBin = async () => {
+    if (deletedCustomers.length === 0) {
+      onNotification('error', 'Recycle bin is already empty');
+      return;
+    }
+
+    if (!confirm(`⚠️ WARNING: This will permanently delete ALL ${deletedCustomers.length} customer(s) in the recycle bin. This action cannot be undone. Are you sure?`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('deleted_customers')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (error) throw error;
+
+      onNotification('success', 'Recycle bin emptied successfully');
+      setSelectedCustomers([]);
+      loadDeletedCustomers();
+    } catch (error: any) {
+      onNotification('error', 'Failed to empty recycle bin: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCustomers.length === deletedCustomers.length) {
+      setSelectedCustomers([]);
+    } else {
+      setSelectedCustomers(deletedCustomers.map(c => c.id));
+    }
+  };
+
+  const handleSelectCustomer = (id: string) => {
+    if (selectedCustomers.includes(id)) {
+      setSelectedCustomers(selectedCustomers.filter(sid => sid !== id));
+    } else {
+      setSelectedCustomers([...selectedCustomers, id]);
     }
   };
 
@@ -158,30 +238,71 @@ export const RecycleBin: React.FC<RecycleBinProps> = ({ onClose, onRefresh, onNo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] mx-4 flex flex-col">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Trash2 className="text-gray-600" size={24} />
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Trash2 className="text-gray-600" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Recycle Bin</h3>
+                <p className="text-sm text-gray-600">
+                  {deletedCustomers.length} deleted customer{deletedCustomers.length !== 1 ? 's' : ''}
+                  {selectedCustomers.length > 0 && (
+                    <span className="ml-2 text-blue-600 font-medium">
+                      ({selectedCustomers.length} selected)
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">Recycle Bin</h3>
-              <p className="text-sm text-gray-600">
-                {deletedCustomers.length} deleted customer{deletedCustomers.length !== 1 ? 's' : ''}
-              </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadDeletedCustomers}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw size={20} />
+              </button>
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <X size={24} />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={loadDeletedCustomers}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Refresh"
-            >
-              <RefreshCw size={20} />
-            </button>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <X size={24} />
-            </button>
-          </div>
+
+          {deletedCustomers.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={selectedCustomers.length === deletedCustomers.length && deletedCustomers.length > 0}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Select All</span>
+              </label>
+
+              {selectedCustomers.length > 0 && (
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={deleting}
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                  <span>Delete Selected ({selectedCustomers.length})</span>
+                </button>
+              )}
+
+              <button
+                onClick={handleEmptyRecycleBin}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 ml-auto"
+              >
+                <Trash2 size={16} />
+                <span>Empty Recycle Bin</span>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -197,12 +318,21 @@ export const RecycleBin: React.FC<RecycleBinProps> = ({ onClose, onRefresh, onNo
             <div className="space-y-4">
               {deletedCustomers.map((customer) => {
                 const daysRemaining = getDaysRemaining(customer.auto_delete_at);
+                const isSelected = selectedCustomers.includes(customer.id);
                 return (
                   <div
                     key={customer.id}
-                    className="bg-gray-50 border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow"
+                    className={`bg-gray-50 border rounded-xl p-5 hover:shadow-md transition-all ${
+                      isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-4 mb-3">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleSelectCustomer(customer.id)}
+                        className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      />
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h4 className="font-semibold text-gray-900">{customer.customer_number}</h4>
@@ -225,7 +355,7 @@ export const RecycleBin: React.FC<RecycleBinProps> = ({ onClose, onRefresh, onNo
                       <div className="flex flex-col items-end gap-2">
                         <button
                           onClick={() => handleRestore(customer)}
-                          disabled={restoring}
+                          disabled={restoring || deleting}
                           className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                         >
                           <RotateCcw size={16} />
@@ -233,7 +363,8 @@ export const RecycleBin: React.FC<RecycleBinProps> = ({ onClose, onRefresh, onNo
                         </button>
                         <button
                           onClick={() => handlePermanentDelete(customer.id)}
-                          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                          disabled={deleting}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm disabled:opacity-50"
                         >
                           <X size={16} />
                           <span>Delete Forever</span>
