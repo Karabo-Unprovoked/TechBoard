@@ -325,9 +325,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Logo.png" alt="Computer Guardian Logo" class="logo-img">
-            <h1 class="logo-text">Computer Guardian</h1>
-            <p class="tagline">Professional Repair Services</p>
+            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Horizontal_White.png" alt="Computer Guardian Logo" class="logo-img">
           </div>
           <div class="content">
             <div class="test-badge">✓ TEST EMAIL</div>
@@ -499,9 +497,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Logo.png" alt="Computer Guardian Logo" class="logo-img">
-            <h1 class="logo-text">Computer Guardian</h1>
-            <p class="tagline">Professional Repair Services</p>
+            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Horizontal_White.png" alt="Computer Guardian Logo" class="logo-img">
           </div>
           <div class="proof-banner">
             ✓ Official Service Document - Keep for Your Records
