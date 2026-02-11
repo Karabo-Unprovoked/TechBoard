@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List, ChevronDown, ChevronRight, FileWarning } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
 import type { TicketStatus, TicketSubStatus } from '../lib/supabase';
 import { RecycleBin } from './RecycleBin';
+import { ErrorLogsTab } from './ErrorLogsTab';
 
 interface SystemSettingsProps {
   onBack: () => void;
@@ -18,7 +19,7 @@ interface User {
 }
 
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotification }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general' | 'statuses'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general' | 'statuses' | 'errorLogs'>('email');
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
@@ -653,6 +654,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'users', label: 'User Management', icon: User },
+    { id: 'errorLogs', label: 'Error Logs', icon: FileWarning },
     { id: 'recycle', label: 'Recycle Bin', icon: Trash2 }
   ];
 
@@ -663,7 +665,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
       case 'admin':
         return allTabs; // Admin can see everything
       case 'technician':
-        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general' && tab.id !== 'statuses'); // No user management, security, recycle bin, general, or statuses
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general' && tab.id !== 'statuses' && tab.id !== 'errorLogs'); // No user management, security, recycle bin, general, statuses, or error logs
       case 'viewer':
         return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
       default:
@@ -1632,6 +1634,10 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                   </div>
                 </div>
               </div>
+            )}
+
+            {activeTab === 'errorLogs' && userRole === 'admin' && (
+              <ErrorLogsTab />
             )}
 
             {activeTab === 'recycle' && userRole === 'admin' && (
