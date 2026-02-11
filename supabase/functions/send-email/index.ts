@@ -276,14 +276,17 @@ Deno.serve(async (req: Request) => {
             height: auto;
             display: block;
             margin: 0 auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
           }
           .logo-text {
             color: #ffb400;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
-            margin: 15px 0 0 0;
+            margin: 0;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
           }
           .tagline {
             color: #ffffff;
@@ -330,7 +333,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <img src="${LOGO_DATA_URI}" alt="Computer Guardian Logo" class="logo-img">
+            <div class="logo-text">COMPUTER GUARDIAN</div>
           </div>
           <div class="content">
             <div class="test-badge">✓ TEST EMAIL</div>
@@ -504,7 +507,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <img src="${LOGO_DATA_URI}" alt="Computer Guardian Logo" class="logo-img">
+            <div class="logo-text">COMPUTER GUARDIAN</div>
           </div>
           <div class="proof-banner">
             ✓ Official Service Document - Keep for Your Records
