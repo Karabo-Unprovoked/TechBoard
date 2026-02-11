@@ -248,114 +248,82 @@ Deno.serve(async (req: Request) => {
   try {
     const { to, subject, content, ticketNumber, isTest } = await req.json()
 
-    // Create email content with professional branded template
+    // Create email content with professional branded template (table-based for Outlook compatibility)
     const emailHtml = isTest ? `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f5f5f5;
-            padding: 20px;
-          }
-          .email-wrapper { max-width: 650px; margin: 0 auto; background: white; }
-          .header {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            padding: 40px;
-            text-align: center;
-          }
-          .logo-img {
-            max-width: 300px;
-            width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-          }
-          .logo-text {
-            color: #ffb400;
-            font-size: 32px;
-            font-weight: 700;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-          }
-          .tagline {
-            color: #ffffff;
-            font-size: 14px;
-            margin-top: 5px;
-            letter-spacing: 1px;
-          }
-          .content {
-            padding: 40px;
-            background: white;
-          }
-          .test-badge {
-            background: #28a745;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 700;
-            display: inline-block;
-            margin-bottom: 20px;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          .success-box {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f0f9f4;
-            border-left: 4px solid #28a745;
-            border-radius: 6px;
-          }
-          .footer {
-            background: #1a1a1a;
-            color: #999;
-            padding: 30px 40px;
-            text-align: center;
-            font-size: 12px;
-            line-height: 1.8;
-          }
-          .footer a { color: #ffb400; text-decoration: none; }
-          h2 { color: #1a1a1a; margin-bottom: 20px; }
-          p { margin-bottom: 15px; }
-        </style>
       </head>
-      <body>
-        <div class="email-wrapper">
-          <div class="header">
-            <img src="${LOGO_DATA_URI}" alt="Computer Guardian Logo" class="logo-img">
-            <div class="logo-text">COMPUTER GUARDIAN</div>
-          </div>
-          <div class="content">
-            <div class="test-badge">✓ TEST EMAIL</div>
-            <h2>Email Configuration Test</h2>
-            <div>${content}</div>
-            <div class="success-box">
-              <p><strong>✓ Success!</strong> Your SMTP configuration is working correctly.</p>
-              <p style="margin-bottom: 0;"><strong>Server:</strong> computerguardian.co.za:465 (SSL)<br>
-              <strong>From:</strong> info@computerguardian.co.za</p>
-            </div>
-          </div>
-          <div class="footer">
-            <p style="margin-bottom: 10px;"><strong style="color: #ffb400;">COMPUTER GUARDIAN</strong></p>
-            <p>📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
-            <p>🌐 <a href="https://computerguardian.co.za">computerguardian.co.za</a></p>
-            <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
-              © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
-              This is a test email from your repair management system.
-            </p>
-          </div>
-        </div>
+      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 20px 0;">
+          <tr>
+            <td align="center">
+              <table width="650" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; max-width: 650px;">
+                <!-- Header -->
+                <tr>
+                  <td style="background-color: #1a1a1a; padding: 40px; text-align: center;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center">
+                          <img src="${LOGO_DATA_URI}" alt="Computer Guardian" style="max-width: 300px; width: 100%; height: auto; display: block; margin: 0 auto 20px auto;" />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="color: #ffb400; font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">
+                          COMPUTER GUARDIAN
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px; background-color: #ffffff;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #28a745; color: #ffffff; padding: 12px 24px; text-align: center; font-weight: bold; font-size: 14px; text-transform: uppercase; margin-bottom: 20px;">
+                          ✓ TEST EMAIL
+                        </td>
+                      </tr>
+                      <tr><td style="height: 20px;"></td></tr>
+                      <tr>
+                        <td style="color: #1a1a1a; font-size: 24px; font-weight: bold; padding-bottom: 20px;">
+                          Email Configuration Test
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #1a1a1a; font-size: 16px; line-height: 1.6;">
+                          ${content}
+                        </td>
+                      </tr>
+                      <tr><td style="height: 30px;"></td></tr>
+                      <tr>
+                        <td style="background-color: #f0f9f4; border-left: 4px solid #28a745; padding: 20px;">
+                          <p style="margin: 0 0 10px 0; color: #1a1a1a;"><strong>✓ Success!</strong> Your SMTP configuration is working correctly.</p>
+                          <p style="margin: 0; color: #1a1a1a;"><strong>Server:</strong> computerguardian.co.za:465 (SSL)<br><strong>From:</strong> info@computerguardian.co.za</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #1a1a1a; color: #999999; padding: 30px 40px; text-align: center; font-size: 12px; line-height: 1.8;">
+                    <p style="margin: 0 0 10px 0; color: #ffb400; font-weight: bold;">COMPUTER GUARDIAN</p>
+                    <p style="margin: 0 0 10px 0;">📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
+                    <p style="margin: 0 0 20px 0;">🌐 <a href="https://computerguardian.co.za" style="color: #ffb400; text-decoration: none;">computerguardian.co.za</a></p>
+                    <p style="margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #333333;">
+                      © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
+                      This is a test email from your repair management system.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     ` : `
@@ -364,171 +332,72 @@ Deno.serve(async (req: Request) => {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f5f5f5;
-            padding: 20px;
-          }
-          .email-wrapper {
-            max-width: 650px;
-            margin: 0 auto;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-          }
-          .header {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            padding: 40px;
-            text-align: center;
-            position: relative;
-          }
-          .logo-img {
-            max-width: 300px;
-            width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-          }
-          .logo-text {
-            color: #ffb400;
-            font-size: 28px;
-            font-weight: 700;
-            margin: 15px 0 0 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-          }
-          .tagline {
-            color: #ffffff;
-            font-size: 14px;
-            margin-top: 5px;
-            letter-spacing: 1px;
-          }
-          .proof-banner {
-            background: #ffb400;
-            color: #1a1a1a;
-            padding: 12px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          .content {
-            padding: 40px;
-            background: white;
-          }
-          .ticket-badge {
-            background: #ffb400;
-            color: #1a1a1a;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 700;
-            display: inline-block;
-            margin-bottom: 25px;
-            font-size: 16px;
-            letter-spacing: 0.5px;
-          }
-          .info-box {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-          }
-          .info-box h3 {
-            color: #ffb400;
-            margin-bottom: 15px;
-            font-size: 18px;
-          }
-          .ticket-details {
-            background: white;
-            border: 2px solid #ffb400;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-          }
-          .ticket-details h3 {
-            color: #ffb400;
-            margin-bottom: 15px;
-            font-size: 18px;
-          }
-          .contact-section {
-            margin-top: 30px;
-            padding: 25px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            text-align: center;
-          }
-          .contact-section h4 {
-            color: #1a1a1a;
-            margin-bottom: 15px;
-          }
-          .contact-grid {
-            display: table;
-            width: 100%;
-            margin-top: 15px;
-          }
-          .contact-item {
-            display: table-row;
-          }
-          .contact-item > span {
-            display: table-cell;
-            padding: 8px;
-            text-align: left;
-          }
-          .footer {
-            background: #1a1a1a;
-            color: #999;
-            padding: 30px 40px;
-            text-align: center;
-            font-size: 12px;
-            line-height: 1.8;
-          }
-          .footer a { color: #ffb400; text-decoration: none; }
-          .footer-logo {
-            color: #ffb400;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-          }
-          h2 { color: #1a1a1a; margin-bottom: 20px; font-size: 24px; }
-          p { margin-bottom: 12px; }
-          strong { color: #1a1a1a; }
-          @media only screen and (max-width: 600px) {
-            .email-wrapper { margin: 0; }
-            .header, .content, .footer { padding: 20px !important; }
-            .logo-text { font-size: 24px; }
-          }
-        </style>
       </head>
-      <body>
-        <div class="email-wrapper">
-          <div class="header">
-            <img src="${LOGO_DATA_URI}" alt="Computer Guardian Logo" class="logo-img">
-            <div class="logo-text">COMPUTER GUARDIAN</div>
-          </div>
-          <div class="proof-banner">
-            ✓ Official Service Document - Keep for Your Records
-          </div>
-          <div class="content">
-            ${ticketNumber ? `<div class="ticket-badge">📋 Ticket #${ticketNumber}</div>` : ''}
-            <div>${content}</div>
-          </div>
-          <div class="footer">
-            <p class="footer-logo">COMPUTER GUARDIAN</p>
-            <p>Professional Computer Repair Services</p>
-            <p>📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
-            <p>🌐 <a href="https://computerguardian.co.za">computerguardian.co.za</a></p>
-            <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
-              © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
-              This email serves as official documentation of your repair service.
-            </p>
-          </div>
-        </div>
+      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 20px 0;">
+          <tr>
+            <td align="center">
+              <table width="650" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; max-width: 650px;">
+                <!-- Header -->
+                <tr>
+                  <td style="background-color: #1a1a1a; padding: 40px; text-align: center;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center">
+                          <img src="${LOGO_DATA_URI}" alt="Computer Guardian" style="max-width: 300px; width: 100%; height: auto; display: block; margin: 0 auto 20px auto;" />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="color: #ffb400; font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">
+                          COMPUTER GUARDIAN
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- Banner -->
+                <tr>
+                  <td style="background-color: #ffb400; color: #1a1a1a; padding: 12px; text-align: center; font-weight: bold; font-size: 13px; text-transform: uppercase;">
+                    ✓ OFFICIAL SERVICE DOCUMENT - KEEP FOR YOUR RECORDS
+                  </td>
+                </tr>
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px; background-color: #ffffff;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      ${ticketNumber ? `
+                      <tr>
+                        <td style="background-color: #ffb400; color: #1a1a1a; padding: 12px 24px; text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 25px;">
+                          📋 Ticket #${ticketNumber}
+                        </td>
+                      </tr>
+                      <tr><td style="height: 25px;"></td></tr>
+                      ` : ''}
+                      <tr>
+                        <td style="color: #1a1a1a; font-size: 16px; line-height: 1.6;">
+                          ${content}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #1a1a1a; color: #999999; padding: 30px 40px; text-align: center; font-size: 12px; line-height: 1.8;">
+                    <p style="margin: 0 0 10px 0; color: #ffb400; font-weight: bold; font-size: 20px;">COMPUTER GUARDIAN</p>
+                    <p style="margin: 0 0 10px 0;">Professional Computer Repair Services</p>
+                    <p style="margin: 0 0 10px 0;">📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
+                    <p style="margin: 0 0 20px 0;">🌐 <a href="https://computerguardian.co.za" style="color: #ffb400; text-decoration: none;">computerguardian.co.za</a></p>
+                    <p style="margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #333333;">
+                      © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
+                      This email serves as official documentation of your repair service.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `
