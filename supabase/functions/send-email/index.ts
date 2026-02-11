@@ -333,6 +333,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
+            <img src="${LOGO_DATA_URI}" alt="Computer Guardian Logo" class="logo-img">
             <div class="logo-text">COMPUTER GUARDIAN</div>
           </div>
           <div class="content">
@@ -507,6 +508,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
+            <img src="${LOGO_DATA_URI}" alt="Computer Guardian Logo" class="logo-img">
             <div class="logo-text">COMPUTER GUARDIAN</div>
           </div>
           <div class="proof-banner">
