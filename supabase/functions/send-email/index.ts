@@ -266,11 +266,6 @@ Deno.serve(async (req: Request) => {
                   <td style="background-color: #1a1a1a; padding: 40px; text-align: center;">
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="center">
-                          <img src="${LOGO_DATA_URI}" alt="Computer Guardian" style="max-width: 300px; width: 100%; height: auto; display: block; margin: 0 auto 20px auto;" />
-                        </td>
-                      </tr>
-                      <tr>
                         <td align="center" style="color: #ffb400; font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">
                           COMPUTER GUARDIAN
                         </td>
@@ -312,7 +307,7 @@ Deno.serve(async (req: Request) => {
                 <tr>
                   <td style="background-color: #1a1a1a; color: #999999; padding: 30px 40px; text-align: center; font-size: 12px; line-height: 1.8;">
                     <p style="margin: 0 0 10px 0; color: #ffb400; font-weight: bold;">COMPUTER GUARDIAN</p>
-                    <p style="margin: 0 0 10px 0;">📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
+                    <p style="margin: 0 0 10px 0;">📧 info@computerguardian.co.za | 📞 012 001 8530</p>
                     <p style="margin: 0 0 20px 0;">🌐 <a href="https://computerguardian.co.za" style="color: #ffb400; text-decoration: none;">computerguardian.co.za</a></p>
                     <p style="margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #333333;">
                       © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
@@ -342,11 +337,6 @@ Deno.serve(async (req: Request) => {
                 <tr>
                   <td style="background-color: #1a1a1a; padding: 40px; text-align: center;">
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td align="center">
-                          <img src="${LOGO_DATA_URI}" alt="Computer Guardian" style="max-width: 300px; width: 100%; height: auto; display: block; margin: 0 auto 20px auto;" />
-                        </td>
-                      </tr>
                       <tr>
                         <td align="center" style="color: #ffb400; font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">
                           COMPUTER GUARDIAN
@@ -386,7 +376,7 @@ Deno.serve(async (req: Request) => {
                   <td style="background-color: #1a1a1a; color: #999999; padding: 30px 40px; text-align: center; font-size: 12px; line-height: 1.8;">
                     <p style="margin: 0 0 10px 0; color: #ffb400; font-weight: bold; font-size: 20px;">COMPUTER GUARDIAN</p>
                     <p style="margin: 0 0 10px 0;">Professional Computer Repair Services</p>
-                    <p style="margin: 0 0 10px 0;">📧 info@computerguardian.co.za | 📞 +27 86 120 3203</p>
+                    <p style="margin: 0 0 10px 0;">📧 info@computerguardian.co.za | 📞 012 001 8530</p>
                     <p style="margin: 0 0 20px 0;">🌐 <a href="https://computerguardian.co.za" style="color: #ffb400; text-decoration: none;">computerguardian.co.za</a></p>
                     <p style="margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #333333;">
                       © ${new Date().getFullYear()} Computer Guardian. All rights reserved.<br>
