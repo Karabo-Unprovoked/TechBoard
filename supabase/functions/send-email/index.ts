@@ -50,31 +50,49 @@ async function getEmailSettings() {
 
 // Simple SMTP client implementation
 async function sendSMTPEmail(to: string, subject: string, htmlContent: string, textContent: string, smtpConfig: any) {
+  let tlsConn: Deno.TlsConn | null = null;
+
   try {
-    // Create a TCP connection to the SMTP server
+    console.log('Connecting to SMTP server:', smtpConfig.hostname, smtpConfig.port);
+
+    // For port 465 (SMTPS), connect directly with TLS
+    // For other ports, use regular connect then STARTTLS
     const conn = await Deno.connect({
       hostname: smtpConfig.hostname,
       port: smtpConfig.port,
     })
 
-    // Upgrade to TLS/SSL
-    const tlsConn = await Deno.startTls(conn, {
+    // Upgrade to TLS/SSL immediately for port 465
+    tlsConn = await Deno.startTls(conn, {
       hostname: smtpConfig.hostname,
     })
 
     const encoder = new TextEncoder()
     const decoder = new TextDecoder()
 
-    // Helper function to send command and read response
-    async function sendCommand(command: string): Promise<string> {
-      await tlsConn.write(encoder.encode(command + '\r\n'))
-      const buffer = new Uint8Array(1024)
-      const bytesRead = await tlsConn.read(buffer)
-      return decoder.decode(buffer.subarray(0, bytesRead || 0))
+    // Helper function to send command and read response with timeout
+    async function sendCommand(command: string, timeout = 10000): Promise<string> {
+      await tlsConn!.write(encoder.encode(command + '\r\n'))
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP command timeout')), timeout)
+      )
+
+      const readPromise = (async () => {
+        const buffer = new Uint8Array(4096)
+        const bytesRead = await tlsConn!.read(buffer)
+        return decoder.decode(buffer.subarray(0, bytesRead || 0))
+      })()
+
+      return await Promise.race([readPromise, timeoutPromise])
     }
 
-    // SMTP conversation
-    let response = await sendCommand('')
+    // Read initial greeting from server
+    console.log('Reading initial greeting...');
+    const buffer = new Uint8Array(4096)
+    const bytesRead = await tlsConn.read(buffer)
+    let response = decoder.decode(buffer.subarray(0, bytesRead || 0))
     console.log('Initial response:', response)
 
     response = await sendCommand('EHLO computerguardian.co.za')
@@ -96,21 +114,47 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
 
     // Check if authentication succeeded (235 = Authentication successful)
     if (!response.startsWith('235')) {
-      tlsConn.close()
+      if (tlsConn) tlsConn.close()
       return {
         success: false,
         message: `SMTP Authentication failed: ${response.trim()}`
       }
     }
 
+    console.log('Authentication successful');
+
     response = await sendCommand(`MAIL FROM:<${smtpConfig.username}>`)
     console.log('MAIL FROM response:', response)
+
+    if (!response.startsWith('250')) {
+      if (tlsConn) tlsConn.close()
+      return {
+        success: false,
+        message: `MAIL FROM failed: ${response.trim()}`
+      }
+    }
 
     response = await sendCommand(`RCPT TO:<${to}>`)
     console.log('RCPT TO response:', response)
 
+    if (!response.startsWith('250')) {
+      if (tlsConn) tlsConn.close()
+      return {
+        success: false,
+        message: `RCPT TO failed: ${response.trim()}`
+      }
+    }
+
     response = await sendCommand('DATA')
     console.log('DATA response:', response)
+
+    if (!response.startsWith('354')) {
+      if (tlsConn) tlsConn.close()
+      return {
+        success: false,
+        message: `DATA command failed: ${response.trim()}`
+      }
+    }
 
     // Email headers and content
     const emailContent = [
@@ -137,10 +181,20 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
     response = await sendCommand(emailContent)
     console.log('Email content response:', response)
 
+    if (!response.startsWith('250')) {
+      if (tlsConn) tlsConn.close()
+      return {
+        success: false,
+        message: `Email sending failed: ${response.trim()}`
+      }
+    }
+
     response = await sendCommand('QUIT')
     console.log('QUIT response:', response)
 
-    tlsConn.close()
+    if (tlsConn) tlsConn.close()
+
+    console.log('Email sent successfully to:', to);
 
     return {
       success: true,
@@ -149,6 +203,13 @@ async function sendSMTPEmail(to: string, subject: string, htmlContent: string, t
 
   } catch (error) {
     console.error('SMTP Error:', error)
+    if (tlsConn) {
+      try {
+        tlsConn.close()
+      } catch (e) {
+        console.error('Error closing connection:', e)
+      }
+    }
     return {
       success: false,
       message: `SMTP Error: ${error.message}`
