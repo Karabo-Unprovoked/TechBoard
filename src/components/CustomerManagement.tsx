@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash, Users, MapPin, MessageCircle, Truck } from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash, Users, MapPin, MessageCircle, Truck, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
+import type { NotificationType } from './Notification';
 
 interface CustomerManagementProps {
   customer: Customer;
   onBack: () => void;
   onCustomerUpdated: (customer: Customer) => void;
   onViewTicket?: (ticket: RepairTicket) => void;
+  onNotification?: (type: NotificationType, message: string) => void;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   customer: initialCustomer,
   onBack,
   onCustomerUpdated,
-  onViewTicket
+  onViewTicket,
+  onNotification
 }) => {
   const [customer, setCustomer] = useState<Customer>(initialCustomer);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [customerTickets, setCustomerTickets] = useState<RepairTicket[]>([]);
 
   const [editData, setEditData] = useState({
@@ -76,6 +80,49 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       console.error('Error updating customer:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendWelcomeEmail = async () => {
+    if (!customer.email || !customer.email.includes('@')) {
+      onNotification?.('error', 'Customer does not have a valid email address');
+      return;
+    }
+
+    if (!confirm(`Send welcome email to ${customer.email}?`)) {
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const firstTicket = customerTickets.length > 0 ? customerTickets[customerTickets.length - 1] : null;
+
+      const emailResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          to: customer.email,
+          subject: 'Welcome to Computer Guardian Repair Services',
+          content: `Dear ${customer.first_name},\n\nWelcome to Computer Guardian! We're delighted to have you as our customer.\n\nCustomer Number: ${customer.customer_number}${firstTicket ? `\nYour Active Ticket: ${firstTicket.ticket_number}` : ''}\n\nWe will contact you shortly via ${customer.preferred_contact_method || 'your preferred method'} to discuss your repair needs.\n\nIf you have any questions, please don't hesitate to reach out to us.\n\nThank you for choosing Computer Guardian!`,
+          ticketNumber: firstTicket?.ticket_number
+        })
+      });
+
+      const emailResult = await emailResponse.json();
+
+      if (emailResult.success) {
+        onNotification?.('success', 'Welcome email sent successfully to ' + customer.email);
+      } else {
+        throw new Error(emailResult.error || 'Failed to send email');
+      }
+    } catch (error: any) {
+      console.error('Error sending welcome email:', error);
+      onNotification?.('error', 'Failed to send welcome email: ' + (error.message || 'Unknown error'));
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -275,9 +322,22 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       placeholder="Enter email address"
                     />
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-gray-400" />
-                      <span className="text-gray-900">{customer.email || 'Not provided'}</span>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Mail size={16} className="text-gray-400" />
+                        <span className="text-gray-900">{customer.email || 'Not provided'}</span>
+                      </div>
+                      {customer.email && customer.email.includes('@') && (
+                        <button
+                          onClick={handleSendWelcomeEmail}
+                          disabled={sendingEmail}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-white transition-colors disabled:opacity-50 text-sm"
+                          style={{ backgroundColor: PRIMARY }}
+                        >
+                          <Send size={14} />
+                          <span>{sendingEmail ? 'Sending...' : 'Send Welcome Email'}</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

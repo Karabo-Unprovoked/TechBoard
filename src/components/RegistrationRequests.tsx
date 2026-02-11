@@ -270,20 +270,39 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
           if (emailError) {
             console.error('Email sending error:', emailError);
-            onNotification('warning', 'Registration approved but email notification failed. Please contact customer manually.');
+            onNotification('warning', 'Registration approved but welcome email failed to send. Use manual send button in customer profile.');
           } else if (emailResult && !emailResult.success) {
             console.error('Email failed:', emailResult);
-            onNotification('warning', 'Registration approved but email notification failed. Please contact customer manually.');
+            onNotification('warning', 'Registration approved but welcome email failed to send. Use manual send button in customer profile.');
           } else {
             console.log('Email sent successfully:', emailResult);
+            onNotification('success', shouldMerge ? 'Registration approved - Ticket created. Welcome email sent successfully!' : 'Registration approved - Customer created. Welcome email sent successfully!');
+            loadRequests();
+            onRequestsChanged?.();
+            setSelectedRequest(null);
+            setShowMergeModal(false);
+            setExistingCustomer(null);
+            setPendingRequest(null);
+            setProcessing(false);
+            return;
           }
         } catch (emailErr) {
           console.error('Email exception:', emailErr);
-          onNotification('warning', 'Registration approved but email notification failed. Please contact customer manually.');
+          onNotification('warning', 'Registration approved but welcome email failed to send. Use manual send button in customer profile.');
         }
+      } else {
+        onNotification('success', shouldMerge ? 'Registration approved - Ticket created successfully (no email on file)' : 'Registration approved - Customer created successfully (no email on file)');
+        loadRequests();
+        onRequestsChanged?.();
+        setSelectedRequest(null);
+        setShowMergeModal(false);
+        setExistingCustomer(null);
+        setPendingRequest(null);
+        setProcessing(false);
+        return;
       }
 
-      onNotification('success', shouldMerge ? 'Registration approved - Customer merged and ticket created successfully' : 'Registration approved - Customer and ticket created successfully');
+      onNotification('success', shouldMerge ? 'Registration approved - Customer merged and ticket created' : 'Registration approved - Customer and ticket created');
       loadRequests();
       onRequestsChanged?.();
       setSelectedRequest(null);

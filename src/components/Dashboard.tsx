@@ -715,6 +715,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       setSelectedCustomer(updatedCustomer);
                     }}
                     onViewTicket={handleManageTicket}
+                    onNotification={onNotification}
                   />
                 )}
                 {currentView === 'settings' && (
