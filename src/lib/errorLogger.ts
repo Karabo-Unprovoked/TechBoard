@@ -72,3 +72,36 @@ export const clearOldErrorLogs = async (daysOld: number = 30) => {
     throw error;
   }
 };
+
+export const deleteErrorLog = async (logId: string) => {
+  const { error } = await supabase
+    .from('error_logs')
+    .delete()
+    .eq('id', logId);
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const deleteErrorLogs = async (logIds: string[]) => {
+  const { error } = await supabase
+    .from('error_logs')
+    .delete()
+    .in('id', logIds);
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const clearAllErrorLogs = async () => {
+  const { error } = await supabase
+    .from('error_logs')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000');
+
+  if (error) {
+    throw error;
+  }
+};

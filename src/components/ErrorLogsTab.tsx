@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, RefreshCw, Trash2, ChevronDown, ChevronUp, Filter } from 'lucide-react';
-import { getErrorLogs, clearOldErrorLogs } from '../lib/errorLogger';
+import { AlertCircle, RefreshCw, Trash2, ChevronDown, ChevronUp, Filter, X } from 'lucide-react';
+import { getErrorLogs, clearOldErrorLogs, deleteErrorLog, deleteErrorLogs, clearAllErrorLogs } from '../lib/errorLogger';
 
 interface ErrorLog {
   id: string;
@@ -18,6 +18,8 @@ export const ErrorLogsTab: React.FC = () => {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadErrorLogs();
@@ -44,10 +46,89 @@ export const ErrorLogsTab: React.FC = () => {
     try {
       await clearOldErrorLogs(30);
       showNotification('success', 'Old error logs cleared successfully');
+      setSelectedLogs([]);
       loadErrorLogs();
     } catch (error: any) {
       console.error('Error clearing old logs:', error);
       showNotification('error', 'Failed to clear old logs');
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedLogs.length === 0) {
+      showNotification('error', 'No logs selected');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedLogs.length} selected log(s)?`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteErrorLogs(selectedLogs);
+      showNotification('success', `Successfully deleted ${selectedLogs.length} log(s)`);
+      setSelectedLogs([]);
+      loadErrorLogs();
+    } catch (error: any) {
+      console.error('Error deleting logs:', error);
+      showNotification('error', 'Failed to delete logs');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteLog = async (logId: string) => {
+    if (!confirm('Are you sure you want to delete this log?')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteErrorLog(logId);
+      showNotification('success', 'Log deleted successfully');
+      setSelectedLogs(selectedLogs.filter(id => id !== logId));
+      loadErrorLogs();
+    } catch (error: any) {
+      console.error('Error deleting log:', error);
+      showNotification('error', 'Failed to delete log');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleClearAllLogs = async () => {
+    if (!confirm('⚠️ WARNING: This will delete ALL error logs. This action cannot be undone. Are you sure?')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await clearAllErrorLogs();
+      showNotification('success', 'All error logs cleared successfully');
+      setSelectedLogs([]);
+      loadErrorLogs();
+    } catch (error: any) {
+      console.error('Error clearing all logs:', error);
+      showNotification('error', 'Failed to clear all logs');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedLogs.length === filteredLogs.length) {
+      setSelectedLogs([]);
+    } else {
+      setSelectedLogs(filteredLogs.map(log => log.id));
+    }
+  };
+
+  const handleSelectLog = (logId: string) => {
+    if (selectedLogs.includes(logId)) {
+      setSelectedLogs(selectedLogs.filter(id => id !== logId));
+    } else {
+      setSelectedLogs([...selectedLogs, logId]);
     }
   };
 
@@ -115,6 +196,11 @@ export const ErrorLogsTab: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Error Logs</h2>
           <p className="text-sm text-gray-600 mt-1">
             View and manage system error logs
+            {selectedLogs.length > 0 && (
+              <span className="ml-2 text-blue-600 font-medium">
+                ({selectedLogs.length} selected)
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -126,12 +212,31 @@ export const ErrorLogsTab: React.FC = () => {
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
+          {selectedLogs.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              disabled={deleting}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected ({selectedLogs.length})
+            </button>
+          )}
           <button
             onClick={handleClearOldLogs}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            disabled={deleting}
+            className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
             Clear Old Logs
+          </button>
+          <button
+            onClick={handleClearAllLogs}
+            disabled={deleting}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+            Clear All
           </button>
         </div>
       </div>
@@ -170,6 +275,14 @@ export const ErrorLogsTab: React.FC = () => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th className="px-4 py-3 text-center w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedLogs.length === filteredLogs.length && filteredLogs.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Time
                   </th>
@@ -185,8 +298,8 @@ export const ErrorLogsTab: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                    Details
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -194,6 +307,14 @@ export const ErrorLogsTab: React.FC = () => {
                 {filteredLogs.map((log) => (
                   <React.Fragment key={log.id}>
                     <tr className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedLogs.includes(log.id)}
+                          onChange={() => handleSelectLog(log.id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                         {formatDate(log.created_at)}
                       </td>
@@ -216,21 +337,32 @@ export const ErrorLogsTab: React.FC = () => {
                         {log.user_email || '-'}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => toggleExpandRow(log.id)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {expandedRow === log.id ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => toggleExpandRow(log.id)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="View details"
+                          >
+                            {expandedRow === log.id ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteLog(log.id)}
+                            disabled={deleting}
+                            className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                            title="Delete log"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                     {expandedRow === log.id && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-4 bg-gray-50">
+                        <td colSpan={7} className="px-4 py-4 bg-gray-50">
                           <div className="space-y-2">
                             <div>
                               <h4 className="text-sm font-semibold text-gray-700 mb-1">
