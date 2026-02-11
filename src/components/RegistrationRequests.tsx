@@ -241,30 +241,60 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
       if (request.email) {
         try {
+          const customerDetailsHtml = `
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #ffb400; margin-top: 0;">Your Details</h3>
+              <p style="margin: 5px 0;"><strong>Name:</strong> ${request.first_name} ${request.last_name}</p>
+              <p style="margin: 5px 0;"><strong>Email:</strong> ${request.email}</p>
+              <p style="margin: 5px 0;"><strong>Phone:</strong> ${request.phone || 'Not provided'}</p>
+              <p style="margin: 5px 0;"><strong>Preferred Contact:</strong> ${request.preferred_contact_method || 'Email'}</p>
+              <p style="margin: 5px 0;"><strong>Customer Number:</strong> ${customerNumber}</p>
+              <p style="margin: 10px 0 5px 0; font-size: 12px; color: #666;"><em>Please review these details and reply to this email if anything needs to be corrected.</em></p>
+            </div>
+          `;
+
+          const ticketDetailsHtml = `
+            <div style="margin: 20px 0;">
+              <h3 style="color: #ffb400;">Your Active Ticket</h3>
+              <div style="background: white; border: 2px solid #ffb400; border-radius: 8px; padding: 15px; margin: 15px 0;">
+                <h4 style="color: #ffb400; margin: 0 0 10px 0;">Ticket: ${nextTicketNumber}</h4>
+                <p style="margin: 5px 0;"><strong>Device Type:</strong> ${request.device_type}</p>
+                ${request.laptop_brand ? `<p style="margin: 5px 0;"><strong>Brand:</strong> ${request.laptop_brand}</p>` : ''}
+                ${request.laptop_model ? `<p style="margin: 5px 0;"><strong>Model:</strong> ${request.laptop_model}</p>` : ''}
+                ${request.serial_number ? `<p style="margin: 5px 0;"><strong>Serial Number:</strong> ${request.serial_number}</p>` : ''}
+                <p style="margin: 5px 0;"><strong>Issue:</strong> ${request.laptop_problem}</p>
+                ${request.device_accessories && request.device_accessories.length > 0 ?
+                  `<p style="margin: 5px 0;"><strong>Device Came With:</strong> ${request.device_accessories.join(', ')}</p>`
+                  : ''}
+                ${request.needs_collection ?
+                  `<div style="background: #e8f5e8; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                    <p style="margin: 0; color: #2d7a2d;"><strong>✓ Collection & Delivery:</strong> You requested collection and delivery service. We will arrange this with you.</p>
+                  </div>`
+                  : ''}
+              </div>
+            </div>
+          `;
+
           const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {
             body: {
               to: request.email,
-              subject: 'Registration Approved - Welcome!',
+              subject: 'Registration Approved - Welcome to Computer Guardian!',
               ticketNumber: nextTicketNumber,
-              content: `
-                <h2>Registration Approved</h2>
-                <p>Dear ${request.first_name} ${request.last_name},</p>
-                <p>Your registration has been approved! We have created a customer profile and repair ticket for you.</p>
-                <p><strong>Your Details:</strong></p>
-                <ul>
-                  <li>Customer Number: ${customerNumber}</li>
-                  <li>Ticket Number: ${nextTicketNumber}</li>
-                </ul>
-                <p><strong>Device Details:</strong></p>
-                <ul>
-                  <li>Brand: ${request.laptop_brand || 'Not specified'}</li>
-                  <li>Model: ${request.laptop_model || 'Not specified'}</li>
-                  <li>Problem: ${request.laptop_problem}</li>
-                </ul>
-                ${request.needs_collection ? '<p><strong>Collection & Delivery:</strong> You requested collection and delivery service. We will arrange this with you.</p>' : ''}
-                <p>We will contact you shortly via ${request.preferred_contact_method} to discuss your device repair.</p>
-                <p>Thank you for choosing our services!</p>
-              `
+              content: `Dear ${request.first_name},
+
+Welcome to Computer Guardian! We're delighted to have you as our customer.
+
+Your registration has been approved and we have created your customer profile and repair ticket.
+
+${customerDetailsHtml}
+
+${ticketDetailsHtml}
+
+We will contact you shortly via ${request.preferred_contact_method || 'email'} to keep you updated on your repair progress.
+
+If you have any questions, please don't hesitate to reach out to us.
+
+Thank you for choosing Computer Guardian!`
             }
           });
 
