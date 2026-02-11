@@ -268,9 +268,11 @@ Deno.serve(async (req: Request) => {
             text-align: center;
           }
           .logo-img {
-            max-width: 200px;
+            max-width: 300px;
+            width: 100%;
             height: auto;
-            margin-bottom: 10px;
+            display: block;
+            margin: 0 auto;
           }
           .logo-text {
             color: #ffb400;
@@ -325,7 +327,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Horizontal_White.png" alt="Computer Guardian Logo" class="logo-img">
+            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Logo_2.png" alt="Computer Guardian Logo" class="logo-img">
           </div>
           <div class="content">
             <div class="test-badge">✓ TEST EMAIL</div>
@@ -377,9 +379,11 @@ Deno.serve(async (req: Request) => {
             position: relative;
           }
           .logo-img {
-            max-width: 200px;
+            max-width: 300px;
+            width: 100%;
             height: auto;
-            margin-bottom: 10px;
+            display: block;
+            margin: 0 auto;
           }
           .logo-text {
             color: #ffb400;
@@ -497,7 +501,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Horizontal_White.png" alt="Computer Guardian Logo" class="logo-img">
+            <img src="https://computerguardian.co.za/wp-content/uploads/2023/10/Logo_2.png" alt="Computer Guardian Logo" class="logo-img">
           </div>
           <div class="proof-banner">
             ✓ Official Service Document - Keep for Your Records
