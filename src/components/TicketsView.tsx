@@ -45,57 +45,57 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header with refresh button and view toggle */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
             {tickets.length} Ticket{tickets.length !== 1 ? 's' : ''}
           </h3>
-          <p className="text-sm text-gray-600">Manage repair tickets and track progress</p>
+          <p className="text-xs sm:text-sm text-gray-600">Manage repair tickets and track progress</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* View Mode Toggle */}
           <div className="flex items-center bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-white shadow-sm'
                   : 'hover:bg-gray-200'
               }`}
               title="Grid View"
             >
-              <LayoutGrid size={16} className={viewMode === 'grid' ? 'text-gray-900' : 'text-gray-600'} />
+              <LayoutGrid size={14} className="sm:w-4 sm:h-4" style={{ color: viewMode === 'grid' ? '#5d5d5d' : '#6b7280' }} />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === 'list'
                   ? 'bg-white shadow-sm'
                   : 'hover:bg-gray-200'
               }`}
               title="List View"
             >
-              <List size={16} className={viewMode === 'list' ? 'text-gray-900' : 'text-gray-600'} />
+              <List size={14} className="sm:w-4 sm:h-4" style={{ color: viewMode === 'list' ? '#5d5d5d' : '#6b7280' }} />
             </button>
           </div>
 
           <button
             onClick={() => exportTicketsToExcel(tickets)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
             title="Export to Excel"
           >
-            <Download size={16} />
-            <span>Export</span>
+            <Download size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Export</span>
           </button>
 
           <button
             onClick={onRefresh}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
           >
-            <RefreshCw size={16} />
-            <span>Refresh</span>
+            <RefreshCw size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>
@@ -110,65 +110,65 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
           <p className="text-gray-600">Create a new ticket to get started</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {tickets.map((ticket) => (
             <div
               key={ticket.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => onManageTicket && onManageTicket(ticket)}
             >
               {/* Ticket Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900">{ticket.ticket_number}</h4>
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+              <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{ticket.ticket_number}</h4>
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                    <span className={`inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(ticket.status)}`}>
                       {getStatusLabel(statuses, ticket.status)}
                     </span>
                     {ticket.internal_status && (
-                      <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      <span className="inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-100 text-gray-700">
                         {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onViewLabel(ticket);
                     }}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
                     style={{ color: PRIMARY }}
                     title="View QR Label"
                   >
-                    <QrCode size={18} />
+                    <QrCode size={16} className="sm:w-[18px] sm:h-[18px]" />
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onManageTicket && onManageTicket(ticket);
                     }}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700"
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700"
                     title="View Ticket"
                   >
-                    <Eye size={18} />
+                    <Eye size={16} className="sm:w-[18px] sm:h-[18px]" />
                   </button>
                 </div>
               </div>
 
               {/* Customer Info */}
               {ticket.customer && (
-                <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
-                  <User size={16} />
-                  <span>{ticket.customer.first_name} {ticket.customer.last_name}</span>
+                <div className="flex items-center gap-2 mb-2 sm:mb-3 text-xs sm:text-sm text-gray-600">
+                  <User size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="truncate">{ticket.customer.first_name} {ticket.customer.last_name}</span>
                 </div>
               )}
 
               {/* Device Info */}
-              <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
-                <Laptop size={16} />
-                <span>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3 text-xs sm:text-sm text-gray-600">
+                <Laptop size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">
                   {ticket.device_type}
                   {(ticket.brand || ticket.model) && (
                     <span className="text-gray-500">
@@ -180,8 +180,8 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
 
               {/* Issue Description */}
               {ticket.issue_description && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-700 line-clamp-2">
+                <div className="mb-3 sm:mb-4">
+                  <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">
                     {ticket.issue_description}
                   </p>
                 </div>
@@ -189,14 +189,14 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
 
               {/* Status Update */}
               {onUpdateStatus && (
-                <div className="mb-4" onClick={(e) => e.stopPropagation()}>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                <div className="mb-3 sm:mb-4" onClick={(e) => e.stopPropagation()}>
+                  <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1">
                     Update Status
                   </label>
                   <select
                     value={ticket.status}
                     onChange={(e) => onUpdateStatus(ticket.id, e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
+                    className="w-full px-2 py-1.5 sm:py-1 border border-gray-300 rounded text-xs sm:text-sm focus:ring-2 focus:border-transparent outline-none"
                     style={{ focusRingColor: PRIMARY }}
                   >
                     {statuses.map((status) => (

@@ -541,41 +541,42 @@ Thank you for choosing Computer Guardian!`
         rel="stylesheet"
       />
 
-      <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-bold" style={{ color: SECONDARY }}>
+            <h2 className="text-xl sm:text-2xl font-bold" style={{ color: SECONDARY }}>
               Registration Requests
             </h2>
-            <p className="text-gray-600">Review and approve customer registration requests</p>
+            <p className="text-xs sm:text-sm text-gray-600">Review and approve customer registration requests</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
               title={`Currently showing ${sortOrder === 'newest' ? 'newest first' : 'oldest first'}`}
             >
-              <ArrowUpDown size={16} />
-              <span>{sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}</span>
+              <ArrowUpDown size={14} className="sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">{sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}</span>
+              <span className="sm:hidden">{sortOrder === 'newest' ? 'New' : 'Old'}</span>
             </button>
             <button
               onClick={loadRequests}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
             >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              <span>Refresh</span>
+              <RefreshCw size={14} className={`sm:w-4 sm:h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1">
             {(['all', 'pending', 'approved', 'declined'] as const).map(status => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors whitespace-nowrap ${
                   filter === status
                     ? 'text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -593,10 +594,10 @@ Thank you for choosing Computer Guardian!`
                   setClearType(filter);
                   setShowClearModal(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors whitespace-nowrap"
               >
-                <Trash2 size={16} />
-                <span>Clear {filter.charAt(0).toUpperCase() + filter.slice(1)} List</span>
+                <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                <span>Clear {filter.charAt(0).toUpperCase() + filter.slice(1)}</span>
               </button>
             )}
           </div>

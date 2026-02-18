@@ -726,18 +726,18 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <nav className="space-y-2">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4">
+              <nav className="space-y-1 sm:space-y-2">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${
+                      className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg font-medium transition-colors text-left ${
                         activeTab === tab.id
                           ? 'text-white'
                           : 'text-gray-600 hover:bg-gray-50'
@@ -746,8 +746,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                         backgroundColor: activeTab === tab.id ? PRIMARY : 'transparent'
                       }}
                     >
-                      <Icon size={18} className="flex-shrink-0" />
-                      <span className="flex-1">{tab.label}</span>
+                      <Icon size={16} className="sm:w-[18px] sm:h-[18px] flex-shrink-0" />
+                      <span className="flex-1 truncate">{tab.label}</span>
                     </button>
                   );
                 })}
@@ -758,21 +758,21 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
           {/* Main Content */}
           <div className="lg:col-span-3">
             {activeTab === 'general' && userRole === 'admin' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4" style={{ color: SECONDARY }}>
                   General Settings
                 </h3>
 
-                <div className="space-y-6">
-                  <p className="text-gray-600">General settings will be added here in the future.</p>
+                <div className="space-y-4 sm:space-y-6">
+                  <p className="text-sm sm:text-base text-gray-600">General settings will be added here in the future.</p>
                 </div>
               </div>
             )}
 
             {activeTab === 'statuses' && userRole === 'admin' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-lg font-semibold mb-6" style={{ color: SECONDARY }}>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6" style={{ color: SECONDARY }}>
                     Ticket Status Management
                   </h3>
 

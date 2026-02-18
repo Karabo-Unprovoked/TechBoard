@@ -323,80 +323,80 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   const PRIMARY = '#5d5d5d';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header with search, filter, and view toggle */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
             {filteredCustomers.length} Customer{filteredCustomers.length !== 1 ? 's' : ''}
           </h3>
-          <p className="text-sm text-gray-600">Manage customer information and view repair history</p>
+          <p className="text-xs sm:text-sm text-gray-600">Manage customer information and view repair history</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center bg-gray-100 rounded-lg p-1 flex-shrink-0">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-white shadow-sm'
                   : 'hover:bg-gray-200'
               }`}
               title="Grid View"
             >
-              <LayoutGrid size={16} className={viewMode === 'grid' ? 'text-gray-900' : 'text-gray-600'} />
+              <LayoutGrid size={14} className="sm:w-4 sm:h-4" style={{ color: viewMode === 'grid' ? '#5d5d5d' : '#6b7280' }} />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === 'list'
                   ? 'bg-white shadow-sm'
                   : 'hover:bg-gray-200'
               }`}
               title="List View"
             >
-              <List size={16} className={viewMode === 'list' ? 'text-gray-900' : 'text-gray-600'} />
+              <List size={14} className="sm:w-4 sm:h-4" style={{ color: viewMode === 'list' ? '#5d5d5d' : '#6b7280' }} />
             </button>
           </div>
 
           <button
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors flex-shrink-0"
             title="Import from Excel"
           >
-            <Upload size={16} />
-            <span>Import</span>
+            <Upload size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Import</span>
           </button>
 
           <button
             onClick={() => exportCustomersToExcel(filteredCustomers)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors flex-shrink-0"
             title="Export to Excel"
           >
-            <Download size={16} />
-            <span>Export</span>
+            <Download size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Export</span>
           </button>
 
           <button
             onClick={onRefresh}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors flex-shrink-0"
           >
-            <RefreshCw size={16} />
-            <span>Refresh</span>
+            <RefreshCw size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>
 
       {/* Search and Sort Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-[18px] sm:h-[18px]" />
           <input
             type="text"
             placeholder="Search by name, number, email, or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+            className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
             style={{ focusRingColor: PRIMARY }}
           />
         </div>
