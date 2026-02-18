@@ -31,6 +31,15 @@ function App() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
 
+      // Check for path-based routing first
+      const path = window.location.pathname.toLowerCase();
+      if (path === '/bookdevice' || path === '/book-device' || path === '/register') {
+        setAppState('self-registration');
+        setLoading(false);
+        return;
+      }
+
+      // Then check hash-based routing
       const hash = window.location.hash;
       if (hash && hash.startsWith('#track-')) {
         setAppState('track-customer');
@@ -64,7 +73,16 @@ function App() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for browser navigation (back/forward buttons)
+    const handlePopState = () => {
+      checkAuth();
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -86,6 +104,8 @@ function App() {
   };
 
   const handleBackToLogin = () => {
+    // Clear both path and hash
+    window.history.pushState({}, '', '/');
     window.location.hash = '';
     setAppState('login');
   };
