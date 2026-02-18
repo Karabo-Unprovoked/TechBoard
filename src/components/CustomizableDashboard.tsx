@@ -36,31 +36,31 @@ const defaultWidgets: Widget[] = [
     id: 'stats',
     name: 'Statistics',
     component: 'StatsWidget',
-    defaultLayout: { i: 'stats', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
+    defaultLayout: { i: 'stats', x: 0, y: 0, w: 12, h: 3, minW: 6, minH: 2 },
   },
   {
     id: 'quick-actions',
     name: 'Quick Actions',
     component: 'QuickActionsWidget',
-    defaultLayout: { i: 'quick-actions', x: 0, y: 2, w: 12, h: 1, minW: 4, minH: 1 },
+    defaultLayout: { i: 'quick-actions', x: 0, y: 3, w: 12, h: 2, minW: 4, minH: 2 },
   },
   {
     id: 'recent-tickets',
     name: 'Recent Tickets',
     component: 'RecentTicketsWidget',
-    defaultLayout: { i: 'recent-tickets', x: 0, y: 3, w: 8, h: 3, minW: 6, minH: 2 },
+    defaultLayout: { i: 'recent-tickets', x: 0, y: 5, w: 8, h: 4, minW: 6, minH: 3 },
   },
   {
     id: 'status-overview',
     name: 'Status Overview',
     component: 'StatusOverviewWidget',
-    defaultLayout: { i: 'status-overview', x: 8, y: 3, w: 4, h: 3, minW: 3, minH: 2 },
+    defaultLayout: { i: 'status-overview', x: 8, y: 5, w: 4, h: 4, minW: 3, minH: 3 },
   },
   {
     id: 'revenue-chart',
     name: 'Revenue Chart',
     component: 'RevenueChartWidget',
-    defaultLayout: { i: 'revenue-chart', x: 0, y: 6, w: 12, h: 2, minW: 6, minH: 2 },
+    defaultLayout: { i: 'revenue-chart', x: 0, y: 9, w: 12, h: 3, minW: 6, minH: 2 },
   },
 ];
 
@@ -316,30 +316,35 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
         </div>
       )}
 
-      <Responsive
-        className="layout"
-        layouts={{ lg: visibleLayouts }}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-        rowHeight={100}
-        onLayoutChange={handleLayoutChange}
-        isDraggable={!isLocked}
-        isResizable={!isLocked}
-        compactType="vertical"
-        preventCollision={false}
-        width={containerWidth}
-      >
-        {visibleLayouts.map(layout => (
-          <div
-            key={layout.i}
-            className={`${!isLocked ? 'cursor-move' : ''}`}
-          >
-            <div className={`h-full ${!isLocked ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-xl' : ''}`}>
-              {renderWidget(layout.i)}
+      <div style={{ position: 'relative' }}>
+        <Responsive
+          className="layout"
+          layouts={{ lg: visibleLayouts }}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={80}
+          onLayoutChange={handleLayoutChange}
+          isDraggable={!isLocked}
+          isResizable={!isLocked}
+          compactType="vertical"
+          preventCollision={false}
+          width={containerWidth}
+          margin={[16, 16]}
+          containerPadding={[0, 0]}
+        >
+          {visibleLayouts.map(layout => (
+            <div
+              key={layout.i}
+              className={`${!isLocked ? 'cursor-move' : ''}`}
+              style={{ overflow: 'visible' }}
+            >
+              <div className={`h-full w-full ${!isLocked ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-xl' : ''}`}>
+                {renderWidget(layout.i)}
+              </div>
             </div>
-          </div>
-        ))}
-      </Responsive>
+          ))}
+        </Responsive>
+      </div>
     </div>
   );
 };
