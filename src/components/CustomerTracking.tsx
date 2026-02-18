@@ -191,10 +191,10 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                 />
                 <div>
                   <h1 className="text-xl font-bold" style={{ color: SECONDARY }}>
-                    Track Customer
+                    Track Repair
                   </h1>
                   <p className="text-sm" style={{ color: SECONDARY }}>
-                    Search for customer information and repair history
+                    Search for repair status and ticket information
                   </p>
                 </div>
               </div>

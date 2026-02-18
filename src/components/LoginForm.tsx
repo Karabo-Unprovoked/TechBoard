@@ -182,7 +182,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 group"
               >
                 <Search size={20} />
-                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Track Customer</span>
+                <span className="font-medium group-hover:translate-x-1 transition-transform duration-200">Track Repair</span>
               </button>
               <button
                 onClick={() => window.open('mailto:support@guardianassist.co.za', '_blank')}
