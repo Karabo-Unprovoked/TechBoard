@@ -3,7 +3,6 @@ import type { TicketStatus } from './supabase';
 
 const statusColorMap: Record<string, string> = {
   'pending': 'bg-orange-100 text-orange-800',
-  'in-transit': 'bg-indigo-100 text-indigo-800',
   'received': 'bg-blue-100 text-blue-800',
   'in-progress': 'bg-yellow-100 text-yellow-800',
   'invoiced': 'bg-teal-100 text-teal-800',
@@ -15,7 +14,6 @@ const statusColorMap: Record<string, string> = {
 
 const statusDisplayColorMap: Record<string, { bg: string; dot: string }> = {
   'pending': { bg: 'bg-orange-50', dot: 'bg-orange-500' },
-  'in-transit': { bg: 'bg-indigo-50', dot: 'bg-indigo-500' },
   'received': { bg: 'bg-blue-50', dot: 'bg-blue-500' },
   'in-progress': { bg: 'bg-yellow-50', dot: 'bg-yellow-500' },
   'invoiced': { bg: 'bg-teal-50', dot: 'bg-teal-500' },

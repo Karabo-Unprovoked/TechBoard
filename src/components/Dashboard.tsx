@@ -202,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   });
 
   // Always ensure standard status keys exist for backwards compatibility
-  stats.inTransitTickets = stats.intransitTickets || tickets.filter(t => t.status === 'in-transit').length;
+  stats.pendingTickets = stats.pendingTickets || tickets.filter(t => t.status === 'pending').length;
   stats.receivedTickets = stats.receivedTickets || tickets.filter(t => t.status === 'received').length;
   stats.inProgressTickets = stats.inprogressTickets || tickets.filter(t => t.status === 'in-progress').length;
   stats.invoicedTickets = stats.invoicedTickets || tickets.filter(t => t.status === 'invoiced').length;
