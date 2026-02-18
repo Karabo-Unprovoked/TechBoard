@@ -29,6 +29,7 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
     province: '',
     postal_code: '',
     country: 'South Africa',
+    device_type: '',
     laptop_brand: '',
     laptop_model: '',
     laptop_problem: '',
@@ -414,13 +415,33 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Laptop Brand
+                      Device Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.device_type}
+                      onChange={(e) => setFormData({ ...formData, device_type: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      style={{ focusRingColor: PRIMARY }}
+                    >
+                      <option value="">Select device type</option>
+                      <option value="Laptop">Laptop</option>
+                      <option value="Desktop">Desktop</option>
+                      <option value="Tablet">Tablet</option>
+                      <option value="Phone">Phone</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Device Brand
                     </label>
                     <input
                       type="text"
                       value={formData.laptop_brand}
                       onChange={(e) => setFormData({ ...formData, laptop_brand: e.target.value })}
-                      placeholder="e.g., Dell, HP, Lenovo"
+                      placeholder="e.g., Dell, HP, Lenovo, Apple"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
                     />
@@ -428,13 +449,13 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Laptop Model
+                      Device Model
                     </label>
                     <input
                       type="text"
                       value={formData.laptop_model}
                       onChange={(e) => setFormData({ ...formData, laptop_model: e.target.value })}
-                      placeholder="e.g., Latitude 5420"
+                      placeholder="e.g., Latitude 5420, MacBook Pro"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
                     />

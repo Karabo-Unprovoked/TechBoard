@@ -19,6 +19,7 @@ interface RegistrationRequest {
   province?: string;
   postal_code?: string;
   country?: string;
+  device_type?: string;
   laptop_brand?: string;
   laptop_model?: string;
   laptop_problem: string;
@@ -213,7 +214,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         .insert({
           ticket_number: nextTicketNumber,
           customer_id: customer.id,
-          device_type: 'Laptop',
+          device_type: request.device_type || 'Laptop',
           brand: request.laptop_brand,
           model: request.laptop_model,
           serial_number: request.serial_number,
@@ -734,6 +735,7 @@ Thank you for choosing Computer Guardian!`
                     <div>
                       <p className="text-sm font-medium text-gray-700">Device</p>
                       <p className="text-sm text-gray-600">
+                        {request.device_type && <span className="font-medium">{request.device_type}: </span>}
                         {request.laptop_brand || 'Unknown'} {request.laptop_model || ''}
                       </p>
                       {request.serial_number && (
@@ -921,7 +923,7 @@ Thank you for choosing Computer Guardian!`
                     <p><strong>Name:</strong> {pendingRequest.first_name} {pendingRequest.last_name}</p>
                     <p><strong>Email:</strong> {pendingRequest.email}</p>
                     <p><strong>Phone:</strong> {pendingRequest.phone_number}</p>
-                    <p><strong>Device:</strong> {pendingRequest.laptop_brand} {pendingRequest.laptop_model}</p>
+                    <p><strong>Device:</strong> {pendingRequest.device_type && `${pendingRequest.device_type}: `}{pendingRequest.laptop_brand} {pendingRequest.laptop_model}</p>
                   </div>
                 </div>
               </div>
