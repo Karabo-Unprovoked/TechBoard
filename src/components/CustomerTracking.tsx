@@ -243,26 +243,26 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         }}
       >
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-100 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <header className="bg-white shadow-sm border-b border-gray-100 px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={onBack}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
               </button>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <img
-                  src="/FinalWhite.png" 
+                  src="/FinalWhite.png"
                   alt="Guardian Assist Logo"
-                  className="w-10 h-10 rounded-lg"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex-shrink-0"
                 />
-                <div>
-                  <h1 className="text-xl font-bold" style={{ color: SECONDARY }}>
+                <div className="min-w-0">
+                  <h1 className="text-base sm:text-lg md:text-xl font-bold truncate" style={{ color: SECONDARY }}>
                     Track Repair
                   </h1>
-                  <p className="text-sm" style={{ color: SECONDARY }}>
+                  <p className="text-xs sm:text-sm hidden sm:block" style={{ color: SECONDARY }}>
                     Search for repair status and ticket information
                   </p>
                 </div>
@@ -270,24 +270,24 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
             </div>
             
             {isAuthenticated && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {onDashboard && (
                   <button
                     onClick={onDashboard}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100"
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-sm rounded-lg transition-colors hover:bg-gray-100"
                     style={{ color: SECONDARY }}
                   >
                     <User size={16} />
-                    <span>Dashboard</span>
+                    <span className="hidden sm:inline">Dashboard</span>
                   </button>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-sm rounded-lg transition-colors hover:bg-gray-100"
                   style={{ color: SECONDARY }}
                 >
                   <LogOut size={16} />
-                  <span>Logout</span>
+                  <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
             )}
@@ -295,39 +295,39 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         </header>
 
         {/* Main Content */}
-        <main className="p-6">
+        <main className="p-3 sm:p-4 md:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Search Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
-              <div className="text-center mb-8">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 md:p-8 mb-4 sm:mb-6">
+              <div className="text-center mb-6 sm:mb-8">
                 <div
-                  className="p-4 rounded-xl inline-block mb-6"
+                  className="p-3 sm:p-4 rounded-lg sm:rounded-xl inline-block mb-4 sm:mb-6"
                   style={{ background: 'rgba(255,180,0,0.12)' }}
                 >
-                  <Search size={48} style={{ color: PRIMARY }} />
+                  <Search size={36} className="sm:w-12 sm:h-12" style={{ color: PRIMARY }} />
                 </div>
-                <h2 className="text-2xl font-bold mb-4" style={{ color: SECONDARY }}>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4" style={{ color: SECONDARY }}>
                   Track Your Device
                 </h2>
-                <p className="text-gray-600 mb-8">
+                <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 px-2">
                   Enter your ticket number to track your device repair status
                 </p>
 
-                <form onSubmit={handleSearch} className="max-w-md mx-auto">
-                  <div className="flex gap-3">
+                <form onSubmit={handleSearch} className="max-w-md mx-auto px-2">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Enter ticket number (e.g., TK-20250115-001)"
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
                       required
                     />
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-6 py-3 rounded-lg font-semibold text-white transition-colors disabled:opacity-50"
+                      className="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-semibold text-white transition-colors disabled:opacity-50"
                       style={{ backgroundColor: PRIMARY }}
                     >
                       {loading ? 'Searching...' : 'Track'}
@@ -345,53 +345,53 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
             {/* Tracking Results */}
             {trackingNumber && tickets.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2" style={{ color: SECONDARY }}>
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
+                <div className="text-center mb-6 sm:mb-8">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 px-2" style={{ color: SECONDARY }}>
                     Repair Status: {tickets[0].status === 'completed' ? 'Completed' : tickets[0].status.charAt(0).toUpperCase() + tickets[0].status.slice(1).replace('-', ' ')}
                     {tickets[0].internal_status && (
-                      <span className="text-lg text-gray-600 ml-2">
+                      <span className="text-sm sm:text-base md:text-lg text-gray-600 ml-2 block sm:inline">
                         ({tickets[0].internal_status.replace('-', ' ')})
                       </span>
                     )}
                   </h3>
-                  <p className="text-xl font-semibold" style={{ color: PRIMARY }}>
+                  <p className="text-base sm:text-lg md:text-xl font-semibold" style={{ color: PRIMARY }}>
                     {trackingNumber}
                   </p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="mt-4 flex items-center gap-2 mx-auto px-4 py-2 rounded-lg transition-colors"
+                    className="mt-3 sm:mt-4 flex items-center gap-2 mx-auto px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors"
                     style={{ backgroundColor: SECONDARY, color: 'white' }}
                   >
-                    <RefreshCw size={16} />
+                    <RefreshCw size={14} className="sm:w-4 sm:h-4" />
                     Refresh
                   </button>
                 </div>
 
                 {/* Status Progress */}
-                <div className="mb-8">
-                  <h4 className="text-lg font-semibold mb-4 text-center" style={{ color: SECONDARY }}>
+                <div className="mb-6 sm:mb-8">
+                  <h4 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-center px-2" style={{ color: SECONDARY }}>
                     Repair Progress
                   </h4>
                   {statuses.length > 0 && (
                     <>
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex justify-between items-center mb-3 sm:mb-4 gap-1 overflow-x-auto pb-2">
                         {statuses.map((statusItem, index) => {
                           const currentStep = getStatusStep(tickets[0].status);
                           const isActive = index + 1 <= currentStep;
                           const isCurrent = index + 1 === currentStep;
 
                           return (
-                            <div key={statusItem.status_key} className="flex flex-col items-center flex-1">
+                            <div key={statusItem.status_key} className="flex flex-col items-center flex-1 min-w-[60px] sm:min-w-[80px]">
                               <div
-                                className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 font-bold ${
+                                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mb-1 sm:mb-2 text-sm sm:text-base font-bold ${
                                   isActive ? 'text-white' : 'bg-gray-200 text-gray-500'
                                 }`}
                                 style={{ backgroundColor: isActive ? PRIMARY : undefined }}
                               >
                                 {isActive ? '✓' : index + 1}
                               </div>
-                              <span className={`text-xs font-medium text-center ${isCurrent ? 'font-bold' : 'text-gray-500'}`} style={{ color: isCurrent ? PRIMARY : undefined }}>
+                              <span className={`text-[10px] sm:text-xs font-medium text-center px-1 ${isCurrent ? 'font-bold' : 'text-gray-500'}`} style={{ color: isCurrent ? PRIMARY : undefined }}>
                                 {statusItem.status_label.toUpperCase()}
                               </span>
                             </div>
@@ -430,25 +430,25 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                 </div>
 
                 {/* Device Information */}
-                <h4 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                <h4 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 px-2" style={{ color: SECONDARY }}>
                   Device Information
                 </h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <Laptop size={20} style={{ color: PRIMARY }} />
-                    <div>
-                      <p className="text-sm font-bold text-gray-700">Device Type</p>
-                      <p className="text-gray-900">{tickets[0].device_type}</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Laptop size={18} className="sm:w-5 sm:h-5 flex-shrink-0" style={{ color: PRIMARY }} />
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-gray-700">Device Type</p>
+                      <p className="text-sm sm:text-base text-gray-900 truncate">{tickets[0].device_type}</p>
                     </div>
                   </div>
 
                   {(tickets[0].brand || tickets[0].model) && (
-                    <div className="flex items-center gap-3">
-                      <Laptop size={20} style={{ color: PRIMARY }} />
-                      <div>
-                        <p className="text-sm font-bold text-gray-700">Model</p>
-                        <p className="text-gray-900">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <Laptop size={18} className="sm:w-5 sm:h-5 flex-shrink-0" style={{ color: PRIMARY }} />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-gray-700">Model</p>
+                        <p className="text-sm sm:text-base text-gray-900 truncate">
                         {[tickets[0].brand, tickets[0].model].filter(Boolean).join(' ')}
                         </p>
                       </div>
@@ -456,47 +456,47 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   )}
 
                   {tickets[0].serial_number && (
-                    <div className="flex items-center gap-3">
-                      <Hash size={20} style={{ color: PRIMARY }} />
-                      <div>
-                        <p className="text-sm font-bold text-gray-700">Serial Number</p>
-                        <p className="font-mono text-sm text-gray-900">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <Hash size={18} className="sm:w-5 sm:h-5 flex-shrink-0" style={{ color: PRIMARY }} />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-gray-700">Serial Number</p>
+                        <p className="font-mono text-xs sm:text-sm text-gray-900 truncate">
                         {tickets[0].serial_number}
                         </p>
                       </div>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-3">
-                    <Calendar size={20} style={{ color: PRIMARY }} />
-                    <div>
-                      <p className="text-sm font-bold text-gray-700">Received Date</p>
-                      <p className="text-gray-900">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Calendar size={18} className="sm:w-5 sm:h-5 flex-shrink-0" style={{ color: PRIMARY }} />
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-gray-700">Received Date</p>
+                      <p className="text-sm sm:text-base text-gray-900 truncate">
                         {formatDate(tickets[0].created_at)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <Clock size={20} style={{ color: PRIMARY }} />
-                    <div>
-                      <p className="text-sm font-bold text-gray-700">Last Updated</p>
-                      <p className="text-gray-900">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Clock size={18} className="sm:w-5 sm:h-5 flex-shrink-0" style={{ color: PRIMARY }} />
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-gray-700">Last Updated</p>
+                      <p className="text-sm sm:text-base text-gray-900 truncate">
                         {formatDate(tickets[0].updated_at)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center ${getStatusColor(tickets[0].status)}`}
+                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${getStatusColor(tickets[0].status)}`}
                     />
-                    <div>
-                      <p className="text-sm font-bold text-gray-700">Current Status</p>
-                      <p className="capitalize text-gray-900">
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-gray-700">Current Status</p>
+                      <p className="capitalize text-sm sm:text-base text-gray-900">
                         {tickets[0].status.replace('-', ' ')}
                         {tickets[0].internal_status && (
-                          <span className="text-sm text-gray-600 ml-2">
+                          <span className="text-xs sm:text-sm text-gray-600 ml-1 sm:ml-2">
                             ({tickets[0].internal_status.replace('-', ' ')})
                           </span>
                         )}

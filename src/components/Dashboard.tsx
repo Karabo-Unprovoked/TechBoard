@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText, Menu, X } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
@@ -38,6 +38,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
   const [pendingRequests, setPendingRequests] = useState(0);
   const [customerFormKey, setCustomerFormKey] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -241,21 +242,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           backgroundColor: '#f1f5f9',
         }}
       >
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Left Sidebar */}
         <div
-          className="w-72 flex flex-col shadow-xl"
+          className={`fixed lg:static inset-y-0 left-0 z-50 w-72 flex flex-col shadow-xl transform transition-transform duration-300 ease-in-out lg:transform-none ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}
           style={{ backgroundColor: SIDEBAR_BG }}
         >
+          {/* Mobile Close Button */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <X size={20} />
+          </button>
+
           {/* Logo and Brand */}
-          <div className="p-6 border-b border-white/10">
+          <div className="p-4 sm:p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
               <img
                 src="/FinalWhite.png"
                 alt="Guardian Assist Logo"
-                className="w-10 h-10"
+                className="w-8 h-8 sm:w-10 sm:h-10"
               />
               <div>
-                <h1 className="text-lg font-bold text-white">Guardian Assist</h1>
+                <h1 className="text-base sm:text-lg font-bold text-white">Guardian Assist</h1>
                 <p className="text-xs text-white/60">Repair Management</p>
               </div>
             </div>
@@ -265,7 +284,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           <div className="flex-1 px-4 py-6">
             <nav className="space-y-1">
               <button
-                onClick={() => setCurrentView('dashboard')}
+                onClick={() => { setCurrentView('dashboard'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'dashboard' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
@@ -274,7 +293,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span className="text-sm">Dashboard</span>
               </button>
               <button
-                onClick={() => setCurrentView('tickets')}
+                onClick={() => { setCurrentView('tickets'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'tickets' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
@@ -283,7 +302,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span className="text-sm">All Tickets</span>
               </button>
               <button
-                onClick={() => setCurrentView('customers')}
+                onClick={() => { setCurrentView('customers'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'customers' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
@@ -292,23 +311,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span className="text-sm">All Customers</span>
               </button>
               <button
-                onClick={onTrackCustomer}
+                onClick={() => { onTrackCustomer(); setSidebarOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all font-medium"
               >
                 <Search size={18} />
                 <span className="text-sm">Track Repair</span>
               </button>
               <button
-                onClick={() => setCurrentView('registration-requests')}
+                onClick={() => { setCurrentView('registration-requests'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'registration-requests' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <FileText size={18} />
                 <span className="text-sm">Registration Requests</span>
+                {pendingRequests > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {pendingRequests}
+                  </span>
+                )}
               </button>
               <button
-                onClick={() => setCurrentView('settings')}
+                onClick={() => { setCurrentView('settings'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'settings' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
@@ -317,7 +341,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <span className="text-sm">Settings</span>
               </button>
               <button
-                onClick={() => setCurrentView('profile')}
+                onClick={() => { setCurrentView('profile'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'profile' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
@@ -346,10 +370,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         {/* Right Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <div className="bg-white/70 backdrop-blur-sm border-b border-gray-200/50 px-8 py-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">
+          <div className="bg-white/70 backdrop-blur-sm border-b border-gray-200/50 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5">
+            <div className="flex items-center justify-between gap-2">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu size={24} />
+              </button>
+
+              <div className="flex-1">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">
                   {currentView === 'dashboard' && 'Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'customers' && 'Customer Management'}
@@ -360,8 +392,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'manage-customer' && 'Manage Customer'}
                   {currentView === 'settings' && 'System Settings'}
                   {currentView === 'profile' && 'My Profile'}
+                  {currentView === 'registration-requests' && 'Registration Requests'}
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">
                   {currentView === 'dashboard' && 'Welcome back! Here\'s your overview'}
                   {currentView === 'tickets' && 'Manage and track repair tickets'}
                   {currentView === 'customers' && 'View and manage customer information'}
@@ -372,6 +405,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'manage-customer' && 'View customer details and repair history'}
                   {currentView === 'settings' && 'Configure system settings and test functionality'}
                   {currentView === 'profile' && 'Manage your account details and security settings'}
+                  {currentView === 'registration-requests' && 'Review and approve customer registration requests'}
                 </p>
               </div>
               
@@ -407,7 +441,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 p-8 overflow-y-auto">
+          <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
@@ -418,35 +452,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             ) : (
               <>
                 {currentView === 'dashboard' && (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {/* Welcome Section */}
                     <div
-                      className="rounded-2xl p-8 text-white shadow-lg"
+                      className="rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-white shadow-lg"
                       style={{
                         background: `linear-gradient(135deg, ${PRIMARY} 0%, #ff9500 100%)`
                       }}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
-                          <h3 className="text-2xl font-bold mb-2">Hello, Welcome back</h3>
-                          <p className="text-orange-50 text-sm">Your dashboard is updated with the latest information</p>
+                          <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Hello, Welcome back</h3>
+                          <p className="text-orange-50 text-xs sm:text-sm">Your dashboard is updated with the latest information</p>
                         </div>
                         {userRole !== 'viewer' && (
-                          <div className="flex gap-3">
+                          <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
                             <button
                               onClick={() => setCurrentView('new-customer')}
-                              className="flex items-center gap-2 px-5 py-3 bg-white/20 backdrop-blur-sm rounded-xl font-semibold hover:bg-white/30 transition-all"
+                              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl font-semibold hover:bg-white/30 transition-all text-sm"
                             >
-                              <Users size={18} />
-                              <span className="text-sm">New Customer</span>
+                              <Users size={16} className="sm:w-[18px] sm:h-[18px]" />
+                              <span className="text-xs sm:text-sm">New Customer</span>
                             </button>
                             <button
                               onClick={() => setCurrentView('new-ticket')}
-                              className="flex items-center gap-2 px-5 py-3 bg-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all text-sm"
                               style={{ color: PRIMARY }}
                             >
-                              <Plus size={18} />
-                              <span className="text-sm">New Ticket</span>
+                              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
+                              <span className="text-xs sm:text-sm">New Ticket</span>
                             </button>
                           </div>
                         )}
@@ -472,18 +506,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     )}
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="bg-blue-50 p-3 rounded-xl">
-                            <Wrench size={24} className="text-blue-600" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-3 sm:mb-4">
+                          <div className="bg-blue-50 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                            <Wrench size={20} className="sm:w-6 sm:h-6 text-blue-600" />
                           </div>
-                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 sm:px-3 py-1 rounded-full">
                             +{stats.todayTickets} today
                           </span>
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Tickets</h4>
-                        <p className="text-3xl font-bold text-gray-900 mb-3">{stats.totalTickets}</p>
+                        <h4 className="text-gray-600 text-xs sm:text-sm font-medium mb-1">Total Tickets</h4>
+                        <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">{stats.totalTickets}</p>
 
                         {/* Status Breakdown */}
                         <div className="space-y-2 pt-3 border-t border-gray-100">

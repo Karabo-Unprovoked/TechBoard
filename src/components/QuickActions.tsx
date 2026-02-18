@@ -11,18 +11,18 @@ export const QuickActions: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
-      
-      <div className="grid grid-cols-1 gap-3">
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6">Quick Actions</h3>
+
+      <div className="grid grid-cols-1 gap-2 sm:gap-3">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
             <button
               key={index}
-              className={`${action.color} text-white p-4 rounded-lg flex items-center gap-3 transition-colors font-medium`}
+              className={`${action.color} text-white p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3 transition-colors font-medium text-sm sm:text-base`}
             >
-              <Icon size={20} />
+              <Icon size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
               <span>{action.label}</span>
             </button>
           );

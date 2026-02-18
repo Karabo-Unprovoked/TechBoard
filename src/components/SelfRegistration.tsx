@@ -130,22 +130,22 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
 
   if (submitted) {
     return (
-      <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-          <div className="mb-6">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle size={32} className="text-green-600" />
+      <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="min-h-screen bg-gray-50 flex items-center justify-center px-3 sm:px-4">
+        <div className="max-w-md w-full bg-white rounded-lg sm:rounded-xl shadow-lg p-6 sm:p-8 text-center">
+          <div className="mb-4 sm:mb-6">
+            <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle size={24} className="sm:w-8 sm:h-8 text-green-600" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-4" style={{ color: SECONDARY }}>
+          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4" style={{ color: SECONDARY }}>
             Registration Submitted!
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
             Thank you for your registration. We will review your request and contact you shortly via your preferred contact method.
           </p>
           <button
             onClick={onBack}
-            className="w-full py-3 rounded-lg text-white font-medium transition-colors"
+            className="w-full py-2.5 sm:py-3 text-sm sm:text-base rounded-lg text-white font-medium transition-colors"
             style={{ backgroundColor: PRIMARY }}
           >
             Return to Home
@@ -162,36 +162,36 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
         rel="stylesheet"
       />
 
-      <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="min-h-screen bg-gray-50 py-8 px-4">
+      <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8 px-3 sm:px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <button
               onClick={onBack}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
             >
               <ArrowLeft size={16} />
               <span>Back</span>
             </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2" style={{ color: SECONDARY }}>
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 md:p-8">
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2" style={{ color: SECONDARY }}>
                 Device Repair Registration
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Fill out the form below to register your device for repair. We'll review your request and contact you soon.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               {/* Personal Information */}
               <div>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2" style={{ color: SECONDARY }}>
-                  <User size={20} />
+                <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2" style={{ color: SECONDARY }}>
+                  <User size={18} className="sm:w-5 sm:h-5" />
                   Personal Information
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Title
