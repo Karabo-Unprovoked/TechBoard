@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List, ChevronDown, ChevronRight, FileWarning } from 'lucide-react';
+import { ArrowLeft, Mail, Send, CheckCircle, AlertCircle, Settings, Database, Shield, Bell, Globe, Wrench, User, Plus, Trash2, CreditCard as Edit3, KeyRound, List, ChevronDown, ChevronRight, FileWarning, MessageCircle } from 'lucide-react';
 import { supabase, getUserRole } from '../lib/supabase';
 import type { TicketStatus, TicketSubStatus } from '../lib/supabase';
 import { RecycleBin } from './RecycleBin';
@@ -19,7 +19,7 @@ interface User {
 }
 
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotification }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general' | 'statuses' | 'errorLogs'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'database' | 'security' | 'notifications' | 'users' | 'recycle' | 'general' | 'statuses' | 'errorLogs' | 'whatsapp'>('email');
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'technician' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(true);
@@ -66,6 +66,21 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     testEmail: '',
     subject: 'Test Email from Guardian Assist - SMTP Configuration Test',
     message: 'This is a test email to verify your SMTP configuration is working correctly.\n\nIf you receive this email, your email system is properly configured and ready to send customer notifications.\n\nServer: computerguardian.co.za:465 (SSL)\nFrom: info@computerguardian.co.za\n\nGuardian Assist Team',
+    loading: false,
+    result: null as { success: boolean; message: string } | null
+  });
+  const [whatsappSettings, setWhatsappSettings] = useState<{
+    business_phone_number_id: string;
+    access_token: string;
+    webhook_verify_token: string;
+    is_enabled: boolean;
+    send_on_ticket_created: boolean;
+    send_on_status_change: boolean;
+    send_on_ready_for_pickup: boolean;
+  } | null>(null);
+  const [whatsappTest, setWhatsappTest] = useState({
+    testPhone: '',
+    message: 'Test message from Guardian Assist - Your repair shop management system is now configured to send WhatsApp notifications!',
     loading: false,
     result: null as { success: boolean; message: string } | null
   });
@@ -151,6 +166,101 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     }
   };
 
+  const loadWhatsAppSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('whatsapp_settings')
+        .select('*')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setWhatsappSettings(data);
+      }
+    } catch (error) {
+      console.error('Error loading WhatsApp settings:', error);
+    }
+  };
+
+  const handleSaveWhatsAppSettings = async () => {
+    if (!whatsappSettings) return;
+
+    try {
+      const { data: existing } = await supabase
+        .from('whatsapp_settings')
+        .select('id')
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('whatsapp_settings')
+          .update({
+            ...whatsappSettings,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('whatsapp_settings')
+          .insert([whatsappSettings]);
+
+        if (error) throw error;
+      }
+
+      onNotification('success', 'WhatsApp settings saved successfully');
+      loadWhatsAppSettings();
+    } catch (error: any) {
+      onNotification('error', 'Failed to save WhatsApp settings: ' + error.message);
+    }
+  };
+
+  const handleTestWhatsApp = async () => {
+    if (!whatsappTest.testPhone) {
+      setWhatsappTest(prev => ({
+        ...prev,
+        result: { success: false, message: 'Please enter a phone number' }
+      }));
+      return;
+    }
+
+    setWhatsappTest(prev => ({ ...prev, loading: true, result: null }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          phoneNumber: whatsappTest.testPhone,
+          message: whatsappTest.message,
+          messageType: 'test'
+        }
+      });
+
+      if (error) throw error;
+
+      setWhatsappTest(prev => ({
+        ...prev,
+        loading: false,
+        result: {
+          success: data.success,
+          message: data.success
+            ? `Test message sent successfully to ${whatsappTest.testPhone}`
+            : data.error || 'Failed to send test message'
+        }
+      }));
+    } catch (error: any) {
+      setWhatsappTest(prev => ({
+        ...prev,
+        loading: false,
+        result: {
+          success: false,
+          message: 'Network error: ' + error.message
+        }
+      }));
+    }
+  };
+
 
   // Load user role on component mount
   React.useEffect(() => {
@@ -174,6 +284,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     loadUserRole();
     loadEmailSettings();
     loadGeneralSettings();
+    loadWhatsAppSettings();
   }, []);
 
   const handleUpdateEmailPassword = async () => {
@@ -650,6 +761,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
     { id: 'general', label: 'General', icon: Settings },
     { id: 'statuses', label: 'Status Management', icon: List },
     { id: 'email', label: 'Email Settings', icon: Mail },
+    { id: 'whatsapp', label: 'WhatsApp Settings', icon: MessageCircle },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -663,13 +775,13 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
 
     switch (userRole) {
       case 'admin':
-        return allTabs; // Admin can see everything
+        return allTabs;
       case 'technician':
-        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general' && tab.id !== 'statuses' && tab.id !== 'errorLogs'); // No user management, security, recycle bin, general, statuses, or error logs
+        return allTabs.filter(tab => tab.id !== 'users' && tab.id !== 'security' && tab.id !== 'recycle' && tab.id !== 'general' && tab.id !== 'statuses' && tab.id !== 'errorLogs' && tab.id !== 'whatsapp');
       case 'viewer':
-        return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database'); // Only email and database (read-only)
+        return allTabs.filter(tab => tab.id === 'email' || tab.id === 'database');
       default:
-        return [allTabs[1]]; // Default to email
+        return [allTabs[2]];
     }
   };
 
@@ -1399,9 +1511,236 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
               )
             )}
 
+            {activeTab === 'whatsapp' && userRole === 'admin' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    WhatsApp Business API Configuration
+                  </h3>
+
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Setup Instructions</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>1. Create a Meta Business Account at business.facebook.com</p>
+                      <p>2. Set up WhatsApp Business API</p>
+                      <p>3. Get your Phone Number ID and Access Token from the Meta Developer Portal</p>
+                      <p>4. Enter credentials below and enable integration</p>
+                    </div>
+                  </div>
+
+                  {whatsappSettings && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Business Phone Number ID
+                        </label>
+                        <input
+                          type="text"
+                          value={whatsappSettings.business_phone_number_id}
+                          onChange={(e) => setWhatsappSettings({ ...whatsappSettings, business_phone_number_id: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                          placeholder="Your WhatsApp Business Phone Number ID"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Access Token
+                        </label>
+                        <input
+                          type="password"
+                          value={whatsappSettings.access_token}
+                          onChange={(e) => setWhatsappSettings({ ...whatsappSettings, access_token: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                          placeholder="Your WhatsApp API Access Token"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Webhook Verify Token (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={whatsappSettings.webhook_verify_token}
+                          onChange={(e) => setWhatsappSettings({ ...whatsappSettings, webhook_verify_token: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                          style={{ focusRingColor: PRIMARY }}
+                          placeholder="Webhook verification token"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div>
+                          <p className="font-medium text-gray-900">Enable WhatsApp Integration</p>
+                          <p className="text-sm text-gray-600">Turn on to start sending WhatsApp messages</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={whatsappSettings.is_enabled}
+                          onChange={(e) => setWhatsappSettings({ ...whatsappSettings, is_enabled: e.target.checked })}
+                          className="rounded"
+                        />
+                      </div>
+
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium text-gray-900 mb-3">Automatic Notifications</h4>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">Ticket Created</p>
+                              <p className="text-sm text-gray-600">Send message when new ticket is created</p>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={whatsappSettings.send_on_ticket_created}
+                              onChange={(e) => setWhatsappSettings({ ...whatsappSettings, send_on_ticket_created: e.target.checked })}
+                              className="rounded"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">Status Changes</p>
+                              <p className="text-sm text-gray-600">Send message when ticket status is updated</p>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={whatsappSettings.send_on_status_change}
+                              onChange={(e) => setWhatsappSettings({ ...whatsappSettings, send_on_status_change: e.target.checked })}
+                              className="rounded"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">Ready for Pickup</p>
+                              <p className="text-sm text-gray-600">Send message when device is ready for collection</p>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={whatsappSettings.send_on_ready_for_pickup}
+                              onChange={(e) => setWhatsappSettings({ ...whatsappSettings, send_on_ready_for_pickup: e.target.checked })}
+                              className="rounded"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleSaveWhatsAppSettings}
+                        className="w-full px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                        style={{ backgroundColor: PRIMARY }}
+                      >
+                        Save WhatsApp Settings
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    Test WhatsApp Integration
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Phone Number (with country code)
+                      </label>
+                      <input
+                        type="tel"
+                        value={whatsappTest.testPhone}
+                        onChange={(e) => setWhatsappTest({ ...whatsappTest, testPhone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                        style={{ focusRingColor: PRIMARY }}
+                        placeholder="e.g., 27821234567"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Enter number with country code, no + sign</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Test Message
+                      </label>
+                      <textarea
+                        value={whatsappTest.message}
+                        onChange={(e) => setWhatsappTest({ ...whatsappTest, message: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none"
+                        style={{ focusRingColor: PRIMARY }}
+                        rows={3}
+                      />
+                    </div>
+
+                    <button
+                      onClick={handleTestWhatsApp}
+                      disabled={whatsappTest.loading || !whatsappSettings?.is_enabled}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: PRIMARY }}
+                    >
+                      <MessageCircle size={16} />
+                      <span>{whatsappTest.loading ? 'Sending...' : 'Send Test Message'}</span>
+                    </button>
+
+                    {!whatsappSettings?.is_enabled && (
+                      <p className="text-sm text-amber-600">
+                        WhatsApp integration must be enabled before testing
+                      </p>
+                    )}
+
+                    {whatsappTest.result && (
+                      <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                        whatsappTest.result.success
+                          ? 'bg-green-50 text-green-800 border border-green-200'
+                          : 'bg-red-50 text-red-800 border border-red-200'
+                      }`}>
+                        {whatsappTest.result.success ? (
+                          <CheckCircle size={16} />
+                        ) : (
+                          <AlertCircle size={16} />
+                        )}
+                        <span className="text-sm">{whatsappTest.result.message}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
+                    Message Templates
+                  </h3>
+
+                  <div className="space-y-3">
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="font-medium text-gray-900 mb-2">Ticket Created</p>
+                      <p className="text-sm text-gray-600">
+                        "Hi [Customer Name], your device has been received. Ticket #[Ticket Number]. We'll update you on progress."
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="font-medium text-gray-900 mb-2">Status Update</p>
+                      <p className="text-sm text-gray-600">
+                        "Update for Ticket #[Ticket Number]: Status changed to [New Status]. [Optional notes]"
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="font-medium text-gray-900 mb-2">Ready for Pickup</p>
+                      <p className="text-sm text-gray-600">
+                        "Great news! Your device (Ticket #[Ticket Number]) is ready for collection. Please visit us during business hours."
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'notifications' && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                {/* Role-based access notice */}
                 {userRole === 'viewer' && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <div className="flex items-center gap-2 mb-2">
@@ -1417,18 +1756,18 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                 <h3 className="text-lg font-semibold mb-4" style={{ color: SECONDARY }}>
                   Notification Settings
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900">Status Change Alerts</p>
                       <p className="text-sm text-gray-600">Notify when ticket status changes</p>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      defaultChecked 
+                    <input
+                      type="checkbox"
+                      defaultChecked
                       disabled={userRole === 'viewer'}
-                      className="rounded disabled:opacity-50" 
+                      className="rounded disabled:opacity-50"
                     />
                   </div>
 
@@ -1437,11 +1776,11 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ onBack, onNotifi
                       <p className="font-medium text-gray-900">Completion Notifications</p>
                       <p className="text-sm text-gray-600">Alert customers when repairs are complete</p>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      defaultChecked 
+                    <input
+                      type="checkbox"
+                      defaultChecked
                       disabled={userRole === 'viewer'}
-                      className="rounded disabled:opacity-50" 
+                      className="rounded disabled:opacity-50"
                     />
                   </div>
                 </div>
