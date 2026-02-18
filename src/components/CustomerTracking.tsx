@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash, MessageSquare } from 'lucide-react';
+import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash, MessageSquare, PhoneCall } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketNote } from '../lib/supabase';
 
@@ -24,6 +24,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [trackingNumber, setTrackingNumber] = useState('');
   const [customerNotes, setCustomerNotes] = useState<TicketNote[]>([]);
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
+  const [sendingCallback, setSendingCallback] = useState(false);
+  const [callbackMessage, setCallbackMessage] = useState<'success' | 'error' | null>(null);
 
   const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) return;
@@ -143,6 +145,68 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleRequestCallback = async () => {
+    if (!tickets.length) return;
+
+    setSendingCallback(true);
+    setCallbackMessage(null);
+
+    try {
+      const ticket = tickets[0];
+      const customer = ticket.customer as Customer;
+
+      const statusLabel = statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status;
+      const subStatusText = ticket.sub_status ? ` (${ticket.sub_status})` : '';
+
+      const emailContent = `
+        <p><strong>Callback Request Received</strong></p>
+        <p>A customer has requested a callback regarding their repair.</p>
+
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #ffb400;">
+          <p style="margin: 5px 0;"><strong>Ticket Number:</strong> ${ticket.ticket_number}</p>
+          <p style="margin: 5px 0;"><strong>Customer:</strong> ${customer?.name || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>Phone:</strong> ${ticket.customer_phone}</p>
+          <p style="margin: 5px 0;"><strong>Email:</strong> ${ticket.customer_email}</p>
+          <p style="margin: 5px 0;"><strong>Device:</strong> ${ticket.device_type} - ${ticket.device_brand} ${ticket.device_model}</p>
+          <p style="margin: 5px 0;"><strong>Current Status:</strong> ${statusLabel}${subStatusText}</p>
+        </div>
+
+        <p><strong>Action Required:</strong> Please contact this customer as soon as possible to discuss their repair.</p>
+      `;
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'info@computerguardian.co.za',
+          subject: `Callback Request - Ticket #${ticket.ticket_number}`,
+          content: emailContent,
+          ticketNumber: ticket.ticket_number,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setCallbackMessage('success');
+        setTimeout(() => setCallbackMessage(null), 5000);
+      } else {
+        setCallbackMessage('error');
+        setTimeout(() => setCallbackMessage(null), 5000);
+      }
+    } catch (err) {
+      console.error('Callback request error:', err);
+      setCallbackMessage('error');
+      setTimeout(() => setCallbackMessage(null), 5000);
+    } finally {
+      setSendingCallback(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
