@@ -26,6 +26,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
   const [sendingCallback, setSendingCallback] = useState(false);
   const [callbackMessage, setCallbackMessage] = useState<'success' | 'error' | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) return;
@@ -195,7 +196,11 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
       if (result.success) {
         setCallbackMessage('success');
-        setTimeout(() => setCallbackMessage(null), 5000);
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setCallbackMessage(null);
+          setShowSuccessPopup(false);
+        }, 5000);
       } else {
         setCallbackMessage('error');
         setTimeout(() => setCallbackMessage(null), 5000);
@@ -546,12 +551,6 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                     {sendingCallback ? 'Sending Request...' : 'Request Callback'}
                   </button>
 
-                  {callbackMessage === 'success' && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center">
-                      Callback request sent successfully! We'll contact you soon.
-                    </div>
-                  )}
-
                   {callbackMessage === 'error' && (
                     <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
                       Failed to send callback request. Please try again or contact us directly.
@@ -589,7 +588,79 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
             </div>
           </div>
         </main>
+
+        {/* Success Popup Modal */}
+        {showSuccessPopup && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+              onClick={() => setShowSuccessPopup(false)}
+            />
+
+            {/* Popup Card */}
+            <div
+              className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full transform animate-bounce-in"
+              style={{ animation: 'slideUp 0.3s ease-out' }}
+            >
+              <div className="text-center">
+                {/* Success Icon */}
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+                  style={{ backgroundColor: 'rgba(255, 180, 0, 0.15)' }}
+                >
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: PRIMARY }}
+                  >
+                    <svg
+                      className="w-10 h-10 text-white"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Success Message */}
+                <h3 className="text-2xl font-bold mb-3" style={{ color: SECONDARY }}>
+                  Request Sent!
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Your callback request has been sent successfully. We'll contact you soon to discuss your repair.
+                </p>
+
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowSuccessPopup(false)}
+                  className="w-full px-6 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-[1.02] shadow-md hover:shadow-lg"
+                  style={{ backgroundColor: PRIMARY }}
+                >
+                  Got it!
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      <style>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </>
   );
 };
