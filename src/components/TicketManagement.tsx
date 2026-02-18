@@ -30,7 +30,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [emailData, setEmailData] = useState({
     type: 'status_update',
-    subject: '',
+    subject: `Repair Update - ${ticket.ticket_number}`,
     content: ''
   });
 
@@ -103,12 +103,33 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
     }
   };
 
+  const handleEmailTypeChange = (type: string) => {
+    let subject = '';
+    switch (type) {
+      case 'status_update':
+        subject = `Repair Update - ${ticket.ticket_number}`;
+        break;
+      case 'completion_notice':
+        subject = `Repair Complete - ${ticket.ticket_number}`;
+        break;
+      case 'parts_needed':
+        subject = `Parts Required - ${ticket.ticket_number}`;
+        break;
+      case 'quote_request':
+        subject = `Repair Quote - ${ticket.ticket_number}`;
+        break;
+      default:
+        subject = '';
+    }
+    setEmailData({ ...emailData, type, subject });
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
       const updateData = {
         ...editData,
-        estimated_completion: editData.estimated_completion ? 
+        estimated_completion: editData.estimated_completion ?
           new Date(editData.estimated_completion).toISOString() : null,
         updated_at: new Date().toISOString()
       };
@@ -198,8 +219,8 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
       setEmails(prev => [emailRecord, ...prev]);
       setShowEmailModal(false);
-      setEmailData({ type: 'status_update', subject: '', content: '' });
-      
+      setEmailData({ type: 'status_update', subject: `Repair Update - ${ticket.ticket_number}`, content: '' });
+
       alert('Email sent successfully to ' + ticket.customer.email);
     } catch (error) {
       console.error('Error sending email:', error);
@@ -877,7 +898,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   <label className="block text-sm font-bold text-gray-700 mb-2">Email Type</label>
                   <select
                     value={emailData.type}
-                    onChange={(e) => setEmailData({ ...emailData, type: e.target.value })}
+                    onChange={(e) => handleEmailTypeChange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                     style={{ focusRingColor: PRIMARY }}
                   >
@@ -912,7 +933,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   <textarea
                     value={emailData.content}
                     onChange={(e) => setEmailData({ ...emailData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none overflow-y-auto"
                     style={{ focusRingColor: PRIMARY }}
                     rows={6}
                     placeholder={
