@@ -534,6 +534,30 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   </div>
                 )}
 
+                {/* Request Callback Button */}
+                <div className="mb-6">
+                  <button
+                    onClick={handleRequestCallback}
+                    disabled={sendingCallback}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-semibold text-white transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                    style={{ backgroundColor: PRIMARY }}
+                  >
+                    <PhoneCall size={20} />
+                    {sendingCallback ? 'Sending Request...' : 'Request Callback'}
+                  </button>
+
+                  {callbackMessage === 'success' && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center">
+                      Callback request sent successfully! We'll contact you soon.
+                    </div>
+                  )}
+
+                  {callbackMessage === 'error' && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
+                      Failed to send callback request. Please try again or contact us directly.
+                    </div>
+                  )}
+                </div>
 
                 {/* Estimated Timeline */}
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
