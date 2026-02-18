@@ -10,6 +10,12 @@ interface CustomerTrackingProps {
   onDashboard?: () => void;
 }
 
+interface TicketStatus {
+  status_key: string;
+  status_label: string;
+  status_order: number;
+}
+
 export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLogout, isAuthenticated, onDashboard }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,6 +23,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   const [error, setError] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [customerNotes, setCustomerNotes] = useState<TicketNote[]>([]);
+  const [statuses, setStatuses] = useState<TicketStatus[]>([]);
 
   const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) return;
@@ -74,6 +81,23 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   }, []);
 
   React.useEffect(() => {
+    const loadStatuses = async () => {
+      const { data } = await supabase
+        .from('ticket_statuses')
+        .select('status_key, status_label, status_order')
+        .order('status_order');
+
+      if (data) {
+        // Filter out special statuses that shouldn't show in progress tracker
+        const progressStatuses = data.filter(
+          s => !['void', 'unrepairable', 'pending-customer-action', 'test'].includes(s.status_key)
+        );
+        setStatuses(progressStatuses);
+      }
+    };
+
+    loadStatuses();
+
     const hash = window.location.hash;
     console.log('Hash detected:', hash);
     if (hash && hash.startsWith('#track-')) {
@@ -113,24 +137,8 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
   };
 
   const getStatusStep = (status: string) => {
-    switch (status) {
-      case 'received':
-        return 1;
-      case 'in-progress':
-        return 2;
-      case 'waiting-parts':
-        return 3;
-      case 'completed':
-        return 4;
-      case 'unrepairable':
-        return 4; // Final status
-      case 'pending-customer-action':
-        return 2; // Customer needs to take action
-      case 'void':
-        return 4; // Final status
-      default:
-        return 1;
-    }
+    const statusIndex = statuses.findIndex(s => s.status_key === status);
+    return statusIndex >= 0 ? statusIndex + 1 : 1;
   };
 
   const handleLogout = async () => {
@@ -291,50 +299,58 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   <h4 className="text-lg font-semibold mb-4 text-center" style={{ color: SECONDARY }}>
                     Repair Progress
                   </h4>
-                  <div className="flex justify-between items-center mb-4">
-                    {['RECEIVED', 'IN PROGRESS', 'TESTING', 'COMPLETED'].map((step, index) => {
-                      const currentStep = getStatusStep(tickets[0].status);
-                      const isActive = index + 1 <= currentStep;
-                      const isCurrent = index + 1 === currentStep;
-                      
-                      return (
-                        <div key={step} className="flex flex-col items-center flex-1">
-                          <div 
-                            className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 font-bold ${
-                              isActive ? 'text-white' : 'bg-gray-200 text-gray-500'
-                            }`}
-                            style={{ backgroundColor: isActive ? PRIMARY : undefined }}
-                          >
-                            {isActive ? '✓' : index + 1}
-                          </div>
-                          <span className={`text-sm font-medium text-center ${isCurrent ? 'font-bold' : 'text-gray-500'}`} style={{ color: isCurrent ? PRIMARY : undefined }}>
-                            {step}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                    <div 
-                      className="h-2 rounded-full transition-all duration-500"
-                      style={{ 
-                        backgroundColor: PRIMARY,
-                        width: `${(getStatusStep(tickets[0].status) / 4) * 100}%`
-                      }}
-                    />
-                  </div>
-                  
+                  {statuses.length > 0 && (
+                    <>
+                      <div className="flex justify-between items-center mb-4">
+                        {statuses.map((statusItem, index) => {
+                          const currentStep = getStatusStep(tickets[0].status);
+                          const isActive = index + 1 <= currentStep;
+                          const isCurrent = index + 1 === currentStep;
+
+                          return (
+                            <div key={statusItem.status_key} className="flex flex-col items-center flex-1">
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 font-bold ${
+                                  isActive ? 'text-white' : 'bg-gray-200 text-gray-500'
+                                }`}
+                                style={{ backgroundColor: isActive ? PRIMARY : undefined }}
+                              >
+                                {isActive ? '✓' : index + 1}
+                              </div>
+                              <span className={`text-xs font-medium text-center ${isCurrent ? 'font-bold' : 'text-gray-500'}`} style={{ color: isCurrent ? PRIMARY : undefined }}>
+                                {statusItem.status_label.toUpperCase()}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                        <div
+                          className="h-2 rounded-full transition-all duration-500"
+                          style={{
+                            backgroundColor: PRIMARY,
+                            width: `${(getStatusStep(tickets[0].status) / statuses.length) * 100}%`
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+
                   {/* Status Description */}
                   <div className="text-center p-4 rounded-lg" style={{ backgroundColor: 'rgba(255,180,0,0.1)' }}>
                     <p className="text-sm" style={{ color: SECONDARY }}>
+                      {tickets[0].status === 'pending' && 'Your repair request has been received and is being reviewed.'}
                       {tickets[0].status === 'received' && 'Your device has been received and is in our queue for diagnosis.'}
                       {tickets[0].status === 'in-progress' && 'Our technicians are currently working on diagnosing and repairing your device.'}
-                      {tickets[0].status === 'waiting-parts' && 'We are waiting for replacement parts to arrive. We will continue once parts are available.'}
                       {tickets[0].status === 'completed' && 'Your device repair is complete and ready for collection!'}
                       {tickets[0].status === 'unrepairable' && 'Unfortunately, your device cannot be repaired. Please contact us for more details.'}
                       {tickets[0].status === 'pending-customer-action' && 'We need additional information or approval from you to proceed with the repair.'}
+                      {tickets[0].status === 'void' && 'This ticket has been voided. Please contact us for more information.'}
+                      {!['pending', 'received', 'in-progress', 'completed', 'unrepairable', 'pending-customer-action', 'void'].includes(tickets[0].status) &&
+                        `Current status: ${statuses.find(s => s.status_key === tickets[0].status)?.status_label || tickets[0].status}`
+                      }
                     </p>
                   </div>
                 </div>
