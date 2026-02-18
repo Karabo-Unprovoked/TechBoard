@@ -437,14 +437,31 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Device Brand
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={formData.laptop_brand}
                       onChange={(e) => setFormData({ ...formData, laptop_brand: e.target.value })}
-                      placeholder="e.g., Dell, HP, Lenovo, Apple"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       style={{ focusRingColor: PRIMARY }}
-                    />
+                    >
+                      <option value="">Select brand</option>
+                      <option value="Acer">Acer</option>
+                      <option value="Apple">Apple</option>
+                      <option value="ASUS">ASUS</option>
+                      <option value="Dell">Dell</option>
+                      <option value="Google">Google</option>
+                      <option value="HP">HP</option>
+                      <option value="Huawei">Huawei</option>
+                      <option value="Lenovo">Lenovo</option>
+                      <option value="LG">LG</option>
+                      <option value="Microsoft">Microsoft</option>
+                      <option value="MSI">MSI</option>
+                      <option value="Razer">Razer</option>
+                      <option value="Samsung">Samsung</option>
+                      <option value="Sony">Sony</option>
+                      <option value="Toshiba">Toshiba</option>
+                      <option value="Xiaomi">Xiaomi</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
 
                   <div>
