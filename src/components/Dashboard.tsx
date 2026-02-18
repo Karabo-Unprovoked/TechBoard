@@ -14,6 +14,7 @@ import { CustomersView } from './CustomersView';
 import { CustomerManagement } from './CustomerManagement';
 import { UserProfile } from './UserProfile';
 import { RegistrationRequests } from './RegistrationRequests';
+import { CustomizableDashboard } from './CustomizableDashboard';
 import type { NotificationType } from './Notification';
 
 interface DashboardProps {
@@ -453,41 +454,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <>
                 {currentView === 'dashboard' && (
                   <div className="space-y-4 sm:space-y-6">
-                    {/* Welcome Section */}
-                    <div
-                      className="rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-white shadow-lg"
-                      style={{
-                        background: `linear-gradient(135deg, ${PRIMARY} 0%, #ff9500 100%)`
-                      }}
-                    >
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div>
-                          <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Hello, Welcome back</h3>
-                          <p className="text-orange-50 text-xs sm:text-sm">Your dashboard is updated with the latest information</p>
-                        </div>
-                        {userRole !== 'viewer' && (
-                          <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
-                            <button
-                              onClick={() => setCurrentView('new-customer')}
-                              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl font-semibold hover:bg-white/30 transition-all text-sm"
-                            >
-                              <Users size={16} className="sm:w-[18px] sm:h-[18px]" />
-                              <span className="text-xs sm:text-sm">New Customer</span>
-                            </button>
-                            <button
-                              onClick={() => setCurrentView('new-ticket')}
-                              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all text-sm"
-                              style={{ color: PRIMARY }}
-                            >
-                              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
-                              <span className="text-xs sm:text-sm">New Ticket</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Supabase Configuration Warning */}
                     {!isSupabaseConfigured && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-2">
@@ -505,194 +471,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       </div>
                     )}
 
-                    {/* Stats Overview */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-3 sm:mb-4">
-                          <div className="bg-blue-50 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-                            <Wrench size={20} className="sm:w-6 sm:h-6 text-blue-600" />
-                          </div>
-                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 sm:px-3 py-1 rounded-full">
-                            +{stats.todayTickets} today
-                          </span>
-                        </div>
-                        <h4 className="text-gray-600 text-xs sm:text-sm font-medium mb-1">Total Tickets</h4>
-                        <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">{stats.totalTickets}</p>
-
-                        {/* Status Breakdown */}
-                        <div className="space-y-2 pt-3 border-t border-gray-100">
-                          {statuses.slice(0, 3).map((status) => {
-                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
-                            const count = stats[statusKey] || 0;
-                            const percentage = stats.totalTickets > 0 ? Math.round((count / stats.totalTickets) * 100) : 0;
-                            const colors = getStatusDisplayColors(status.status_key);
-
-                            return (
-                              <div key={status.id} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
-                                  <span className="text-xs text-gray-600">{status.status_label}</span>
-                                </div>
-                                <span className="text-xs font-semibold text-gray-900">{percentage}%</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('registration-requests')}>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="bg-orange-50 p-3 rounded-xl">
-                            <FileText size={24} className="text-orange-600" />
-                          </div>
-                          {pendingRequests > 0 && (
-                            <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                              Needs Review
-                            </span>
-                          )}
-                        </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Pending Registrations</h4>
-                        <p className="text-3xl font-bold text-gray-900">{pendingRequests}</p>
-                        <p className="text-xs text-gray-500 mt-2">Click to review requests</p>
-                      </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('customers')}>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="bg-green-50 p-3 rounded-xl">
-                            <Users size={24} className="text-green-600" />
-                          </div>
-                          <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                            Active
-                          </span>
-                        </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Customers</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers}</p>
-                        <p className="text-xs text-gray-500 mt-2">Click to view all customers</p>
-                      </div>
-                    </div>
-
-                    {/* Recent Tickets with Status Updates */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <div className="lg:col-span-2">
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                          <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold text-gray-900">Latest Updates</h3>
-                            <button
-                              onClick={() => setCurrentView('tickets')}
-                              className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                            >
-                              View All →
-                            </button>
-                          </div>
-
-                          <div className="space-y-3">
-                            {tickets.slice(0, 5).map((ticket) => (
-                              <div key={ticket.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-all">
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="bg-gray-100 px-3 py-1 rounded-lg">
-                                      <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
-                                    </div>
-                                    <span className="text-sm text-gray-600">
-                                      {ticket.customer?.name} - {ticket.device_type}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => handleViewLabel(ticket)}
-                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                                      style={{ color: '#ffb400' }}
-                                      title="View QR Label"
-                                    >
-                                      <QrCode size={16} />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setSelectedTicket(ticket);
-                                        setCurrentView('manage-ticket');
-                                      }}
-                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-                                      title="View Ticket"
-                                    >
-                                      <Eye size={16} />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <select
-                                      value={ticket.status}
-                                      onChange={(e) => {
-                                        updateTicketStatus(ticket.id, e.target.value, '');
-                                      }}
-                                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
-                                    >
-                                      {statuses.map((status) => (
-                                        <option key={status.id} value={status.status_key}>
-                                          {status.status_label}
-                                        </option>
-                                      ))}
-                                    </select>
-
-                                    <div className="text-right">
-                                      <p className="text-xs text-gray-400 font-medium">
-                                        {new Date(ticket.created_at).toLocaleDateString()}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {(() => {
-                                    const currentStatus = statuses.find(s => s.status_key === ticket.status);
-                                    if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
-                                      return (
-                                        <select
-                                          value={ticket.internal_status || ''}
-                                          onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
-                                          className="px-2 py-1 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
-                                        >
-                                          <option value="">—</option>
-                                          {currentStatus.sub_statuses.map((subStatus) => (
-                                            <option key={subStatus.id} value={subStatus.sub_status_key}>
-                                              {subStatus.sub_status_label}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      );
-                                    }
-                                    return null;
-                                  })()}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Status Overview - Dynamic based on database */}
-                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
-                        <div className="space-y-4">
-                          {statuses.map((status) => {
-                            const colors = getStatusDisplayColors(status.status_key);
-                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
-                            const count = stats[statusKey] || 0;
-
-                            return (
-                              <div key={status.id} className="flex items-center justify-between group">
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center group-hover:${colors.bg.replace('50', '100')} transition-colors`}>
-                                    <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
-                                  </div>
-                                  <span className="text-sm text-gray-600 font-medium">{status.status_label}</span>
-                                </div>
-                                <span className="font-bold text-gray-900">{count}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    </div>
+                    <CustomizableDashboard
+                      tickets={tickets}
+                      customers={customers}
+                      pendingRequests={pendingRequests}
+                      statuses={statuses}
+                      userRole={userRole}
+                      onNavigate={setCurrentView}
+                      onViewLabel={handleViewLabel}
+                      onManageTicket={handleManageTicket}
+                      onUpdateStatus={updateTicketStatus}
+                    />
+                  </div>
                 )}
                 {currentView === 'tickets' && (
                   <TicketsView 
