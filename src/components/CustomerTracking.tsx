@@ -280,6 +280,11 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold mb-2" style={{ color: SECONDARY }}>
                     Repair Status: {tickets[0].status === 'completed' ? 'Completed' : tickets[0].status.charAt(0).toUpperCase() + tickets[0].status.slice(1).replace('-', ' ')}
+                    {tickets[0].internal_status && (
+                      <span className="text-lg text-gray-600 ml-2">
+                        ({tickets[0].internal_status.replace('-', ' ')})
+                      </span>
+                    )}
                   </h3>
                   <p className="text-xl font-semibold" style={{ color: PRIMARY }}>
                     {trackingNumber}
@@ -414,13 +419,18 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className={`w-5 h-5 rounded-full flex items-center justify-center ${getStatusColor(tickets[0].status)}`}
                     />
                     <div>
                       <p className="text-sm font-bold text-gray-700">Current Status</p>
                       <p className="capitalize text-gray-900">
                         {tickets[0].status.replace('-', ' ')}
+                        {tickets[0].internal_status && (
+                          <span className="text-sm text-gray-600 ml-2">
+                            ({tickets[0].internal_status.replace('-', ' ')})
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
