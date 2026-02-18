@@ -29,7 +29,9 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
   const [showVoidModal, setShowVoidModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const getDefaultEmailContent = () => {
-    const customerName = `${initialTicket.customer?.first_name} ${initialTicket.customer?.last_name}`;
+    const firstName = initialTicket.customer?.first_name || '';
+    const lastName = initialTicket.customer?.last_name || '';
+    const customerName = firstName && lastName ? `${firstName} ${lastName}` : initialTicket.customer?.name || 'Valued Customer';
     return `Dear ${customerName},\n\nWe wanted to update you on the status of your ${initialTicket.device_type} repair.\n\nCurrent Status: ${initialTicket.status.replace('-', ' ').toUpperCase()}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team`;
   };
 
@@ -112,7 +114,9 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
     let subject = '';
     let content = '';
 
-    const customerName = `${ticket.customer?.first_name} ${ticket.customer?.last_name}`;
+    const firstName = ticket.customer?.first_name || '';
+    const lastName = ticket.customer?.last_name || '';
+    const customerName = firstName && lastName ? `${firstName} ${lastName}` : ticket.customer?.name || 'Valued Customer';
 
     switch (type) {
       case 'status_update':
@@ -234,7 +238,9 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
       setEmails(prev => [emailRecord, ...prev]);
       setShowEmailModal(false);
       // Reset to default template
-      const customerName = `${ticket.customer?.first_name} ${ticket.customer?.last_name}`;
+      const firstName = ticket.customer?.first_name || '';
+      const lastName = ticket.customer?.last_name || '';
+      const customerName = firstName && lastName ? `${firstName} ${lastName}` : ticket.customer?.name || 'Valued Customer';
       const defaultContent = `Dear ${customerName},\n\nWe wanted to update you on the status of your ${ticket.device_type} repair.\n\nCurrent Status: ${ticket.status.replace('-', ' ').toUpperCase()}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team`;
       setEmailData({ type: 'status_update', subject: `Repair Update - ${ticket.ticket_number}`, content: defaultContent });
 
@@ -953,17 +959,21 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none overflow-y-auto"
                     style={{ focusRingColor: PRIMARY }}
                     rows={6}
-                    placeholder={
-                      emailData.type === 'status_update' ? 
-                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nWe wanted to update you on the status of your ${ticket.device_type} repair.\n\nCurrent Status: ${ticket.status.replace('-', ' ').toUpperCase()}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team` :
+                    placeholder={(() => {
+                      const firstName = ticket.customer?.first_name || '';
+                      const lastName = ticket.customer?.last_name || '';
+                      const customerName = firstName && lastName ? `${firstName} ${lastName}` : ticket.customer?.name || 'Valued Customer';
+
+                      return emailData.type === 'status_update' ?
+                        `Dear ${customerName},\n\nWe wanted to update you on the status of your ${ticket.device_type} repair.\n\nCurrent Status: ${ticket.status.replace('-', ' ').toUpperCase()}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team` :
                       emailData.type === 'completion_notice' ?
-                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nGreat news! Your ${ticket.device_type} repair has been completed and is ready for collection.\n\nPlease contact us to arrange pickup at your convenience.\n\nThank you for choosing Guardian Assist!\n\nBest regards,\nGuardian Assist Team` :
+                        `Dear ${customerName},\n\nGreat news! Your ${ticket.device_type} repair has been completed and is ready for collection.\n\nPlease contact us to arrange pickup at your convenience.\n\nThank you for choosing Guardian Assist!\n\nBest regards,\nGuardian Assist Team` :
                       emailData.type === 'parts_needed' ?
-                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nWe need to order additional parts for your ${ticket.device_type} repair.\n\nThis may extend the repair time by a few days. We will keep you updated on the progress.\n\nThank you for your patience.\n\nBest regards,\nGuardian Assist Team` :
+                        `Dear ${customerName},\n\nWe need to order additional parts for your ${ticket.device_type} repair.\n\nThis may extend the repair time by a few days. We will keep you updated on the progress.\n\nThank you for your patience.\n\nBest regards,\nGuardian Assist Team` :
                       emailData.type === 'quote_request' ?
-                        `Dear ${ticket.customer?.first_name} ${ticket.customer?.last_name},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nEstimated Cost: R${ticket.estimated_cost?.toFixed(2) || '0.00'}\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team` :
-                      'Email content...'
-                    }
+                        `Dear ${customerName},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nEstimated Cost: R${ticket.estimated_cost?.toFixed(2) || '0.00'}\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team` :
+                      'Email content...';
+                    })()}
                   />
                 </div>
 
