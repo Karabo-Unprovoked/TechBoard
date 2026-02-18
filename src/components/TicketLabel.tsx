@@ -32,7 +32,12 @@ export const TicketLabel: React.FC<TicketLabelProps> = ({ ticket, onBack }) => {
   const [qrCode, setQrCode] = React.useState('');
 
   React.useEffect(() => {
-    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    let appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+
+    if (appUrl.includes('localhost') || appUrl.includes('127.0.0.1')) {
+      appUrl = window.location.origin;
+    }
+
     const trackingUrl = `${appUrl}/#track-${ticket.ticket_number}`;
     generateQRCode(trackingUrl).then(setQrCode);
   }, [ticket.ticket_number]);
