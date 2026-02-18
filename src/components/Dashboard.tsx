@@ -236,7 +236,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
       />
 
       <div
-        className="min-h-screen flex"
+        className="min-h-screen flex overflow-x-hidden w-full max-w-full"
         style={{
           fontFamily: 'Montserrat, sans-serif',
           backgroundColor: '#f1f5f9',
@@ -368,9 +368,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         </div>
 
         {/* Right Content Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           {/* Header */}
-          <div className="bg-white/70 backdrop-blur-sm border-b border-gray-200/50 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5">
+          <div className="bg-white/70 backdrop-blur-sm border-b border-gray-200/50 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 overflow-x-hidden">
             <div className="flex items-center justify-between gap-2">
               {/* Mobile Menu Button */}
               <button
@@ -410,7 +410,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               </div>
               
               {currentView === 'tickets' && (
-                <div className="flex items-center gap-4">
+                <div className="hidden md:flex items-center gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                     <input
@@ -441,7 +441,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
+          <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
