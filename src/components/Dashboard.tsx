@@ -40,6 +40,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [pendingRequests, setPendingRequests] = useState(0);
   const [customerFormKey, setCustomerFormKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ticketViewLayout, setTicketViewLayout] = useState<TicketViewLayout>('detailed');
 
   const handleLogout = async () => {
@@ -63,14 +64,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
       const { data, error } = await supabase
         .from('user_preferences')
-        .select('dashboard_view')
+        .select('dashboard_view, sidebar_collapsed')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') throw error;
 
-      if (data?.dashboard_view) {
-        setTicketViewLayout(data.dashboard_view as TicketViewLayout);
+      if (data) {
+        if (data.dashboard_view) {
+          setTicketViewLayout(data.dashboard_view as TicketViewLayout);
+        }
+        if (data.sidebar_collapsed !== undefined) {
+          setSidebarCollapsed(data.sidebar_collapsed);
+        }
       }
     } catch (error) {
       console.error('Error loading user preferences:', error);
@@ -103,6 +109,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const handleLayoutChange = (layout: TicketViewLayout) => {
     setTicketViewLayout(layout);
     saveUserPreference(layout);
+  };
+
+  const toggleSidebar = async () => {
+    const newCollapsedState = !sidebarCollapsed;
+    setSidebarCollapsed(newCollapsedState);
+
+    try {
+      if (!isSupabaseConfigured) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
+          sidebar_collapsed: newCollapsedState,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving sidebar preference:', error);
+    }
   };
 
   const loadStatusesData = async () => {
@@ -306,9 +338,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
         {/* Left Sidebar */}
         <div
-          className={`fixed lg:static inset-y-0 left-0 z-50 w-72 flex flex-col shadow-xl transform transition-transform duration-300 ease-in-out lg:transform-none ${
+          className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col shadow-xl transform transition-all duration-300 ease-in-out lg:transform-none ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-          }`}
+          } ${sidebarCollapsed ? 'w-20' : 'w-72'}`}
           style={{ backgroundColor: SIDEBAR_BG }}
         >
           {/* Mobile Close Button */}
@@ -319,18 +351,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             <X size={20} />
           </button>
 
+          {/* Desktop Collapse Toggle Button */}
+          <button
+            onClick={toggleSidebar}
+            className="hidden lg:block absolute -right-3 top-8 z-50 p-1.5 bg-white rounded-full shadow-lg text-gray-600 hover:text-gray-900 transition-colors border border-gray-200"
+          >
+            {sidebarCollapsed ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            )}
+          </button>
+
           {/* Logo and Brand */}
           <div className="p-4 sm:p-6 border-b border-white/10">
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
               <img
                 src="/FinalWhite.png"
                 alt="Guardian Assist Logo"
                 className="w-8 h-8 sm:w-10 sm:h-10"
               />
-              <div>
-                <h1 className="text-base sm:text-lg font-bold text-white">Guardian Assist</h1>
-                <p className="text-xs text-white/60">Repair Management</p>
-              </div>
+              {!sidebarCollapsed && (
+                <div>
+                  <h1 className="text-base sm:text-lg font-bold text-white">Guardian Assist</h1>
+                  <p className="text-xs text-white/60">Repair Management</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -339,69 +389,76 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             <nav className="space-y-1">
               <button
                 onClick={() => { setCurrentView('dashboard'); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'dashboard' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
+                title={sidebarCollapsed ? 'Dashboard' : ''}
               >
                 <BarChart3 size={18} />
-                <span className="text-sm">Dashboard</span>
+                {!sidebarCollapsed && <span className="text-sm">Dashboard</span>}
               </button>
               <button
                 onClick={() => { setCurrentView('tickets'); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'tickets' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
+                title={sidebarCollapsed ? 'All Tickets' : ''}
               >
                 <Wrench size={18} />
-                <span className="text-sm">All Tickets</span>
+                {!sidebarCollapsed && <span className="text-sm">All Tickets</span>}
               </button>
               <button
                 onClick={() => { setCurrentView('customers'); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'customers' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
+                title={sidebarCollapsed ? 'All Customers' : ''}
               >
                 <Users size={18} />
-                <span className="text-sm">All Customers</span>
+                {!sidebarCollapsed && <span className="text-sm">All Customers</span>}
               </button>
               <button
                 onClick={() => { onTrackCustomer(); setSidebarOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all font-medium"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all font-medium`}
+                title={sidebarCollapsed ? 'Track Repair' : ''}
               >
                 <Search size={18} />
-                <span className="text-sm">Track Repair</span>
+                {!sidebarCollapsed && <span className="text-sm">Track Repair</span>}
               </button>
               <button
                 onClick={() => { setCurrentView('registration-requests'); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all relative ${
                   currentView === 'registration-requests' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
+                title={sidebarCollapsed ? 'Registration Requests' : ''}
               >
                 <FileText size={18} />
-                <span className="text-sm">Registration Requests</span>
+                {!sidebarCollapsed && <span className="text-sm">Registration Requests</span>}
                 {pendingRequests > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className={`${sidebarCollapsed ? 'absolute -top-1 -right-1' : 'ml-auto'} bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center`}>
                     {pendingRequests}
                   </span>
                 )}
               </button>
               <button
                 onClick={() => { setCurrentView('settings'); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'settings' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
+                title={sidebarCollapsed ? 'Settings' : ''}
               >
                 <Settings size={18} />
-                <span className="text-sm">Settings</span>
+                {!sidebarCollapsed && <span className="text-sm">Settings</span>}
               </button>
               <button
                 onClick={() => { setCurrentView('profile'); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'profile' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
+                title={sidebarCollapsed ? 'My Profile' : ''}
               >
                 <User size={18} />
-                <span className="text-sm">My Profile</span>
+                {!sidebarCollapsed && <span className="text-sm">My Profile</span>}
               </button>
             </nav>
           </div>
@@ -410,14 +467,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           <div className="p-4 border-t border-white/10">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-medium"
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-medium`}
+              title={sidebarCollapsed ? 'Logout' : ''}
             >
               <LogOut size={18} />
-              <span className="text-sm">Logout</span>
+              {!sidebarCollapsed && <span className="text-sm">Logout</span>}
             </button>
-            <p className="text-xs text-white/40 text-center mt-3">
-              © 2025 Guardian Assist
-            </p>
+            {!sidebarCollapsed && (
+              <p className="text-xs text-white/40 text-center mt-3">
+                © 2025 Guardian Assist
+              </p>
+            )}
           </div>
         </div>
 
