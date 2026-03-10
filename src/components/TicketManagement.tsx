@@ -430,112 +430,158 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 Ticket Details
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Status and Priority */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
-                  {isEditing ? (
-                    <select
-                      value={editData.status}
-                      onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                      style={{ focusRingColor: PRIMARY }}
-                    >
-                      {statuses.length === 0 ? (
-                        <>
-                          <option value="pending">Pending</option>
-                          <option value="received">Received</option>
-                          <option value="in-progress">In Progress</option>
-                          <option value="invoiced">Invoiced</option>
-                          <option value="completed">Completed</option>
-                          <option value="unrepairable">Unrepairable</option>
-                          <option value="pending-customer-action">Pending Customer Action</option>
-                        </>
-                      ) : (
-                        statuses.map((status) => (
-                          <option key={status.id} value={status.status_key}>
-                            {status.status_label}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
-                        {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
+              {/* Modern Status Card Selector */}
+              {isEditing ? (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-600 mb-3">Update Status</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {(statuses.length === 0 ? [
+                      { id: '1', status_key: 'pending', status_label: 'Pending', color: 'orange' },
+                      { id: '2', status_key: 'received', status_label: 'Received', color: 'blue' },
+                      { id: '3', status_key: 'in-progress', status_label: 'In Progress', color: 'yellow' },
+                      { id: '4', status_key: 'invoiced', status_label: 'Invoiced', color: 'teal' },
+                      { id: '5', status_key: 'completed', status_label: 'Completed', color: 'green' },
+                      { id: '6', status_key: 'unrepairable', status_label: 'Unrepairable', color: 'red' },
+                      { id: '7', status_key: 'pending-customer-action', status_label: 'Pending Customer', color: 'purple' }
+                    ] : statuses).map((status) => {
+                      const isSelected = editData.status === status.status_key;
+                      const colorMap: Record<string, string> = {
+                        orange: isSelected ? 'bg-orange-500 border-orange-600 text-white' : 'bg-white border-orange-200 text-orange-700 hover:bg-orange-50',
+                        blue: isSelected ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white border-blue-200 text-blue-700 hover:bg-blue-50',
+                        yellow: isSelected ? 'bg-yellow-500 border-yellow-600 text-white' : 'bg-white border-yellow-200 text-yellow-700 hover:bg-yellow-50',
+                        teal: isSelected ? 'bg-teal-500 border-teal-600 text-white' : 'bg-white border-teal-200 text-teal-700 hover:bg-teal-50',
+                        green: isSelected ? 'bg-green-500 border-green-600 text-white' : 'bg-white border-green-200 text-green-700 hover:bg-green-50',
+                        red: isSelected ? 'bg-red-500 border-red-600 text-white' : 'bg-white border-red-200 text-red-700 hover:bg-red-50',
+                        purple: isSelected ? 'bg-purple-500 border-purple-600 text-white' : 'bg-white border-purple-200 text-purple-700 hover:bg-purple-50'
+                      };
+                      const statusColor = status.status_key === 'pending' ? 'orange' :
+                                        status.status_key === 'received' ? 'blue' :
+                                        status.status_key === 'in-progress' ? 'yellow' :
+                                        status.status_key === 'invoiced' ? 'teal' :
+                                        status.status_key === 'completed' ? 'green' :
+                                        status.status_key === 'unrepairable' ? 'red' : 'purple';
+
+                      return (
+                        <button
+                          key={status.id}
+                          type="button"
+                          onClick={() => setEditData({ ...editData, status: status.status_key })}
+                          className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${colorMap[statusColor]} ${
+                            isSelected ? 'scale-105 shadow-lg' : 'shadow-sm'
+                          }`}
+                        >
+                          {isSelected && (
+                            <CheckCircle className="absolute top-2 right-2" size={16} />
+                          )}
+                          <div className="text-sm font-semibold">{status.status_label}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Current Status</label>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-block px-4 py-2 rounded-lg text-sm font-semibold ${getStatusColor(ticket.status)}`}>
+                      {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
+                    </span>
+                    {ticket.internal_status && (
+                      <span className="inline-block px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-700">
+                        {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
                       </span>
-                      {ticket.internal_status && (
-                        <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
-                          {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
-                        </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sub-Status Cards */}
+              {(() => {
+                const currentStatus = statuses.find(s => s.status_key === (isEditing ? editData.status : ticket.status));
+                if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
+                  return (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-600 mb-3">
+                        {isEditing ? 'Select Sub-Status' : 'Sub-Status Details'}
+                      </label>
+                      {isEditing ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {currentStatus.sub_statuses.map((subStatus) => {
+                            const isSelected = editData.internal_status === subStatus.sub_status_key;
+                            return (
+                              <button
+                                key={subStatus.id}
+                                type="button"
+                                onClick={() => setEditData({ ...editData, internal_status: subStatus.sub_status_key })}
+                                className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
+                                  isSelected
+                                    ? 'bg-gray-600 border-gray-700 text-white scale-105 shadow-lg'
+                                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                                }`}
+                              >
+                                {isSelected && (
+                                  <CheckCircle className="absolute top-2 right-2" size={16} />
+                                )}
+                                <div className="text-sm font-semibold">{subStatus.sub_status_label}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-sm font-medium text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">
+                          {ticket.internal_status ? getSubStatusLabel(statuses, ticket.status, ticket.internal_status) : 'Not set'}
+                        </div>
                       )}
                     </div>
-                  )}
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Outsourced To */}
+              {editData.internal_status === 'outsourced' && isEditing && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Outsourced To</label>
+                  <input
+                    type="text"
+                    value={editData.outsourced_to}
+                    onChange={(e) => setEditData({ ...editData, outsourced_to: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
+                    style={{ focusRingColor: PRIMARY }}
+                    placeholder="Company or person name"
+                  />
                 </div>
+              )}
 
-                {/* Sub-Status (Internal Status) */}
-                {(() => {
-                  const currentStatus = statuses.find(s => s.status_key === (isEditing ? editData.status : ticket.status));
-                  if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
-                    return (
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Sub-Status</label>
-                        {isEditing ? (
-                          <select
-                            value={editData.internal_status}
-                            onChange={(e) => setEditData({ ...editData, internal_status: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                            style={{ focusRingColor: PRIMARY }}
-                          >
-                            <option value="">Select...</option>
-                            {currentStatus.sub_statuses.map((subStatus) => (
-                              <option key={subStatus.id} value={subStatus.sub_status_key}>
-                                {subStatus.sub_status_label}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <div className="text-sm text-gray-900">
-                            {ticket.internal_status ? getSubStatusLabel(statuses, ticket.status, ticket.internal_status) : 'Not set'}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-
-                {/* Outsourced To */}
-                {editData.internal_status === 'outsourced' && isEditing && (
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Outsourced To</label>
-                    <input
-                      type="text"
-                      value={editData.outsourced_to}
-                      onChange={(e) => setEditData({ ...editData, outsourced_to: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                      style={{ focusRingColor: PRIMARY }}
-                      placeholder="Company or person name"
-                    />
-                  </div>
-                )}
-
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Priority Cards */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Priority</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Priority</label>
                   {isEditing ? (
-                    <select
-                      value={editData.priority}
-                      onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                      style={{ focusRingColor: PRIMARY }}
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
+                    <div className="flex gap-2">
+                      {['low', 'medium', 'high'].map((priority) => {
+                        const isSelected = editData.priority === priority;
+                        const colorMap = {
+                          low: isSelected ? 'bg-green-500 border-green-600 text-white' : 'bg-white border-green-200 text-green-700 hover:bg-green-50',
+                          medium: isSelected ? 'bg-yellow-500 border-yellow-600 text-white' : 'bg-white border-yellow-200 text-yellow-700 hover:bg-yellow-50',
+                          high: isSelected ? 'bg-red-500 border-red-600 text-white' : 'bg-white border-red-200 text-red-700 hover:bg-red-50'
+                        };
+                        return (
+                          <button
+                            key={priority}
+                            type="button"
+                            onClick={() => setEditData({ ...editData, priority })}
+                            className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-semibold transition-all duration-200 ${
+                              colorMap[priority as keyof typeof colorMap]
+                            } ${isSelected ? 'scale-105 shadow-md' : 'shadow-sm'}`}
+                          >
+                            {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                          </button>
+                        );
+                      })}
+                    </div>
                   ) : (
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(ticket.priority || 'medium')}`}>
+                    <span className={`inline-block px-4 py-2 rounded-lg text-sm font-semibold ${getPriorityColor(ticket.priority || 'medium')}`}>
                       {(ticket.priority || 'medium').toUpperCase()}
                     </span>
                   )}
@@ -543,12 +589,12 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
                 {/* Device Information */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Device Type</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Device Type</label>
                   {isEditing ? (
                     <select
                       value={editData.device_type}
                       onChange={(e) => setEditData({ ...editData, device_type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all bg-white"
                       style={{ focusRingColor: PRIMARY }}
                     >
                       <option value="Laptop">Laptop</option>
@@ -558,50 +604,50 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                       <option value="Other">Other</option>
                     </select>
                   ) : (
-                    <p className="text-gray-900">{ticket.device_type}</p>
+                    <p className="text-gray-900 font-medium">{ticket.device_type}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Brand</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Brand</label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={editData.brand}
                       onChange={(e) => setEditData({ ...editData, brand: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
                       style={{ focusRingColor: PRIMARY }}
                       placeholder="e.g., Dell, HP, Apple"
                     />
                   ) : (
-                    <p className="text-gray-900">{ticket.brand || 'Not specified'}</p>
+                    <p className="text-gray-900 font-medium">{ticket.brand || 'Not specified'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Model</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Model</label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={editData.model}
                       onChange={(e) => setEditData({ ...editData, model: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
                       style={{ focusRingColor: PRIMARY }}
                       placeholder="e.g., Inspiron 15, MacBook Pro"
                     />
                   ) : (
-                    <p className="text-gray-900">{ticket.model || 'Not specified'}</p>
+                    <p className="text-gray-900 font-medium">{ticket.model || 'Not specified'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Serial Number</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Serial Number</label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={editData.serial_number}
                       onChange={(e) => setEditData({ ...editData, serial_number: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all font-mono"
                       style={{ focusRingColor: PRIMARY }}
                       placeholder="Enter serial number"
                     />
@@ -629,52 +675,52 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
                 {/* Cost Information */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Estimated Cost</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Estimated Cost</label>
                   {isEditing ? (
                     <input
                       type="number"
                       step="0.01"
                       value={editData.estimated_cost}
                       onChange={(e) => setEditData({ ...editData, estimated_cost: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
                       style={{ focusRingColor: PRIMARY }}
                       placeholder="0.00"
                     />
                   ) : (
-                    <p className="text-gray-900">R{ticket.estimated_cost?.toFixed(2) || '0.00'}</p>
+                    <p className="text-gray-900 font-medium">R{ticket.estimated_cost?.toFixed(2) || '0.00'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Actual Cost</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Actual Cost</label>
                   {isEditing ? (
                     <input
                       type="number"
                       step="0.01"
                       value={editData.actual_cost}
                       onChange={(e) => setEditData({ ...editData, actual_cost: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
                       style={{ focusRingColor: PRIMARY }}
                       placeholder="0.00"
                     />
                   ) : (
-                    <p className="text-gray-900">R{ticket.actual_cost?.toFixed(2) || '0.00'}</p>
+                    <p className="text-gray-900 font-medium">R{ticket.actual_cost?.toFixed(2) || '0.00'}</p>
                   )}
                 </div>
 
                 {/* Estimated Completion */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Estimated Completion</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Estimated Completion</label>
                   {isEditing ? (
                     <input
                       type="datetime-local"
                       value={editData.estimated_completion}
                       onChange={(e) => setEditData({ ...editData, estimated_completion: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
                       style={{ focusRingColor: PRIMARY }}
                     />
                   ) : (
-                    <p className="text-gray-900">
+                    <p className="text-gray-900 font-medium">
                       {ticket.estimated_completion ? formatDate(ticket.estimated_completion) : 'Not set'}
                     </p>
                   )}
@@ -683,18 +729,18 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
               {/* Issue Description */}
               <div className="mt-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Issue Description</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Issue Description</label>
                 {isEditing ? (
                   <textarea
                     value={editData.issue_description}
                     onChange={(e) => setEditData({ ...editData, issue_description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none transition-all"
                     style={{ focusRingColor: PRIMARY }}
                     rows={3}
                     placeholder="Describe the issue..."
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-900 bg-gray-50 p-4 rounded-xl">
                     {ticket.issue_description || 'No description provided'}
                   </p>
                 )}
@@ -702,18 +748,18 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
 
               {/* Repair Notes */}
               <div className="mt-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Repair Notes</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Repair Notes</label>
                 {isEditing ? (
                   <textarea
                     value={editData.repair_notes}
                     onChange={(e) => setEditData({ ...editData, repair_notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none transition-all"
                     style={{ focusRingColor: PRIMARY }}
                     rows={3}
                     placeholder="Add repair notes..."
                   />
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-900 bg-gray-50 p-4 rounded-xl">
                     {ticket.repair_notes || 'No repair notes yet'}
                   </p>
                 )}
@@ -751,22 +797,37 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
               </h3>
               
               {/* Add New Note */}
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-4 mb-3">
-                  <select
-                    value={noteType}
-                    onChange={(e) => setNoteType(e.target.value as 'internal' | 'customer')}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-                    style={{ focusRingColor: PRIMARY }}
-                  >
-                    <option value="internal">Internal Note</option>
-                    <option value="customer">Customer Visible</option>
-                  </select>
+              <div className="mb-6 p-5 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNoteType('internal')}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                        noteType === 'internal'
+                          ? 'bg-gray-600 text-white shadow-md'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
+                      }`}
+                    >
+                      Internal Note
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNoteType('customer')}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                        noteType === 'customer'
+                          ? 'bg-blue-500 text-white shadow-md'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
+                      }`}
+                    >
+                      Customer Visible
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none transition-all bg-white"
                   style={{ focusRingColor: PRIMARY }}
                   rows={3}
                   placeholder="Add a progress note..."
@@ -774,10 +835,10 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 <button
                   onClick={handleAddNote}
                   disabled={!newNote.trim()}
-                  className="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50"
+                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                   style={{ backgroundColor: PRIMARY }}
                 >
-                  <Plus size={16} />
+                  <Plus size={18} />
                   <span>Add Note</span>
                 </button>
               </div>
