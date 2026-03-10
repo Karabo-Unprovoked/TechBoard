@@ -105,6 +105,11 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
   };
 
   const handleApprove = async (request: RegistrationRequest) => {
+    if (request.status === 'approved') {
+      onNotification('warning', 'This registration has already been approved');
+      return;
+    }
+
     // Check for duplicate email first
     if (request.email?.trim()) {
       const { data: existingCust } = await supabase
@@ -114,7 +119,6 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         .maybeSingle();
 
       if (existingCust) {
-        // Duplicate email found - show merge modal
         setExistingCustomer(existingCust);
         setPendingRequest(request);
         setShowMergeModal(true);
@@ -122,7 +126,6 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
       }
     }
 
-    // No duplicate - proceed with normal approval
     await proceedWithApproval(request, false, null);
   };
 
@@ -197,35 +200,66 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         customer = newCustomer;
       }
 
-      const { data: tickets } = await supabase
-        .from('repair_tickets')
-        .select('ticket_number')
-        .order('ticket_number', { ascending: false })
-        .limit(1);
+      let ticket;
+      let ticketError;
+      let attempts = 0;
+      const maxAttempts = 5;
 
-      let nextTicketNumber = 'TK1000';
-      if (tickets && tickets.length > 0) {
-        const lastNumber = parseInt(tickets[0].ticket_number.replace('TK', ''), 10);
-        nextTicketNumber = `TK${lastNumber + 1}`;
+      while (attempts < maxAttempts) {
+        try {
+          const { data: tickets } = await supabase
+            .from('repair_tickets')
+            .select('ticket_number')
+            .order('ticket_number', { ascending: false })
+            .limit(1);
+
+          let nextTicketNumber = 'TK1000';
+          if (tickets && tickets.length > 0) {
+            const lastNumber = parseInt(tickets[0].ticket_number.replace('TK', ''), 10);
+            nextTicketNumber = `TK${lastNumber + 1}`;
+          }
+
+          const result = await supabase
+            .from('repair_tickets')
+            .insert({
+              ticket_number: nextTicketNumber,
+              customer_id: customer.id,
+              device_type: request.device_type || 'Laptop',
+              brand: request.laptop_brand,
+              model: request.laptop_model,
+              serial_number: request.serial_number,
+              issue_description: request.laptop_problem,
+              device_accessories: request.device_includes,
+              repair_notes: request.additional_notes,
+              device_images: request.device_images,
+              status: 'pending'
+            })
+            .select()
+            .single();
+
+          ticket = result.data;
+          ticketError = result.error;
+
+          if (!ticketError) {
+            break;
+          }
+
+          if (ticketError.code === '23505') {
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+          }
+
+          throw ticketError;
+        } catch (error: any) {
+          if (error.code === '23505' && attempts < maxAttempts - 1) {
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+          }
+          throw error;
+        }
       }
-
-      const { data: ticket, error: ticketError } = await supabase
-        .from('repair_tickets')
-        .insert({
-          ticket_number: nextTicketNumber,
-          customer_id: customer.id,
-          device_type: request.device_type || 'Laptop',
-          brand: request.laptop_brand,
-          model: request.laptop_model,
-          serial_number: request.serial_number,
-          issue_description: request.laptop_problem,
-          device_accessories: request.device_includes,
-          repair_notes: request.additional_notes,
-          device_images: request.device_images,
-          status: 'pending'
-        })
-        .select()
-        .single();
 
       if (ticketError) throw ticketError;
 
@@ -240,7 +274,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
 
       if (updateError) throw updateError;
 
-      if (request.email) {
+      if (request.email && ticket) {
         try {
           const customerDetailsHtml = `
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -258,7 +292,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
             <div style="margin: 20px 0;">
               <h3 style="color: #ffb400;">Your Active Ticket</h3>
               <div style="background: white; border: 2px solid #ffb400; border-radius: 8px; padding: 15px; margin: 15px 0;">
-                <h4 style="color: #ffb400; margin: 0 0 10px 0;">Ticket: ${nextTicketNumber}</h4>
+                <h4 style="color: #ffb400; margin: 0 0 10px 0;">Ticket: ${ticket.ticket_number}</h4>
                 <p style="margin: 5px 0;"><strong>Device Type:</strong> ${request.device_type}</p>
                 ${request.laptop_brand ? `<p style="margin: 5px 0;"><strong>Brand:</strong> ${request.laptop_brand}</p>` : ''}
                 ${request.laptop_model ? `<p style="margin: 5px 0;"><strong>Model:</strong> ${request.laptop_model}</p>` : ''}
@@ -280,7 +314,7 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
             body: {
               to: request.email,
               subject: 'Registration Approved - Welcome to Computer Guardian!',
-              ticketNumber: nextTicketNumber,
+              ticketNumber: ticket.ticket_number,
               content: `Dear ${request.first_name},
 
 Welcome to Computer Guardian! We're delighted to have you as our customer.
@@ -442,7 +476,12 @@ Thank you for choosing Computer Guardian!`
   };
 
   const handleReapprove = async (request: RegistrationRequest) => {
-    await handleApprove(request);
+    if (request.status === 'approved') {
+      onNotification('warning', 'This registration has already been approved');
+      return;
+    }
+
+    await proceedWithApproval(request, false, null);
   };
 
   const handleMergeConfirm = async () => {
