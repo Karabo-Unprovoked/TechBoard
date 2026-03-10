@@ -373,7 +373,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <img
                 src="/FinalWhite.png"
                 alt="Guardian Assist Logo"
-                className="w-8 h-8 sm:w-10 sm:h-10"
+                className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-8 h-8 sm:w-10 sm:h-10'} transition-all duration-300`}
               />
               {!sidebarCollapsed && (
                 <div>
