@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText, Menu, X } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText, Menu, X, LayoutGrid, List, Columns } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
@@ -24,6 +24,7 @@ interface DashboardProps {
 }
 
 type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile' | 'registration-requests';
+type TicketViewLayout = 'detailed' | 'compact' | 'minimal';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer, onNotification }) => {
   const [currentView, setCurrentView] = useState<DashboardView>('dashboard');
@@ -39,6 +40,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [pendingRequests, setPendingRequests] = useState(0);
   const [customerFormKey, setCustomerFormKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [ticketViewLayout, setTicketViewLayout] = useState<TicketViewLayout>('detailed');
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -49,7 +51,59 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     loadUserRole();
     loadStatusesData();
     loadPendingRequests();
+    loadUserPreferences();
   }, []);
+
+  const loadUserPreferences = async () => {
+    try {
+      if (!isSupabaseConfigured) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('dashboard_view')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data?.dashboard_view) {
+        setTicketViewLayout(data.dashboard_view as TicketViewLayout);
+      }
+    } catch (error) {
+      console.error('Error loading user preferences:', error);
+    }
+  };
+
+  const saveUserPreference = async (layout: TicketViewLayout) => {
+    try {
+      if (!isSupabaseConfigured) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
+          dashboard_view: layout,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving user preference:', error);
+    }
+  };
+
+  const handleLayoutChange = (layout: TicketViewLayout) => {
+    setTicketViewLayout(layout);
+    saveUserPreference(layout);
+  };
 
   const loadStatusesData = async () => {
     const data = await loadStatuses();
@@ -575,95 +629,197 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                           <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-gray-900">Latest Updates</h3>
-                            <button
-                              onClick={() => setCurrentView('tickets')}
-                              className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                            >
-                              View All →
-                            </button>
-                          </div>
-
-                          <div className="space-y-3">
-                            {tickets.slice(0, 5).map((ticket) => (
-                              <div key={ticket.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-all">
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="bg-gray-100 px-3 py-1 rounded-lg">
-                                      <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
-                                    </div>
-                                    <span className="text-sm text-gray-600">
-                                      {ticket.customer?.name} - {ticket.device_type}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => handleViewLabel(ticket)}
-                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                                      style={{ color: '#ffb400' }}
-                                      title="View QR Label"
-                                    >
-                                      <QrCode size={16} />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setSelectedTicket(ticket);
-                                        setCurrentView('manage-ticket');
-                                      }}
-                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-                                      title="View Ticket"
-                                    >
-                                      <Eye size={16} />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <select
-                                      value={ticket.status}
-                                      onChange={(e) => {
-                                        updateTicketStatus(ticket.id, e.target.value, '');
-                                      }}
-                                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
-                                    >
-                                      {statuses.map((status) => (
-                                        <option key={status.id} value={status.status_key}>
-                                          {status.status_label}
-                                        </option>
-                                      ))}
-                                    </select>
-
-                                    <div className="text-right">
-                                      <p className="text-xs text-gray-400 font-medium">
-                                        {new Date(ticket.created_at).toLocaleDateString()}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {(() => {
-                                    const currentStatus = statuses.find(s => s.status_key === ticket.status);
-                                    if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
-                                      return (
-                                        <select
-                                          value={ticket.internal_status || ''}
-                                          onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
-                                          className="px-2 py-1 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
-                                        >
-                                          <option value="">—</option>
-                                          {currentStatus.sub_statuses.map((subStatus) => (
-                                            <option key={subStatus.id} value={subStatus.sub_status_key}>
-                                              {subStatus.sub_status_label}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      );
-                                    }
-                                    return null;
-                                  })()}
-                                </div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                                <button
+                                  onClick={() => handleLayoutChange('detailed')}
+                                  className={`p-2 rounded-md transition-all ${
+                                    ticketViewLayout === 'detailed'
+                                      ? 'bg-white shadow-sm text-gray-900'
+                                      : 'text-gray-500 hover:text-gray-700'
+                                  }`}
+                                  title="Detailed View"
+                                >
+                                  <LayoutGrid size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleLayoutChange('compact')}
+                                  className={`p-2 rounded-md transition-all ${
+                                    ticketViewLayout === 'compact'
+                                      ? 'bg-white shadow-sm text-gray-900'
+                                      : 'text-gray-500 hover:text-gray-700'
+                                  }`}
+                                  title="Compact View"
+                                >
+                                  <List size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleLayoutChange('minimal')}
+                                  className={`p-2 rounded-md transition-all ${
+                                    ticketViewLayout === 'minimal'
+                                      ? 'bg-white shadow-sm text-gray-900'
+                                      : 'text-gray-500 hover:text-gray-700'
+                                  }`}
+                                  title="Minimal View"
+                                >
+                                  <Columns size={16} />
+                                </button>
                               </div>
-                            ))}
+                              <button
+                                onClick={() => setCurrentView('tickets')}
+                                className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                              >
+                                View All →
+                              </button>
+                            </div>
                           </div>
+
+                          {/* Detailed View */}
+                          {ticketViewLayout === 'detailed' && (
+                            <div className="space-y-3">
+                              {tickets.slice(0, 5).map((ticket) => (
+                                <div key={ticket.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-all">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="bg-gray-100 px-3 py-1 rounded-lg">
+                                        <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
+                                      </div>
+                                      <span className="text-sm text-gray-600">
+                                        {ticket.customer?.name} - {ticket.device_type}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => handleViewLabel(ticket)}
+                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                        style={{ color: '#ffb400' }}
+                                        title="View QR Label"
+                                      >
+                                        <QrCode size={16} />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedTicket(ticket);
+                                          setCurrentView('manage-ticket');
+                                        }}
+                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+                                        title="View Ticket"
+                                      >
+                                        <Eye size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <select
+                                        value={ticket.status}
+                                        onChange={(e) => {
+                                          updateTicketStatus(ticket.id, e.target.value, '');
+                                        }}
+                                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
+                                      >
+                                        {statuses.map((status) => (
+                                          <option key={status.id} value={status.status_key}>
+                                            {status.status_label}
+                                          </option>
+                                        ))}
+                                      </select>
+
+                                      <div className="text-right">
+                                        <p className="text-xs text-gray-400 font-medium">
+                                          {new Date(ticket.created_at).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {(() => {
+                                      const currentStatus = statuses.find(s => s.status_key === ticket.status);
+                                      if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
+                                        return (
+                                          <select
+                                            value={ticket.internal_status || ''}
+                                            onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
+                                            className="px-2 py-1 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                          >
+                                            <option value="">—</option>
+                                            {currentStatus.sub_statuses.map((subStatus) => (
+                                              <option key={subStatus.id} value={subStatus.sub_status_key}>
+                                                {subStatus.sub_status_label}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Compact View */}
+                          {ticketViewLayout === 'compact' && (
+                            <div className="space-y-2">
+                              {tickets.slice(0, 6).map((ticket) => {
+                                const statusColors = getStatusDisplayColors(ticket.status);
+                                return (
+                                  <div key={ticket.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-all">
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <div className={`w-2 h-2 ${statusColors.dot} rounded-full`}></div>
+                                      <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
+                                      <span className="text-sm text-gray-600">{ticket.customer?.name}</span>
+                                      <span className="text-xs text-gray-400">{ticket.device_type}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-gray-400">
+                                        {new Date(ticket.created_at).toLocaleDateString()}
+                                      </span>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedTicket(ticket);
+                                          setCurrentView('manage-ticket');
+                                        }}
+                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+                                        title="View Ticket"
+                                      >
+                                        <Eye size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Minimal View */}
+                          {ticketViewLayout === 'minimal' && (
+                            <div className="space-y-1">
+                              {tickets.slice(0, 8).map((ticket) => {
+                                const statusLabel = getStatusLabel(statuses, ticket.status);
+                                return (
+                                  <button
+                                    key={ticket.id}
+                                    onClick={() => {
+                                      setSelectedTicket(ticket);
+                                      setCurrentView('manage-ticket');
+                                    }}
+                                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-all text-left"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-gray-900 text-xs">{ticket.ticket_number}</span>
+                                      <span className="text-xs text-gray-500">{ticket.customer?.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-gray-400">{statusLabel}</span>
+                                      <Eye size={12} className="text-gray-400" />
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </div>
 
