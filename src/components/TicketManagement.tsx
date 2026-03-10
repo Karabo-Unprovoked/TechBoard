@@ -430,70 +430,6 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                 Ticket Details
               </h3>
               
-              {/* Modern Status Card Selector */}
-              {isEditing ? (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-600 mb-3">Update Status</label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {(statuses.length === 0 ? [
-                      { id: '1', status_key: 'pending', status_label: 'Pending', color: 'orange' },
-                      { id: '2', status_key: 'received', status_label: 'Received', color: 'blue' },
-                      { id: '3', status_key: 'in-progress', status_label: 'In Progress', color: 'yellow' },
-                      { id: '4', status_key: 'invoiced', status_label: 'Invoiced', color: 'teal' },
-                      { id: '5', status_key: 'completed', status_label: 'Completed', color: 'green' },
-                      { id: '6', status_key: 'unrepairable', status_label: 'Unrepairable', color: 'red' },
-                      { id: '7', status_key: 'pending-customer-action', status_label: 'Pending Customer', color: 'purple' }
-                    ] : statuses).map((status) => {
-                      const isSelected = editData.status === status.status_key;
-                      const colorMap: Record<string, string> = {
-                        orange: isSelected ? 'bg-orange-500 border-orange-600 text-white' : 'bg-white border-orange-200 text-orange-700 hover:bg-orange-50',
-                        blue: isSelected ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white border-blue-200 text-blue-700 hover:bg-blue-50',
-                        yellow: isSelected ? 'bg-yellow-500 border-yellow-600 text-white' : 'bg-white border-yellow-200 text-yellow-700 hover:bg-yellow-50',
-                        teal: isSelected ? 'bg-teal-500 border-teal-600 text-white' : 'bg-white border-teal-200 text-teal-700 hover:bg-teal-50',
-                        green: isSelected ? 'bg-green-500 border-green-600 text-white' : 'bg-white border-green-200 text-green-700 hover:bg-green-50',
-                        red: isSelected ? 'bg-red-500 border-red-600 text-white' : 'bg-white border-red-200 text-red-700 hover:bg-red-50',
-                        purple: isSelected ? 'bg-purple-500 border-purple-600 text-white' : 'bg-white border-purple-200 text-purple-700 hover:bg-purple-50'
-                      };
-                      const statusColor = status.status_key === 'pending' ? 'orange' :
-                                        status.status_key === 'received' ? 'blue' :
-                                        status.status_key === 'in-progress' ? 'yellow' :
-                                        status.status_key === 'invoiced' ? 'teal' :
-                                        status.status_key === 'completed' ? 'green' :
-                                        status.status_key === 'unrepairable' ? 'red' : 'purple';
-
-                      return (
-                        <button
-                          key={status.id}
-                          type="button"
-                          onClick={() => setEditData({ ...editData, status: status.status_key })}
-                          className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${colorMap[statusColor]} ${
-                            isSelected ? 'scale-105 shadow-lg' : 'shadow-sm'
-                          }`}
-                        >
-                          {isSelected && (
-                            <CheckCircle className="absolute top-2 right-2" size={16} />
-                          )}
-                          <div className="text-sm font-semibold">{status.status_label}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-600 mb-2">Current Status</label>
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block px-4 py-2 rounded-lg text-sm font-semibold ${getStatusColor(ticket.status)}`}>
-                      {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
-                    </span>
-                    {ticket.internal_status && (
-                      <span className="inline-block px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-700">
-                        {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Sub-Status Cards */}
               {(() => {
@@ -870,6 +806,109 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Status Update Section */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: SECONDARY }}>
+                  <Settings size={20} className="text-gray-400" />
+                  Change Status
+                </h3>
+                {!isEditing && (
+                  <span className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${getStatusColor(ticket.status)}`}>
+                    {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {(statuses.length === 0 ? [
+                      { id: '1', status_key: 'pending', status_label: 'Pending', color: 'orange' },
+                      { id: '2', status_key: 'received', status_label: 'Received', color: 'blue' },
+                      { id: '3', status_key: 'in-progress', status_label: 'In Progress', color: 'yellow' },
+                      { id: '4', status_key: 'invoiced', status_label: 'Invoiced', color: 'teal' },
+                      { id: '5', status_key: 'completed', status_label: 'Completed', color: 'green' },
+                      { id: '6', status_key: 'unrepairable', status_label: 'Unrepairable', color: 'red' },
+                      { id: '7', status_key: 'pending-customer-action', status_label: 'Pending Customer', color: 'purple' }
+                    ] : statuses).map((status) => {
+                      const isSelected = editData.status === status.status_key;
+                      const colorMap: Record<string, string> = {
+                        orange: isSelected ? 'bg-orange-500 border-orange-600 text-white shadow-lg' : 'bg-white border-orange-300 text-orange-700 hover:bg-orange-50 hover:border-orange-400',
+                        blue: isSelected ? 'bg-blue-500 border-blue-600 text-white shadow-lg' : 'bg-white border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400',
+                        yellow: isSelected ? 'bg-yellow-500 border-yellow-600 text-white shadow-lg' : 'bg-white border-yellow-300 text-yellow-700 hover:bg-yellow-50 hover:border-yellow-400',
+                        teal: isSelected ? 'bg-teal-500 border-teal-600 text-white shadow-lg' : 'bg-white border-teal-300 text-teal-700 hover:bg-teal-50 hover:border-teal-400',
+                        green: isSelected ? 'bg-green-500 border-green-600 text-white shadow-lg' : 'bg-white border-green-300 text-green-700 hover:bg-green-50 hover:border-green-400',
+                        red: isSelected ? 'bg-red-500 border-red-600 text-white shadow-lg' : 'bg-white border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400',
+                        purple: isSelected ? 'bg-purple-500 border-purple-600 text-white shadow-lg' : 'bg-white border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400'
+                      };
+                      const statusColor = status.status_key === 'pending' ? 'orange' :
+                                        status.status_key === 'received' ? 'blue' :
+                                        status.status_key === 'in-progress' ? 'yellow' :
+                                        status.status_key === 'invoiced' ? 'teal' :
+                                        status.status_key === 'completed' ? 'green' :
+                                        status.status_key === 'unrepairable' ? 'red' : 'purple';
+
+                      return (
+                        <button
+                          key={status.id}
+                          type="button"
+                          onClick={() => setEditData({ ...editData, status: status.status_key })}
+                          className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${colorMap[statusColor]} ${
+                            isSelected ? 'scale-105 ring-2 ring-offset-2' : 'shadow-sm hover:shadow-md'
+                          }`}
+                          style={isSelected ? { ringColor: statusColor === 'orange' ? '#f59e0b' :
+                                                            statusColor === 'blue' ? '#3b82f6' :
+                                                            statusColor === 'yellow' ? '#eab308' :
+                                                            statusColor === 'teal' ? '#14b8a6' :
+                                                            statusColor === 'green' ? '#22c55e' :
+                                                            statusColor === 'red' ? '#ef4444' : '#a855f7' } : {}}
+                        >
+                          {isSelected && (
+                            <div className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md">
+                              <CheckCircle size={18} className="text-green-600" />
+                            </div>
+                          )}
+                          <div className="text-sm font-semibold">{status.status_label}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-gray-500 flex items-center gap-1.5 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <Settings size={14} className="text-blue-600" />
+                    Click on a status card above to update the ticket status
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 p-4 bg-white rounded-xl border border-gray-200">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Settings size={20} className="text-gray-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 mb-1">Current Status</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`inline-block px-4 py-2 rounded-lg text-sm font-semibold ${getStatusColor(ticket.status)}`}>
+                          {statuses.find(s => s.status_key === ticket.status)?.status_label || ticket.status.replace('-', ' ').toUpperCase()}
+                        </span>
+                        {ticket.internal_status && (
+                          <span className="inline-block px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-700">
+                            {getSubStatusLabel(statuses, ticket.status, ticket.internal_status)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 flex items-center gap-1.5 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <Settings size={14} className="text-gray-400" />
+                    Click "Edit" to change the ticket status
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
