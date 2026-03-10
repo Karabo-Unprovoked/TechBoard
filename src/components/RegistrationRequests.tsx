@@ -200,66 +200,28 @@ export const RegistrationRequests: React.FC<RegistrationRequestsProps> = ({ onNo
         customer = newCustomer;
       }
 
-      let ticket;
-      let ticketError;
-      let attempts = 0;
-      const maxAttempts = 5;
+      const { data: nextTicketNumber, error: ticketNumberError } = await supabase
+        .rpc('generate_next_ticket_number');
 
-      while (attempts < maxAttempts) {
-        try {
-          const { data: tickets } = await supabase
-            .from('repair_tickets')
-            .select('ticket_number')
-            .order('ticket_number', { ascending: false })
-            .limit(1);
+      if (ticketNumberError) throw ticketNumberError;
 
-          let nextTicketNumber = 'TK1000';
-          if (tickets && tickets.length > 0) {
-            const lastNumber = parseInt(tickets[0].ticket_number.replace('TK', ''), 10);
-            nextTicketNumber = `TK${lastNumber + 1}`;
-          }
-
-          const result = await supabase
-            .from('repair_tickets')
-            .insert({
-              ticket_number: nextTicketNumber,
-              customer_id: customer.id,
-              device_type: request.device_type || 'Laptop',
-              brand: request.laptop_brand,
-              model: request.laptop_model,
-              serial_number: request.serial_number,
-              issue_description: request.laptop_problem,
-              device_accessories: request.device_includes,
-              repair_notes: request.additional_notes,
-              device_images: request.device_images,
-              status: 'pending'
-            })
-            .select()
-            .single();
-
-          ticket = result.data;
-          ticketError = result.error;
-
-          if (!ticketError) {
-            break;
-          }
-
-          if (ticketError.code === '23505') {
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 100));
-            continue;
-          }
-
-          throw ticketError;
-        } catch (error: any) {
-          if (error.code === '23505' && attempts < maxAttempts - 1) {
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 100));
-            continue;
-          }
-          throw error;
-        }
-      }
+      const { data: ticket, error: ticketError } = await supabase
+        .from('repair_tickets')
+        .insert({
+          ticket_number: nextTicketNumber,
+          customer_id: customer.id,
+          device_type: request.device_type || 'Laptop',
+          brand: request.laptop_brand,
+          model: request.laptop_model,
+          serial_number: request.serial_number,
+          issue_description: request.laptop_problem,
+          device_accessories: request.device_includes,
+          repair_notes: request.additional_notes,
+          device_images: request.device_images,
+          status: 'pending'
+        })
+        .select()
+        .single();
 
       if (ticketError) throw ticketError;
 
