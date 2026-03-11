@@ -14,6 +14,8 @@ import { CustomersView } from './CustomersView';
 import { CustomerManagement } from './CustomerManagement';
 import { UserProfile } from './UserProfile';
 import { RegistrationRequests } from './RegistrationRequests';
+import { StatusChangeModal } from './StatusChangeModal';
+import { SLABadge } from './SLABadge';
 import type { NotificationType } from './Notification';
 
 interface DashboardProps {
@@ -42,6 +44,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ticketViewLayout, setTicketViewLayout] = useState<TicketViewLayout>('detailed');
+  const [statusChangeModal, setStatusChangeModal] = useState<{
+    isOpen: boolean;
+    ticketId: string;
+    currentStatus: string;
+    newStatus: string;
+    customerEmail: string;
+    customerName: string;
+    internalStatus?: string;
+  } | null>(null);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -243,7 +254,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   };
 
   const updateTicketStatus = async (ticketId: string, newStatus: string, internalStatus?: string) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    if (ticket.status === newStatus && ticket.internal_status === internalStatus) {
+      return;
+    }
+
+    const customerEmail = ticket.customer?.email || '';
+    const customerName = ticket.customer ?
+      `${ticket.customer.first_name} ${ticket.customer.last_name}` :
+      'Customer';
+
+    setStatusChangeModal({
+      isOpen: true,
+      ticketId,
+      currentStatus: ticket.status,
+      newStatus,
+      customerEmail,
+      customerName,
+      internalStatus
+    });
+  };
+
+  const confirmStatusChange = async (sendEmail: boolean) => {
+    if (!statusChangeModal) return;
+
     try {
+      const { ticketId, newStatus, internalStatus } = statusChangeModal;
+
       const updateData: any = {
         status: newStatus,
         updated_at: new Date().toISOString()
@@ -260,14 +299,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
       if (error) throw error;
 
-      // Update local state
+      if (sendEmail && statusChangeModal.customerEmail) {
+        const ticket = tickets.find(t => t.id === ticketId);
+        const statusLabel = getStatusLabel(statuses, newStatus);
+
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: statusChangeModal.customerEmail,
+            subject: `Status Update - Ticket ${ticket?.ticket_number}`,
+            content: `Dear ${statusChangeModal.customerName},\n\nYour repair ticket status has been updated to: ${statusLabel}\n\nTicket Number: ${ticket?.ticket_number}\nDevice: ${ticket?.device_type}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team`,
+            ticketNumber: ticket?.ticket_number || ''
+          }
+        });
+      }
+
       setTickets(prev => prev.map(ticket =>
         ticket.id === ticketId
           ? { ...ticket, ...updateData }
           : ticket
       ));
+
+      setStatusChangeModal(null);
+      onNotification('success', 'Status updated successfully' + (sendEmail ? ' and email sent' : ''));
     } catch (error) {
       console.error('Error updating ticket status:', error);
+      onNotification('error', 'Failed to update status');
     }
   };
 
@@ -794,6 +850,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                     </div>
                                   </div>
                                   <div className="p-4 space-y-3">
+                                    {ticket.status_changed_at && ticket.sla_hours && (
+                                      <div className="mb-3">
+                                        <SLABadge ticket={ticket} size="medium" />
+                                      </div>
+                                    )}
                                     <div className="flex items-center justify-between">
                                       <div className="flex-1">
                                         <p className="text-xs text-gray-500 mb-2 font-medium">Status</p>
@@ -1055,6 +1116,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             )}
           </div>
         </div>
+
+        {statusChangeModal && (
+          <StatusChangeModal
+            isOpen={statusChangeModal.isOpen}
+            onClose={() => setStatusChangeModal(null)}
+            onConfirm={confirmStatusChange}
+            currentStatus={statusChangeModal.currentStatus}
+            newStatus={statusChangeModal.newStatus}
+            customerEmail={statusChangeModal.customerEmail}
+            customerName={statusChangeModal.customerName}
+          />
+        )}
       </div>
     </>
   );

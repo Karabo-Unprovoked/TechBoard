@@ -3,6 +3,7 @@ import { QrCode, Eye, RefreshCw, Calendar, User, Laptop, FileText, Settings, Lay
 import type { RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusColor as getStatusColorUtil, getStatusLabel, getSubStatusLabel } from '../lib/statusUtils';
 import { exportTicketsToExcel } from '../lib/exportUtils';
+import { SLABadge } from './SLABadge';
 
 interface TicketsViewProps {
   tickets: RepairTicket[];
@@ -209,6 +210,13 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                   <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">
                     {ticket.issue_description}
                   </p>
+                </div>
+              )}
+
+              {/* SLA Badge */}
+              {ticket.status_changed_at && ticket.sla_hours && (
+                <div className="mb-3">
+                  <SLABadge ticket={ticket} size="small" />
                 </div>
               )}
 
