@@ -333,7 +333,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   });
 
   const PRIMARY = '#ffb400';
-  const SIDEBAR_BG = '#4b5563';
+  const SIDEBAR_BG = '#666666';
   const ACCENT_BLUE = '#3b82f6';
   const ACCENT_GREEN = '#10b981';
   const ACCENT_ORANGE = '#f59e0b';
