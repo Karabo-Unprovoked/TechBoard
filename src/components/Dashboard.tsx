@@ -763,8 +763,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           {ticketViewLayout === 'detailed' && (
                             <div className="space-y-4">
                               {tickets.slice(0, 5).map((ticket) => (
-                                <div key={ticket.id} className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all">
-                                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
+                                <div key={ticket.id} className="bg-white shadow-md rounded-xl overflow-hidden hover:shadow-lg transition-all">
+                                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-blue-100">
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center gap-3">
                                         <span className="font-bold text-gray-900 text-base">{ticket.ticket_number}</span>
@@ -876,8 +876,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                               {tickets.slice(0, 6).map((ticket) => {
                                 const statusColors = getStatusDisplayColors(ticket.status);
                                 return (
-                                  <div key={ticket.id} className="border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-all">
-                                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 border-b border-gray-200 flex items-center gap-3">
+                                  <div key={ticket.id} className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-all">
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 border-b border-blue-100 flex items-center gap-3">
                                       <div className={`w-2 h-2 ${statusColors.dot} rounded-full`}></div>
                                       <span className="font-bold text-gray-900 text-sm">{ticket.ticket_number}</span>
                                       <span className="text-sm font-medium text-gray-700">{ticket.customer?.name}</span>
@@ -916,9 +916,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                       setSelectedTicket(ticket);
                                       setCurrentView('manage-ticket');
                                     }}
-                                    className="w-full border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-all text-left"
+                                    className="w-full bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-all text-left"
                                   >
-                                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 flex items-center justify-between">
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 flex items-center justify-between">
                                       <div className="flex items-center gap-3">
                                         <span className="font-bold text-gray-900 text-xs">{ticket.ticket_number}</span>
                                         <span className="text-xs font-medium text-gray-700">{ticket.customer?.name}</span>
