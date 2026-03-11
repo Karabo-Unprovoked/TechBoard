@@ -16,6 +16,7 @@ import { UserProfile } from './UserProfile';
 import { RegistrationRequests } from './RegistrationRequests';
 import { StatusChangeModal } from './StatusChangeModal';
 import { SLABadge } from './SLABadge';
+import { generateStatusUpdateEmail } from '../lib/emailTemplates';
 import type { NotificationType } from './Notification';
 
 interface DashboardProps {
@@ -303,11 +304,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         const ticket = tickets.find(t => t.id === ticketId);
         const statusLabel = getStatusLabel(statuses, newStatus);
 
+        const emailHtml = generateStatusUpdateEmail(
+          statusChangeModal.customerName,
+          ticket?.ticket_number || '',
+          ticket?.device_type || 'Device',
+          statusLabel
+        );
+
         await supabase.functions.invoke('send-email', {
           body: {
             to: statusChangeModal.customerEmail,
-            subject: `Status Update - Ticket ${ticket?.ticket_number}`,
-            content: `Dear ${statusChangeModal.customerName},\n\nYour repair ticket status has been updated to: ${statusLabel}\n\nTicket Number: ${ticket?.ticket_number}\nDevice: ${ticket?.device_type}\n\nWe will keep you informed of any further progress.\n\nBest regards,\nGuardian Assist Team`,
+            subject: `Repair Status Update - Ticket ${ticket?.ticket_number}`,
+            htmlContent: emailHtml,
             ticketNumber: ticket?.ticket_number || ''
           }
         });

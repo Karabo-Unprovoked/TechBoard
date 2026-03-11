@@ -246,10 +246,11 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { to, subject, content, ticketNumber, isTest } = await req.json()
+    const { to, subject, content, ticketNumber, isTest, htmlContent } = await req.json()
 
-    // Create email content with professional branded template (table-based for Outlook compatibility)
-    const emailHtml = isTest ? `
+    // If htmlContent is provided, use it directly (for custom templates)
+    // Otherwise use the default template wrapper
+    const emailHtml = htmlContent ? htmlContent : isTest ? `
       <!DOCTYPE html>
       <html>
       <head>
