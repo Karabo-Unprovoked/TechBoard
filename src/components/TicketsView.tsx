@@ -10,6 +10,7 @@ interface TicketsViewProps {
   onManageTicket?: (ticket: RepairTicket) => void;
   onRefresh: () => void;
   onUpdateStatus?: (ticketId: string, newStatus: string) => void;
+  onUpdateSubStatus?: (ticketId: string, newSubStatus: string | null) => void;
 }
 
 export const TicketsView: React.FC<TicketsViewProps> = ({
@@ -17,7 +18,8 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
   onViewLabel,
   onManageTicket,
   onRefresh,
-  onUpdateStatus
+  onUpdateStatus,
+  onUpdateSubStatus
 }) => {
   const [statuses, setStatuses] = useState<TicketStatus[]>([]);
 
@@ -30,6 +32,29 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
   }, []);
 
   const getStatusColor = getStatusColorUtil;
+
+  const getStatusDisplayColors = (statusKey: string) => {
+    switch (statusKey) {
+      case 'pending':
+        return { bg: 'bg-purple-50', dot: 'bg-purple-500', text: 'text-purple-700', ring: 'ring-purple-200' };
+      case 'received':
+        return { bg: 'bg-blue-50', dot: 'bg-blue-500', text: 'text-blue-700', ring: 'ring-blue-200' };
+      case 'in-progress':
+        return { bg: 'bg-yellow-50', dot: 'bg-yellow-500', text: 'text-yellow-700', ring: 'ring-yellow-200' };
+      case 'invoiced':
+        return { bg: 'bg-indigo-50', dot: 'bg-indigo-500', text: 'text-indigo-700', ring: 'ring-indigo-200' };
+      case 'completed':
+        return { bg: 'bg-green-50', dot: 'bg-green-500', text: 'text-green-700', ring: 'ring-green-200' };
+      case 'unrepairable':
+        return { bg: 'bg-red-50', dot: 'bg-red-500', text: 'text-red-700', ring: 'ring-red-200' };
+      case 'pending-customer-action':
+        return { bg: 'bg-orange-50', dot: 'bg-orange-500', text: 'text-orange-700', ring: 'ring-orange-200' };
+      case 'void':
+        return { bg: 'bg-gray-50', dot: 'bg-gray-500', text: 'text-gray-700', ring: 'ring-gray-200' };
+      default:
+        return { bg: 'bg-gray-50', dot: 'bg-gray-500', text: 'text-gray-700', ring: 'ring-gray-200' };
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -190,21 +215,65 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
               {/* Status Update */}
               {onUpdateStatus && (
                 <div className="mb-3 sm:mb-4" onClick={(e) => e.stopPropagation()}>
-                  <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1">
+                  <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-2">
                     Update Status
                   </label>
-                  <select
-                    value={ticket.status}
-                    onChange={(e) => onUpdateStatus(ticket.id, e.target.value)}
-                    className="w-full px-2 py-1.5 sm:py-1 border border-gray-300 rounded text-xs sm:text-sm focus:ring-2 focus:border-transparent outline-none"
-                    style={{ focusRingColor: PRIMARY }}
-                  >
-                    {statuses.map((status) => (
-                      <option key={status.id} value={status.status_key}>
-                        {status.status_label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex flex-wrap gap-1.5">
+                    {statuses.map((status) => {
+                      const colors = getStatusDisplayColors(status.status_key);
+                      const isActive = ticket.status === status.status_key;
+                      return (
+                        <button
+                          key={status.id}
+                          onClick={() => onUpdateStatus(ticket.id, status.status_key)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all ${
+                            isActive
+                              ? `${colors.bg} ${colors.text} ring-2 ${colors.ring}`
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {status.status_label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Sub-status options */}
+                  {onUpdateSubStatus && ticket.status && statuses.find(s => s.status_key === ticket.status)?.sub_statuses && statuses.find(s => s.status_key === ticket.status)!.sub_statuses!.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-2">
+                        Sub-status (Optional)
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          onClick={() => onUpdateSubStatus(ticket.id, null)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all ${
+                            !ticket.internal_status
+                              ? 'bg-gray-200 text-gray-700 ring-2 ring-gray-300'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          None
+                        </button>
+                        {statuses.find(s => s.status_key === ticket.status)?.sub_statuses?.map((subStatus) => {
+                          const isActive = ticket.internal_status === subStatus.sub_status_key;
+                          return (
+                            <button
+                              key={subStatus.sub_status_key}
+                              onClick={() => onUpdateSubStatus(ticket.id, subStatus.sub_status_key)}
+                              className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all ${
+                                isActive
+                                  ? 'bg-gray-200 text-gray-700 ring-2 ring-gray-300'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              {subStatus.sub_status_label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -269,18 +338,61 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                   </td>
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     {onUpdateStatus ? (
-                      <select
-                        value={ticket.status}
-                        onChange={(e) => onUpdateStatus(ticket.id, e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:border-transparent outline-none"
-                        style={{ focusRingColor: PRIMARY }}
-                      >
-                        {statuses.map((status) => (
-                          <option key={status.id} value={status.status_key}>
-                            {status.status_label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="min-w-[200px]">
+                        <div className="flex flex-wrap gap-1.5">
+                          {statuses.map((status) => {
+                            const colors = getStatusDisplayColors(status.status_key);
+                            const isActive = ticket.status === status.status_key;
+                            return (
+                              <button
+                                key={status.id}
+                                onClick={() => onUpdateStatus(ticket.id, status.status_key)}
+                                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                                  isActive
+                                    ? `${colors.bg} ${colors.text} ring-2 ${colors.ring}`
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {status.status_label}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Sub-status options */}
+                        {onUpdateSubStatus && ticket.status && statuses.find(s => s.status_key === ticket.status)?.sub_statuses && statuses.find(s => s.status_key === ticket.status)!.sub_statuses!.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <div className="flex flex-wrap gap-1.5">
+                              <button
+                                onClick={() => onUpdateSubStatus(ticket.id, null)}
+                                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                                  !ticket.internal_status
+                                    ? 'bg-gray-200 text-gray-700 ring-2 ring-gray-300'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                None
+                              </button>
+                              {statuses.find(s => s.status_key === ticket.status)?.sub_statuses?.map((subStatus) => {
+                                const isActive = ticket.internal_status === subStatus.sub_status_key;
+                                return (
+                                  <button
+                                    key={subStatus.sub_status_key}
+                                    onClick={() => onUpdateSubStatus(ticket.id, subStatus.sub_status_key)}
+                                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                                      isActive
+                                        ? 'bg-gray-200 text-gray-700 ring-2 ring-gray-300'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {subStatus.sub_status_label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="flex flex-col gap-1">
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>

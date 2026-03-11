@@ -946,12 +946,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     </div>
                 )}
                 {currentView === 'tickets' && (
-                  <TicketsView 
-                    tickets={filteredTickets} 
+                  <TicketsView
+                    tickets={filteredTickets}
                     onViewLabel={handleViewLabel}
                     onManageTicket={handleManageTicket}
                     onRefresh={loadData}
                     onUpdateStatus={updateTicketStatus}
+                    onUpdateSubStatus={updateTicketSubStatus}
                   />
                 )}
                 {currentView === 'customers' && (
