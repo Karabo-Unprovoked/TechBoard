@@ -235,7 +235,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         {editMode ? (
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
             <div className="text-sm text-yellow-800 font-medium">
@@ -272,16 +272,16 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerCreated })
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
                 First Name *
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
                   value={formData.first_name}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                   style={{ focusRingColor: PRIMARY }}
                   placeholder="First name"
                   required
