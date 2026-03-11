@@ -11,8 +11,8 @@ export const QuickActions: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6">Quick Actions</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6">
+      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">Quick Actions</h3>
 
       <div className="grid grid-cols-1 gap-2 sm:gap-3">
         {actions.map((action, index) => {

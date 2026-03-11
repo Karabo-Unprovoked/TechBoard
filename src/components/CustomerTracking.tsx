@@ -236,14 +236,14 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
       />
 
       <div
-        className="min-h-screen"
+        className="min-h-screen dark:bg-gray-900"
         style={{
           fontFamily: 'Montserrat, sans-serif',
           background: `linear-gradient(135deg, rgba(255,180,0,0.06) 0%, rgba(93,93,93,0.03) 100%)`,
         }}
       >
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-100 px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700 px-3 sm:px-4 md:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
               <button
@@ -259,10 +259,10 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex-shrink-0"
                 />
                 <div className="min-w-0">
-                  <h1 className="text-base sm:text-lg md:text-xl font-bold truncate" style={{ color: SECONDARY }}>
+                  <h1 className="text-base sm:text-lg md:text-xl font-bold truncate dark:text-white" style={{ color: SECONDARY }}>
                     Track Repair
                   </h1>
-                  <p className="text-xs sm:text-sm hidden sm:block" style={{ color: SECONDARY }}>
+                  <p className="text-xs sm:text-sm hidden sm:block dark:text-gray-400" style={{ color: SECONDARY }}>
                     Search for repair status and ticket information
                   </p>
                 </div>
@@ -298,7 +298,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
         <main className="p-3 sm:p-4 md:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Search Section */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 md:p-8 mb-4 sm:mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 md:p-8 mb-4 sm:mb-6">
               <div className="text-center mb-6 sm:mb-8">
                 <div
                   className="p-3 sm:p-4 rounded-lg sm:rounded-xl inline-block mb-4 sm:mb-6"
@@ -306,10 +306,10 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                 >
                   <Search size={36} className="sm:w-12 sm:h-12" style={{ color: PRIMARY }} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4" style={{ color: SECONDARY }}>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4 dark:text-white" style={{ color: SECONDARY }}>
                   Track Your Device
                 </h2>
-                <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 px-2">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 sm:mb-8 px-2">
                   Enter your ticket number to track your device repair status
                 </p>
 
@@ -320,7 +320,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Enter ticket number (e.g., TK-20250115-001)"
-                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
                       style={{ focusRingColor: PRIMARY }}
                       required
                     />
@@ -336,7 +336,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
                 </form>
 
                 {error && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
                     {error}
                   </div>
                 )}
@@ -345,9 +345,9 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
             {/* Tracking Results */}
             {trackingNumber && tickets.length > 0 && (
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 mb-4 sm:mb-6">
                 <div className="text-center mb-6 sm:mb-8">
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 px-2" style={{ color: SECONDARY }}>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 px-2 dark:text-white" style={{ color: SECONDARY }}>
                     Repair Status: {tickets[0].status === 'completed' ? 'Completed' : tickets[0].status.charAt(0).toUpperCase() + tickets[0].status.slice(1).replace('-', ' ')}
                     {tickets[0].internal_status && (
                       <span className="text-sm sm:text-base md:text-lg text-gray-600 ml-2 block sm:inline">

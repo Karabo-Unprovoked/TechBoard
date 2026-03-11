@@ -6,6 +6,7 @@ import { SelfRegistration } from './components/SelfRegistration';
 import { supabase } from './lib/supabase';
 import { NotificationContainer } from './components/Notification';
 import type { NotificationType } from './components/Notification';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 type AppState = 'login' | 'track-customer' | 'dashboard' | 'self-registration';
 
@@ -112,55 +113,61 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <ThemeProvider>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          </div>
         </div>
-      </div>
+      </ThemeProvider>
     );
   }
 
-  switch (appState) {
-    case 'login':
-      return <LoginForm onTrackCustomer={handleTrackCustomer} onDashboard={handleDashboard} onSelfRegistration={handleSelfRegistration} />;
+  const renderContent = () => {
+    switch (appState) {
+      case 'login':
+        return <LoginForm onTrackCustomer={handleTrackCustomer} onDashboard={handleDashboard} onSelfRegistration={handleSelfRegistration} />;
 
-    case 'track-customer':
-      return (
-        <CustomerTracking
-          onBack={isAuthenticated ? handleDashboard : handleBackToLogin}
-          onLogout={handleLogout}
-          isAuthenticated={isAuthenticated}
-          onDashboard={isAuthenticated ? handleDashboard : undefined}
-        />
-      );
-
-    case 'self-registration':
-      return <SelfRegistration onBack={handleBackToLogin} />;
-
-    case 'dashboard':
-      if (!isAuthenticated) {
-        setAppState('login');
-        return null;
-      }
-      return (
-        <>
-          <Dashboard
-            onBack={handleBackToLogin}
+      case 'track-customer':
+        return (
+          <CustomerTracking
+            onBack={isAuthenticated ? handleDashboard : handleBackToLogin}
             onLogout={handleLogout}
-            onTrackCustomer={handleTrackCustomer}
-            onNotification={showNotification}
+            isAuthenticated={isAuthenticated}
+            onDashboard={isAuthenticated ? handleDashboard : undefined}
           />
-          <NotificationContainer
-            notifications={notifications}
-            onRemove={removeNotification}
-          />
-        </>
-      );
+        );
 
-    default:
-      return null;
-  }
+      case 'self-registration':
+        return <SelfRegistration onBack={handleBackToLogin} />;
+
+      case 'dashboard':
+        if (!isAuthenticated) {
+          setAppState('login');
+          return null;
+        }
+        return (
+          <>
+            <Dashboard
+              onBack={handleBackToLogin}
+              onLogout={handleLogout}
+              onTrackCustomer={handleTrackCustomer}
+              onNotification={showNotification}
+            />
+            <NotificationContainer
+              notifications={notifications}
+              onRemove={removeNotification}
+            />
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return <ThemeProvider>{renderContent()}</ThemeProvider>;
 }
 
 export default App;

@@ -327,10 +327,10 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
       {/* Header with search, filter, and view toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             {filteredCustomers.length} Customer{filteredCustomers.length !== 1 ? 's' : ''}
           </h3>
-          <p className="text-xs sm:text-sm text-gray-600">Manage customer information and view repair history</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Manage customer information and view repair history</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1">
           {/* View Mode Toggle */}
@@ -396,7 +396,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
             placeholder="Search by name, number, email, or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+            className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
             style={{ focusRingColor: PRIMARY }}
           />
         </div>
@@ -454,7 +454,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredCustomers.map((customer) => (
-            <div key={customer.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div key={customer.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
               {/* Customer Header */}
               <div className="flex items-start gap-3 mb-4">
                 <input
@@ -550,9 +550,9 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
                 <th className="w-12 px-6 py-3"></th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>

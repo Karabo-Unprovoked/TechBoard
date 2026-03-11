@@ -74,10 +74,10 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
       {/* Header with refresh button and view toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             {tickets.length} Ticket{tickets.length !== 1 ? 's' : ''}
           </h3>
-          <p className="text-xs sm:text-sm text-gray-600">Manage repair tickets and track progress</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Manage repair tickets and track progress</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           {/* View Mode Toggle */}
@@ -139,13 +139,13 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
           {tickets.map((ticket) => (
             <div
               key={ticket.id}
-              className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => onManageTicket && onManageTicket(ticket)}
             >
               {/* Ticket Header */}
-              <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+              <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{ticket.ticket_number}</h4>
+                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">{ticket.ticket_number}</h4>
                   <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
                     <span className={`inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(ticket.status)}`}>
                       {getStatusLabel(statuses, ticket.status)}
@@ -296,23 +296,23 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ticket</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Device</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {tickets.map((ticket) => (
                 <tr
                   key={ticket.id}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                   onClick={() => onManageTicket && onManageTicket(ticket)}
                 >
                   <td className="px-6 py-4">

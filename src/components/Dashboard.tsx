@@ -347,7 +347,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
       />
 
       <div
-        className="min-h-screen flex overflow-x-hidden w-full max-w-full"
+        className="min-h-screen flex overflow-x-hidden w-full max-w-full dark:bg-gray-900"
         style={{
           fontFamily: 'Montserrat, sans-serif',
           backgroundColor: '#f1f5f9',
@@ -509,7 +509,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         {/* Right Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           {/* Header */}
-          <div className="bg-white/70 backdrop-blur-sm border-b border-gray-200/50 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 overflow-x-hidden">
+          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 overflow-x-hidden">
             <div className="flex items-center justify-between gap-2">
               {/* Mobile Menu Button */}
               <button
@@ -520,7 +520,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               </button>
 
               <div className="flex-1">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-white">
                   {currentView === 'dashboard' && 'Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'customers' && 'Customer Management'}
@@ -533,7 +533,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'profile' && 'My Profile'}
                   {currentView === 'registration-requests' && 'Registration Requests'}
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 hidden sm:block">
                   {currentView === 'dashboard' && 'Welcome back! Here\'s your overview'}
                   {currentView === 'tickets' && 'Manage and track repair tickets'}
                   {currentView === 'customers' && 'View and manage customer information'}
@@ -646,7 +646,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
                     {/* Stats Overview */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between mb-3 sm:mb-4">
                           <div className="bg-blue-50 p-2 sm:p-3 rounded-lg sm:rounded-xl">
                             <Wrench size={20} className="sm:w-6 sm:h-6 text-blue-600" />
@@ -655,11 +655,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                             +{stats.todayTickets} today
                           </span>
                         </div>
-                        <h4 className="text-gray-600 text-xs sm:text-sm font-medium mb-1">Total Tickets</h4>
-                        <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">{stats.totalTickets}</p>
+                        <h4 className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1">Total Tickets</h4>
+                        <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">{stats.totalTickets}</p>
 
                         {/* Status Breakdown */}
-                        <div className="space-y-2 pt-3 border-t border-gray-100">
+                        <div className="space-y-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                           {statuses.slice(0, 3).map((status) => {
                             const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
                             const count = stats[statusKey] || 0;
@@ -670,15 +670,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                               <div key={status.id} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
-                                  <span className="text-xs text-gray-600">{status.status_label}</span>
+                                  <span className="text-xs text-gray-600 dark:text-gray-400">{status.status_label}</span>
                                 </div>
-                                <span className="text-xs font-semibold text-gray-900">{percentage}%</span>
+                                <span className="text-xs font-semibold text-gray-900 dark:text-white">{percentage}%</span>
                               </div>
                             );
                           })}
                         </div>
                       </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('registration-requests')}>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('registration-requests')}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="bg-orange-50 p-3 rounded-xl">
                             <FileText size={24} className="text-orange-600" />
@@ -689,31 +689,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                             </span>
                           )}
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Pending Registrations</h4>
-                        <p className="text-3xl font-bold text-gray-900">{pendingRequests}</p>
-                        <p className="text-xs text-gray-500 mt-2">Click to review requests</p>
+                        <h4 className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-1">Pending Registrations</h4>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{pendingRequests}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Click to review requests</p>
                       </div>
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('customers')}>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('customers')}>
                         <div className="flex items-center justify-between mb-4">
-                          <div className="bg-green-50 p-3 rounded-xl">
-                            <Users size={24} className="text-green-600" />
+                          <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl">
+                            <Users size={24} className="text-green-600 dark:text-green-400" />
                           </div>
-                          <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                          <span className="text-xs font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
                             Active
                           </span>
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Customers</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers}</p>
-                        <p className="text-xs text-gray-500 mt-2">Click to view all customers</p>
+                        <h4 className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-1">Total Customers</h4>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalCustomers}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Click to view all customers</p>
                       </div>
                     </div>
 
                     {/* Recent Tickets with Status Updates */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                           <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold text-gray-900">Latest Updates</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Latest Updates</h3>
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                                 <button
@@ -763,8 +763,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           {ticketViewLayout === 'detailed' && (
                             <div className="space-y-4">
                               {tickets.slice(0, 5).map((ticket) => (
-                                <div key={ticket.id} className="bg-white shadow-md rounded-xl overflow-hidden hover:shadow-lg transition-all">
-                                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                                <div key={ticket.id} className="bg-white dark:bg-gray-700 shadow-md rounded-xl overflow-hidden hover:shadow-lg transition-all">
+                                  <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-100 dark:border-gray-600">
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center gap-3">
                                         <span className="font-bold text-gray-900 text-base">{ticket.ticket_number}</span>
@@ -906,9 +906,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
                           {/* Minimal View */}
                           {ticketViewLayout === 'minimal' && (
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                               {tickets.slice(0, 8).map((ticket) => {
                                 const statusLabel = getStatusLabel(statuses, ticket.status);
+                                const colors = getStatusDisplayColors(ticket.status);
                                 return (
                                   <button
                                     key={ticket.id}
@@ -916,17 +917,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                       setSelectedTicket(ticket);
                                       setCurrentView('manage-ticket');
                                     }}
-                                    className="w-full bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-all text-left"
+                                    className="w-full group hover:bg-gray-50 rounded-lg px-4 py-3 transition-all text-left border border-transparent hover:border-gray-200"
                                   >
-                                    <div className="bg-gray-50 px-3 py-2 flex items-center justify-between">
-                                      <div className="flex items-center gap-3">
-                                        <span className="font-bold text-gray-900 text-xs">{ticket.ticket_number}</span>
-                                        <span className="text-xs font-medium text-gray-700">{ticket.customer?.name}</span>
-                                        <span className="text-xs text-gray-500">• {ticket.device_type?.replace('-laptop', '').replace('-', ' ')}</span>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-4 flex-1">
+                                        <div className={`w-1.5 h-8 ${colors.dot} rounded-full`}></div>
+                                        <span className="font-bold text-gray-900 text-sm min-w-[80px]">{ticket.ticket_number}</span>
+                                        <span className="text-sm font-medium text-gray-700 truncate max-w-[200px]">{ticket.customer?.name}</span>
+                                        <span className="text-xs text-gray-400 hidden sm:block">
+                                          {ticket.device_type?.replace('-laptop', '').replace('-', ' ')}
+                                        </span>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500">{statusLabel}</span>
-                                        <Eye size={12} className="text-gray-400" />
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 group-hover:bg-gray-200 transition-colors">
+                                          {statusLabel}
+                                        </span>
+                                        <Eye size={14} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
                                       </div>
                                     </div>
                                   </button>

@@ -55,11 +55,11 @@ export const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className={`${classes.bg} rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-100 hover:shadow-md transition-shadow duration-200`}>
+    <div className={`${classes.bg} dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow duration-200`}>
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-gray-600 text-xs sm:text-sm font-medium mb-1">{title}</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 truncate">{value}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1">{title}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 truncate">{value}</p>
           {change && (
             <p className={`text-xs sm:text-sm font-medium ${changeColors[changeType]}`}>
               {change}
