@@ -761,41 +761,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
                           {/* Detailed View */}
                           {ticketViewLayout === 'detailed' && (
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                               {tickets.slice(0, 5).map((ticket) => (
-                                <div key={ticket.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-all">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-3">
-                                      <div className="bg-gray-100 px-3 py-1 rounded-lg">
-                                        <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
+                                <div key={ticket.id} className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all">
+                                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-bold text-gray-900 text-base">{ticket.ticket_number}</span>
+                                        <span className="text-sm font-medium text-gray-700">{ticket.customer?.name}</span>
+                                        <span className="text-xs text-gray-500">• {ticket.device_type?.replace('-laptop', '').replace('-', ' ')}</span>
                                       </div>
-                                      <span className="text-sm text-gray-600">
-                                        {ticket.customer?.name} - {ticket.device_type}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        onClick={() => handleViewLabel(ticket)}
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                                        style={{ color: '#ffb400' }}
-                                        title="View QR Label"
-                                      >
-                                        <QrCode size={16} />
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setSelectedTicket(ticket);
-                                          setCurrentView('manage-ticket');
-                                        }}
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-                                        title="View Ticket"
-                                      >
-                                        <Eye size={16} />
-                                      </button>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() => handleViewLabel(ticket)}
+                                          className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+                                          style={{ color: '#ffb400' }}
+                                          title="View QR Label"
+                                        >
+                                          <QrCode size={16} />
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            setSelectedTicket(ticket);
+                                            setCurrentView('manage-ticket');
+                                          }}
+                                          className="p-2 rounded-lg hover:bg-gray-200 transition-colors text-gray-600"
+                                          title="View Ticket"
+                                        >
+                                          <Eye size={16} />
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
-
-                                  <div className="space-y-3">
+                                  <div className="p-4 space-y-3">
                                     <div className="flex items-center justify-between">
                                       <div className="flex-1">
                                         <p className="text-xs text-gray-500 mb-2 font-medium">Status</p>
@@ -874,19 +872,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
                           {/* Compact View */}
                           {ticketViewLayout === 'compact' && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               {tickets.slice(0, 6).map((ticket) => {
                                 const statusColors = getStatusDisplayColors(ticket.status);
                                 return (
-                                  <div key={ticket.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-all">
-                                    <div className="flex items-center gap-3 flex-1">
+                                  <div key={ticket.id} className="border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-all">
+                                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 border-b border-gray-200 flex items-center gap-3">
                                       <div className={`w-2 h-2 ${statusColors.dot} rounded-full`}></div>
-                                      <span className="font-semibold text-gray-900 text-sm">{ticket.ticket_number}</span>
-                                      <span className="text-sm text-gray-600">{ticket.customer?.name}</span>
-                                      <span className="text-xs text-gray-400">{ticket.device_type}</span>
+                                      <span className="font-bold text-gray-900 text-sm">{ticket.ticket_number}</span>
+                                      <span className="text-sm font-medium text-gray-700">{ticket.customer?.name}</span>
+                                      <span className="text-xs text-gray-500">• {ticket.device_type?.replace('-laptop', '').replace('-', ' ')}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs text-gray-400">
+                                    <div className="px-3 py-2 flex items-center justify-between bg-white">
+                                      <span className="text-xs text-gray-500">
                                         {new Date(ticket.created_at).toLocaleDateString()}
                                       </span>
                                       <button
@@ -894,7 +892,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                           setSelectedTicket(ticket);
                                           setCurrentView('manage-ticket');
                                         }}
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+                                        className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
                                         title="View Ticket"
                                       >
                                         <Eye size={14} />
@@ -908,7 +906,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
                           {/* Minimal View */}
                           {ticketViewLayout === 'minimal' && (
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               {tickets.slice(0, 8).map((ticket) => {
                                 const statusLabel = getStatusLabel(statuses, ticket.status);
                                 return (
@@ -918,15 +916,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                       setSelectedTicket(ticket);
                                       setCurrentView('manage-ticket');
                                     }}
-                                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-all text-left"
+                                    className="w-full border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-all text-left"
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium text-gray-900 text-xs">{ticket.ticket_number}</span>
-                                      <span className="text-xs text-gray-500">{ticket.customer?.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs text-gray-400">{statusLabel}</span>
-                                      <Eye size={12} className="text-gray-400" />
+                                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-bold text-gray-900 text-xs">{ticket.ticket_number}</span>
+                                        <span className="text-xs font-medium text-gray-700">{ticket.customer?.name}</span>
+                                        <span className="text-xs text-gray-500">• {ticket.device_type?.replace('-laptop', '').replace('-', ' ')}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-500">{statusLabel}</span>
+                                        <Eye size={12} className="text-gray-400" />
+                                      </div>
                                     </div>
                                   </button>
                                 );
