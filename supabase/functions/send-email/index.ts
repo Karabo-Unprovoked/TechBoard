@@ -394,7 +394,8 @@ Deno.serve(async (req: Request) => {
     `
 
     // Convert HTML to plain text for the text version
-    const textContent = content.replace(/<[^>]*>/g, '').replace(/\n\s*\n/g, '\n\n')
+    const contentForText = content || emailHtml;
+    const textContent = contentForText.replace(/<[^>]*>/g, '').replace(/\n\s*\n/g, '\n\n')
 
     // Get email settings from database
     const smtpConfig = await getEmailSettings()

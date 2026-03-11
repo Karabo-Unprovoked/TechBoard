@@ -311,7 +311,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           statusLabel
         );
 
-        await supabase.functions.invoke('send-email', {
+        console.log('Sending email to:', statusChangeModal.customerEmail);
+
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {
           body: {
             to: statusChangeModal.customerEmail,
             subject: `Repair Status Update - Ticket ${ticket?.ticket_number}`,
@@ -319,6 +321,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
             ticketNumber: ticket?.ticket_number || ''
           }
         });
+
+        if (emailError) {
+          console.error('Email sending error:', emailError);
+          onNotification('warning', 'Status updated but email failed to send');
+        } else {
+          console.log('Email sent successfully:', emailResult);
+        }
       }
 
       setTickets(prev => prev.map(ticket =>
