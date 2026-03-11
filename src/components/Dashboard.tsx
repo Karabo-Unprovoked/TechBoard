@@ -271,6 +271,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
     }
   };
 
+  const updateTicketSubStatus = async (ticketId: string, newSubStatus: string | null) => {
+    try {
+      const updateData: any = {
+        internal_status: newSubStatus || null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('repair_tickets')
+        .update(updateData)
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTickets(prev => prev.map(ticket =>
+        ticket.id === ticketId
+          ? { ...ticket, ...updateData }
+          : ticket
+      ));
+    } catch (error) {
+      console.error('Error updating ticket sub-status:', error);
+    }
+  };
+
   // Calculate dashboard stats dynamically based on loaded statuses
   const stats: any = {
     totalTickets: tickets.length,
