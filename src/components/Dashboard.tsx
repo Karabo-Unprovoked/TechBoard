@@ -770,46 +770,72 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                     </div>
                                   </div>
 
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
                                       <div className="flex-1">
-                                        <select
-                                          value={ticket.status}
-                                          onChange={(e) => {
-                                            updateTicketStatus(ticket.id, e.target.value, '');
-                                          }}
-                                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
-                                        >
-                                          {statuses.map((status) => (
-                                            <option key={status.id} value={status.status_key}>
-                                              {status.status_label}
-                                            </option>
-                                          ))}
-                                        </select>
+                                        <p className="text-xs text-gray-500 mb-2 font-medium">Status</p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {statuses.map((status) => {
+                                            const colors = getStatusDisplayColors(status.status_key);
+                                            const isActive = ticket.status === status.status_key;
+                                            return (
+                                              <button
+                                                key={status.id}
+                                                onClick={() => updateTicketStatus(ticket.id, status.status_key, '')}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                                  isActive
+                                                    ? `${colors.bg} ${colors.text} ring-2 ring-offset-1 ${colors.ring}`
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                              >
+                                                {status.status_label}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
 
                                         {(() => {
                                           const currentStatus = statuses.find(s => s.status_key === ticket.status);
                                           if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
                                             return (
-                                              <select
-                                                value={ticket.internal_status || ''}
-                                                onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
-                                                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
-                                              >
-                                                <option value="">Select sub-status</option>
-                                                {currentStatus.sub_statuses.map((subStatus) => (
-                                                  <option key={subStatus.id} value={subStatus.sub_status_key}>
-                                                    {subStatus.sub_status_label}
-                                                  </option>
-                                                ))}
-                                              </select>
+                                              <div className="mt-3 pt-3 border-t border-gray-100">
+                                                <p className="text-xs text-gray-500 mb-2 font-medium">Additional Details</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                  <button
+                                                    onClick={() => updateTicketStatus(ticket.id, ticket.status, '')}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                                      !ticket.internal_status
+                                                        ? 'bg-gray-200 text-gray-700 ring-2 ring-gray-300 ring-offset-1'
+                                                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                                                    }`}
+                                                  >
+                                                    None
+                                                  </button>
+                                                  {currentStatus.sub_statuses.map((subStatus) => {
+                                                    const isActive = ticket.internal_status === subStatus.sub_status_key;
+                                                    return (
+                                                      <button
+                                                        key={subStatus.id}
+                                                        onClick={() => updateTicketStatus(ticket.id, ticket.status, subStatus.sub_status_key)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                                          isActive
+                                                            ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-300 ring-offset-1'
+                                                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                                                        }`}
+                                                      >
+                                                        {subStatus.sub_status_label}
+                                                      </button>
+                                                    );
+                                                  })}
+                                                </div>
+                                              </div>
                                             );
                                           }
                                           return null;
                                         })()}
                                       </div>
 
-                                      <div className="text-right">
+                                      <div className="text-right ml-4">
                                         <p className="text-xs text-gray-400 font-medium">
                                           {new Date(ticket.created_at).toLocaleDateString()}
                                         </p>

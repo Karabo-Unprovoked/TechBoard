@@ -12,15 +12,15 @@ const statusColorMap: Record<string, string> = {
   'void': 'bg-gray-400 text-white'
 };
 
-const statusDisplayColorMap: Record<string, { bg: string; dot: string }> = {
-  'pending': { bg: 'bg-orange-50', dot: 'bg-orange-500' },
-  'received': { bg: 'bg-blue-50', dot: 'bg-blue-500' },
-  'in-progress': { bg: 'bg-yellow-50', dot: 'bg-yellow-500' },
-  'invoiced': { bg: 'bg-teal-50', dot: 'bg-teal-500' },
-  'completed': { bg: 'bg-green-50', dot: 'bg-green-500' },
-  'unrepairable': { bg: 'bg-red-50', dot: 'bg-red-500' },
-  'pending-customer-action': { bg: 'bg-purple-50', dot: 'bg-purple-500' },
-  'void': { bg: 'bg-gray-50', dot: 'bg-gray-400' }
+const statusDisplayColorMap: Record<string, { bg: string; dot: string; text: string; ring: string }> = {
+  'pending': { bg: 'bg-orange-50', dot: 'bg-orange-500', text: 'text-orange-700', ring: 'ring-orange-300' },
+  'received': { bg: 'bg-blue-50', dot: 'bg-blue-500', text: 'text-blue-700', ring: 'ring-blue-300' },
+  'in-progress': { bg: 'bg-yellow-50', dot: 'bg-yellow-500', text: 'text-yellow-700', ring: 'ring-yellow-300' },
+  'invoiced': { bg: 'bg-teal-50', dot: 'bg-teal-500', text: 'text-teal-700', ring: 'ring-teal-300' },
+  'completed': { bg: 'bg-green-50', dot: 'bg-green-500', text: 'text-green-700', ring: 'ring-green-300' },
+  'unrepairable': { bg: 'bg-red-50', dot: 'bg-red-500', text: 'text-red-700', ring: 'ring-red-300' },
+  'pending-customer-action': { bg: 'bg-purple-50', dot: 'bg-purple-500', text: 'text-purple-700', ring: 'ring-purple-300' },
+  'void': { bg: 'bg-gray-50', dot: 'bg-gray-400', text: 'text-gray-700', ring: 'ring-gray-300' }
 };
 
 export const loadStatuses = async (): Promise<TicketStatus[]> => {
@@ -62,8 +62,8 @@ export const getStatusLabel = (statuses: TicketStatus[], statusKey: string): str
   return status?.status_label || statusKey.replace('-', ' ').toUpperCase();
 };
 
-export const getStatusDisplayColors = (statusKey: string): { bg: string; dot: string } => {
-  return statusDisplayColorMap[statusKey] || { bg: 'bg-gray-50', dot: 'bg-gray-500' };
+export const getStatusDisplayColors = (statusKey: string): { bg: string; dot: string; text: string; ring: string } => {
+  return statusDisplayColorMap[statusKey] || { bg: 'bg-gray-50', dot: 'bg-gray-500', text: 'text-gray-700', ring: 'ring-gray-300' };
 };
 
 export const getSubStatusLabel = (statuses: TicketStatus[], statusKey: string, subStatusKey: string): string => {
