@@ -347,10 +347,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
       />
 
       <div
-        className="min-h-screen flex overflow-x-hidden w-full max-w-full dark:bg-gray-900"
+        className="min-h-screen flex overflow-x-hidden w-full max-w-full bg-gray-50 dark:bg-gray-950"
         style={{
           fontFamily: 'Montserrat, sans-serif',
-          backgroundColor: '#f1f5f9',
         }}
       >
         {/* Mobile Sidebar Overlay */}
@@ -379,7 +378,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
           {/* Desktop Collapse Toggle Button */}
           <button
             onClick={toggleSidebar}
-            className="hidden lg:block absolute -right-3 top-8 z-50 p-1.5 bg-white rounded-full shadow-lg text-gray-600 hover:text-gray-900 transition-colors border border-gray-200"
+            className="hidden lg:block absolute -right-3 top-8 z-50 p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors border border-gray-200 dark:border-gray-700"
           >
             {sidebarCollapsed ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -509,18 +508,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
         {/* Right Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           {/* Header */}
-          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 overflow-x-hidden">
+          <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 overflow-x-hidden">
             <div className="flex items-center justify-between gap-2">
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="lg:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <Menu size={24} />
               </button>
 
               <div className="flex-1">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-white">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                   {currentView === 'dashboard' && 'Dashboard'}
                   {currentView === 'tickets' && 'Repair Tickets'}
                   {currentView === 'customers' && 'Customer Management'}
@@ -551,20 +550,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               {currentView === 'tickets' && (
                 <div className="hidden md:flex items-center gap-4">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
                     <input
                       type="text"
                       placeholder="Search tickets..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none w-64"
+                      className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:border-transparent outline-none w-64"
                       style={{ focusRingColor: PRIMARY }}
                     />
                   </div>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:border-transparent outline-none"
                     style={{ focusRingColor: PRIMARY }}
                   >
                     <option value="all">All Status</option>
@@ -585,7 +584,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: PRIMARY }}></div>
-                  <p className="text-gray-600">Loading...</p>
+                  <p className="text-gray-600 dark:text-gray-400">Loading...</p>
                 </div>
               </div>
             ) : (
