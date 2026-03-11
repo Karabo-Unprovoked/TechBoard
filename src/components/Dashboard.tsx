@@ -772,19 +772,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
 
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <select
-                                        value={ticket.status}
-                                        onChange={(e) => {
-                                          updateTicketStatus(ticket.id, e.target.value, '');
-                                        }}
-                                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
-                                      >
-                                        {statuses.map((status) => (
-                                          <option key={status.id} value={status.status_key}>
-                                            {status.status_label}
-                                          </option>
-                                        ))}
-                                      </select>
+                                      <div className="flex-1">
+                                        <select
+                                          value={ticket.status}
+                                          onChange={(e) => {
+                                            updateTicketStatus(ticket.id, e.target.value, '');
+                                          }}
+                                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-gray-50"
+                                        >
+                                          {statuses.map((status) => (
+                                            <option key={status.id} value={status.status_key}>
+                                              {status.status_label}
+                                            </option>
+                                          ))}
+                                        </select>
+
+                                        {(() => {
+                                          const currentStatus = statuses.find(s => s.status_key === ticket.status);
+                                          if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
+                                            return (
+                                              <select
+                                                value={ticket.internal_status || ''}
+                                                onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
+                                                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                              >
+                                                <option value="">Select sub-status</option>
+                                                {currentStatus.sub_statuses.map((subStatus) => (
+                                                  <option key={subStatus.id} value={subStatus.sub_status_key}>
+                                                    {subStatus.sub_status_label}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            );
+                                          }
+                                          return null;
+                                        })()}
+                                      </div>
 
                                       <div className="text-right">
                                         <p className="text-xs text-gray-400 font-medium">
@@ -792,27 +815,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                                         </p>
                                       </div>
                                     </div>
-
-                                    {(() => {
-                                      const currentStatus = statuses.find(s => s.status_key === ticket.status);
-                                      if (currentStatus?.sub_statuses && currentStatus.sub_statuses.length > 0) {
-                                        return (
-                                          <select
-                                            value={ticket.internal_status || ''}
-                                            onChange={(e) => updateTicketStatus(ticket.id, ticket.status, e.target.value)}
-                                            className="px-2 py-1 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
-                                          >
-                                            <option value="">—</option>
-                                            {currentStatus.sub_statuses.map((subStatus) => (
-                                              <option key={subStatus.id} value={subStatus.sub_status_key}>
-                                                {subStatus.sub_status_label}
-                                              </option>
-                                            ))}
-                                          </select>
-                                        );
-                                      }
-                                      return null;
-                                    })()}
                                   </div>
                                 </div>
                               ))}
