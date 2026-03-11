@@ -16,6 +16,7 @@ import { UserProfile } from './UserProfile';
 import { RegistrationRequests } from './RegistrationRequests';
 import { StatusChangeModal } from './StatusChangeModal';
 import { SLABadge } from './SLABadge';
+import { SLADashboard } from './SLADashboard';
 import { generateStatusUpdateEmail } from '../lib/emailTemplates';
 import type { NotificationType } from './Notification';
 
@@ -26,7 +27,7 @@ interface DashboardProps {
   onNotification: (type: NotificationType, message: string) => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile' | 'registration-requests';
+type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile' | 'registration-requests' | 'sla-dashboard';
 type TicketViewLayout = 'detailed' | 'compact' | 'minimal';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer, onNotification }) => {
@@ -539,6 +540,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 )}
               </button>
               <button
+                onClick={() => { setCurrentView('sla-dashboard'); setSidebarOpen(false); }}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'sla-dashboard' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+                title={sidebarCollapsed ? 'SLA Dashboard' : ''}
+              >
+                <Clock size={18} />
+                {!sidebarCollapsed && <span className="text-sm">SLA Dashboard</span>}
+              </button>
+              <button
                 onClick={() => { setCurrentView('settings'); setSidebarOpen(false); }}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'settings' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -605,6 +616,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'settings' && 'System Settings'}
                   {currentView === 'profile' && 'My Profile'}
                   {currentView === 'registration-requests' && 'Registration Requests'}
+                  {currentView === 'sla-dashboard' && 'SLA Dashboard'}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">
                   {currentView === 'dashboard' && 'Welcome back! Here\'s your overview'}
@@ -618,6 +630,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'settings' && 'Configure system settings and test functionality'}
                   {currentView === 'profile' && 'Manage your account details and security settings'}
                   {currentView === 'registration-requests' && 'Review and approve customer registration requests'}
+                  {currentView === 'sla-dashboard' && 'Monitor service level agreements and ticket breach status'}
                 </p>
               </div>
               
@@ -780,6 +793,80 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         <p className="text-xs text-gray-500 mt-2">Click to view all customers</p>
                       </div>
                     </div>
+
+                    {/* SLA Breach Alert Block */}
+                    {(() => {
+                      const overdueTickets = tickets.filter(ticket => {
+                        if (ticket.status === 'completed' || ticket.status === 'void') return false;
+                        if (!ticket.status_changed_at || !ticket.sla_hours) return false;
+
+                        const statusChangedAt = new Date(ticket.status_changed_at);
+                        const now = new Date();
+                        const msElapsed = now.getTime() - statusChangedAt.getTime();
+                        const hoursElapsed = msElapsed / (1000 * 60 * 60);
+                        return hoursElapsed >= ticket.sla_hours;
+                      });
+
+                      const criticalTickets = tickets.filter(ticket => {
+                        if (ticket.status === 'completed' || ticket.status === 'void') return false;
+                        if (!ticket.status_changed_at || !ticket.sla_hours) return false;
+
+                        const statusChangedAt = new Date(ticket.status_changed_at);
+                        const now = new Date();
+                        const msElapsed = now.getTime() - statusChangedAt.getTime();
+                        const hoursElapsed = msElapsed / (1000 * 60 * 60);
+                        const percentageUsed = (hoursElapsed / ticket.sla_hours) * 100;
+                        return percentageUsed >= 90 && percentageUsed < 100;
+                      });
+
+                      if (overdueTickets.length === 0 && criticalTickets.length === 0) return null;
+
+                      return (
+                        <div
+                          className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 shadow-sm border-2 border-red-200 hover:shadow-md transition-all cursor-pointer"
+                          onClick={() => setCurrentView('sla-dashboard')}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-red-100 p-3 rounded-xl">
+                                <AlertTriangle size={24} className="text-red-600" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-900">SLA Breach Alert</h3>
+                                <p className="text-sm text-gray-600">Immediate attention required</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span className="text-xs font-medium text-gray-600">Overdue</span>
+                              </div>
+                              <p className="text-2xl font-bold text-red-600">{overdueTickets.length}</p>
+                            </div>
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                <span className="text-xs font-medium text-gray-600">Critical</span>
+                              </div>
+                              <p className="text-2xl font-bold text-orange-600">{criticalTickets.length}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-gray-600">Click to view detailed SLA dashboard</p>
+                            <div className="flex items-center gap-1 text-red-600 font-semibold text-sm">
+                              <span>View Details</span>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Recent Tickets with Status Updates */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1127,6 +1214,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   <RegistrationRequests
                     onNotification={onNotification}
                     onRequestsChanged={loadPendingRequests}
+                  />
+                )}
+                {currentView === 'sla-dashboard' && (
+                  <SLADashboard
+                    tickets={tickets}
+                    onViewTicket={handleManageTicket}
+                    statuses={statuses}
                   />
                 )}
               </>
