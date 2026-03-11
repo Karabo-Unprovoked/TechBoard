@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Upload, X, Laptop, User, Mail, Phone, MapPin, FileText, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Upload, X, Laptop, User, Mail, Phone, MapPin, FileText, CheckCircle, Sun, Moon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TermsModal } from './TermsModal';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SelfRegistrationProps {
   onBack: () => void;
@@ -127,6 +128,7 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
+  const { theme, toggleTheme } = useTheme();
 
   if (submitted) {
     return (
@@ -164,13 +166,20 @@ export const SelfRegistration: React.FC<SelfRegistrationProps> = ({ onBack }) =>
 
       <div style={{ fontFamily: 'Montserrat, sans-serif' }} className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 md:py-8 px-3 sm:px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-4 sm:mb-6">
+          <div className="mb-4 sm:mb-6 flex items-center justify-between">
             <button
               onClick={onBack}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors dark:text-gray-300"
             >
               <ArrowLeft size={16} />
               <span>Back</span>
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            >
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
           </div>
 

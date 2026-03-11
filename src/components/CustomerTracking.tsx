@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash, MessageSquare, PhoneCall } from 'lucide-react';
+import { Search, ArrowLeft, User, Phone, Mail, Calendar, Laptop, FileText, Clock, LogOut, RefreshCw, Hash, MessageSquare, PhoneCall, Sun, Moon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketNote } from '../lib/supabase';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface CustomerTrackingProps {
   onBack: () => void;
@@ -226,6 +227,7 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <>
@@ -269,28 +271,38 @@ export const CustomerTracking: React.FC<CustomerTrackingProps> = ({ onBack, onLo
               </div>
             </div>
             
-            {isAuthenticated && (
-              <div className="flex items-center gap-1 sm:gap-2">
-                {onDashboard && (
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              </button>
+
+              {isAuthenticated && (
+                <>
+                  {onDashboard && (
+                    <button
+                      onClick={onDashboard}
+                      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                      style={{ color: SECONDARY }}
+                    >
+                      <User size={16} />
+                      <span className="hidden sm:inline">Dashboard</span>
+                    </button>
+                  )}
                   <button
-                    onClick={onDashboard}
-                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-sm rounded-lg transition-colors hover:bg-gray-100"
+                    onClick={handleLogout}
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                     style={{ color: SECONDARY }}
                   >
-                    <User size={16} />
-                    <span className="hidden sm:inline">Dashboard</span>
-                  </button>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-sm rounded-lg transition-colors hover:bg-gray-100"
-                  style={{ color: SECONDARY }}
-                >
-                  <LogOut size={16} />
+                    <LogOut size={16} />
                   <span className="hidden sm:inline">Logout</span>
                 </button>
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </header>
 

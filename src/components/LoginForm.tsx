@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Lock, AlertCircle, Eye, EyeOff, Search, User, HelpCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Eye, EyeOff, Search, User, HelpCircle, Sun, Moon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface LoginFormProps {
   onTrackCustomer: () => void;
@@ -127,6 +128,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
 
   const PRIMARY = '#ffb400';
   const SECONDARY = '#5d5d5d';
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <>
@@ -150,16 +152,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onTrackCustomer, onDashboa
         >
           {/* Logo and Brand */}
           <div className="p-4 sm:p-6 lg:p-8">
-            <div className="flex items-center gap-3 mb-4 lg:mb-8">
-              <img
-                src="/FinalWhite.png"
-                alt="Guardian Assist Logo"
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 p-1"
-              />
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-white">Guardian Assist</h1>
-                <p className="text-xs sm:text-sm text-white/80">Computer Repair Management</p>
+            <div className="flex items-center justify-between mb-4 lg:mb-8">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/FinalWhite.png"
+                  alt="Guardian Assist Logo"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 p-1"
+                />
+                <div>
+                  <h1 className="text-lg sm:text-xl font-bold text-white">Guardian Assist</h1>
+                  <p className="text-xs sm:text-sm text-white/80">Computer Repair Management</p>
+                </div>
               </div>
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              </button>
             </div>
           </div>
 
