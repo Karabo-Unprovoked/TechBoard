@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText, Menu, X, LayoutGrid, List, Columns2 as Columns } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Search, Filter, Download, Printer, Eye, QrCode, BarChart3, Users, Wrench, Clock, CheckCircle, AlertTriangle, Settings, User, FileText, Menu, X, LayoutGrid, List, Columns2 as Columns, RotateCcw } from 'lucide-react';
 import { supabase, isSupabaseConfigured, getUserRole } from '../lib/supabase';
 import type { Customer, RepairTicket, TicketStatus } from '../lib/supabase';
 import { loadStatuses, getStatusLabel, getStatusDisplayColors } from '../lib/statusUtils';
@@ -20,6 +20,7 @@ import { SLADashboard } from './SLADashboard';
 import { OverdueTicketsAlert } from './OverdueTicketsAlert';
 import { generateStatusUpdateEmail } from '../lib/emailTemplates';
 import type { NotificationType } from './Notification';
+import { DraggableDashboard, useDashboardLayout } from './DraggableDashboard';
 
 interface DashboardProps {
   onBack: () => void;
@@ -47,6 +48,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ticketViewLayout, setTicketViewLayout] = useState<TicketViewLayout>('detailed');
+  const { layout, loading: layoutLoading, resetLayout, sortBlocks } = useDashboardLayout();
   const [statusChangeModal, setStatusChangeModal] = useState<{
     isOpen: boolean;
     ticketId: string;
@@ -691,25 +693,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Hello, Welcome back</h3>
                           <p className="text-orange-50 text-xs sm:text-sm">Your dashboard is updated with the latest information</p>
                         </div>
-                        {userRole !== 'viewer' && (
-                          <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
-                            <button
-                              onClick={() => setCurrentView('new-customer')}
-                              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl font-semibold hover:bg-white/30 transition-all text-sm"
-                            >
-                              <Users size={16} className="sm:w-[18px] sm:h-[18px]" />
-                              <span className="text-xs sm:text-sm">New Customer</span>
-                            </button>
-                            <button
-                              onClick={() => setCurrentView('new-ticket')}
-                              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all text-sm"
-                              style={{ color: PRIMARY }}
-                            >
-                              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
-                              <span className="text-xs sm:text-sm">New Ticket</span>
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
+                          <button
+                            onClick={resetLayout}
+                            className="flex items-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-sm rounded-lg font-medium hover:bg-white/30 transition-all text-xs"
+                            title="Reset Dashboard Layout"
+                          >
+                            <RotateCcw size={14} />
+                            <span className="hidden sm:inline">Reset Layout</span>
+                          </button>
+                          {userRole !== 'viewer' && (
+                            <>
+                              <button
+                                onClick={() => setCurrentView('new-customer')}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl font-semibold hover:bg-white/30 transition-all text-sm"
+                              >
+                                <Users size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                <span className="text-xs sm:text-sm">New Customer</span>
+                              </button>
+                              <button
+                                onClick={() => setCurrentView('new-ticket')}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 bg-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all text-sm"
+                                style={{ color: PRIMARY }}
+                              >
+                                <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                <span className="text-xs sm:text-sm">New Ticket</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -731,8 +743,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       </div>
                     )}
 
-                    {/* Stats Overview */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {/* Dashboard Blocks Container */}
+                    <div className="space-y-6">
+                      {sortBlocks([
+                        { blockId: 'stats' as const, content: (
+                          <DraggableDashboard blockId="stats">
+                            {/* Stats Overview */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between mb-3 sm:mb-4">
                           <div className="bg-blue-50 p-2 sm:p-3 rounded-lg sm:rounded-xl">
@@ -793,10 +810,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                         <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers}</p>
                         <p className="text-xs text-gray-500 mt-2">Click to view all customers</p>
                       </div>
-                    </div>
-
-                    {/* Recent Tickets with Status Updates */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            </div>
+                          </DraggableDashboard>
+                        )},
+                        { blockId: 'latest-updates' as const, content: (
+                          <DraggableDashboard blockId="latest-updates">
+                            {/* Recent Tickets with Status Updates */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                           <div className="flex items-center justify-between mb-6">
@@ -1034,47 +1054,59 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                           )}
                         </div>
                       </div>
-                    </div>
+                            </div>
+                          </DraggableDashboard>
+                        )},
+                        { blockId: 'overdue-tickets' as const, content: (
+                          <DraggableDashboard blockId="overdue-tickets">
+                            {/* Overdue Tickets Alert */}
+                            <div className="lg:col-span-2">
+                              <OverdueTicketsAlert
+                                tickets={tickets}
+                                onViewTicket={handleManageTicket}
+                              />
+                            </div>
+                          </DraggableDashboard>
+                        )},
+                        { blockId: 'status-overview' as const, content: (
+                          <DraggableDashboard blockId="status-overview">
+                            {/* Status Overview - Dynamic based on database */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                              <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
+                              <div className="space-y-3">
+                                {statuses.map((status) => {
+                                  const colors = getStatusDisplayColors(status.status_key);
+                                  const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+                                  const count = stats[statusKey] || 0;
 
-                    {/* Overdue Tickets Alert and Status Overview */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <div className="lg:col-span-2">
-                        <OverdueTicketsAlert
-                          tickets={tickets}
-                          onViewTicket={handleManageTicket}
-                        />
-                      </div>
-
-                      {/* Status Overview - Dynamic based on database */}
-                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
-                        <div className="space-y-3">
-                          {statuses.map((status) => {
-                            const colors = getStatusDisplayColors(status.status_key);
-                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
-                            const count = stats[statusKey] || 0;
-
-                            return (
-                              <button
-                                key={status.id}
-                                onClick={() => {
-                                  setStatusFilter(status.status_key);
-                                  setCurrentView('tickets');
-                                }}
-                                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group cursor-pointer border border-transparent hover:border-gray-200"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                    <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
-                                  </div>
-                                  <span className="text-sm text-gray-600 font-medium group-hover:text-gray-900">{status.status_label}</span>
-                                </div>
-                                <span className="font-bold text-gray-900 group-hover:scale-110 transition-transform">{count}</span>
-                              </button>
-                            );
-                          })}
+                                  return (
+                                    <button
+                                      key={status.id}
+                                      onClick={() => {
+                                        setStatusFilter(status.status_key);
+                                        setCurrentView('tickets');
+                                      }}
+                                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group cursor-pointer border border-transparent hover:border-gray-200"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                          <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
+                                        </div>
+                                        <span className="text-sm text-gray-600 font-medium group-hover:text-gray-900">{status.status_label}</span>
+                                      </div>
+                                      <span className="font-bold text-gray-900 group-hover:scale-110 transition-transform">{count}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </DraggableDashboard>
+                        )},
+                      ]).map((block) => (
+                        <div key={block.blockId}>
+                          {block.content}
                         </div>
-                      </div>
+                      ))}
                     </div>
 
                     </div>
