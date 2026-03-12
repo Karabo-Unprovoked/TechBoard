@@ -155,122 +155,124 @@ export function SLADashboard({ tickets, onViewTicket, statuses }: SLADashboardPr
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">SLA Status Overview</h3>
-            <div className="flex items-center gap-2">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-                className="text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-              </select>
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as SLAFilter)}
-                className="text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="all">All Status ({ticketsWithSLA.length})</option>
-                <option value="overdue">Overdue ({overdueCount})</option>
-                <option value="critical">Critical ({criticalCount})</option>
-                <option value="warning">Warning ({warningCount})</option>
-                <option value="normal">Normal ({normalCount})</option>
-              </select>
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">SLA Status Overview</h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={timeRange}
+                  onChange={(e) => setTimeRange(e.target.value as TimeRange)}
+                  className="text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                </select>
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as SLAFilter)}
+                  className="text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="all">All Status ({ticketsWithSLA.length})</option>
+                  <option value="overdue">Overdue ({overdueCount})</option>
+                  <option value="critical">Critical ({criticalCount})</option>
+                  <option value="warning">Warning ({warningCount})</option>
+                  <option value="normal">Normal ({normalCount})</option>
+                </select>
+              </div>
             </div>
+
+            {ticketsWithSLA.length === 0 ? (
+              <div className="text-center py-12">
+                <CheckCircle size={48} className="text-green-500 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium">No tickets found matching your filters</p>
+                <p className="text-sm text-gray-500 mt-1">All tickets are within acceptable SLA limits</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {ticketsWithSLA.map(({ ticket, slaStatus }) => {
+                  const statusLabel = getStatusLabel(statuses, ticket.status);
+                  const statusColors = getStatusDisplayColors(ticket.status);
+                  const slaColor = getSLAColor(slaStatus.urgencyLevel);
+
+                  return (
+                    <div
+                      key={ticket.id}
+                      className="bg-white border-2 rounded-xl overflow-hidden hover:shadow-lg transition-all"
+                      style={{ borderColor: `${slaColor}40` }}
+                    >
+                      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-gray-900">{ticket.ticket_number}</span>
+                            <span className="text-sm font-medium text-gray-700">{ticket.customer?.name}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full ${statusColors.bg} ${statusColors.text}`}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => onViewTicket(ticket)}
+                            className="p-2 rounded-lg hover:bg-gray-200 transition-colors text-gray-600"
+                            title="View Ticket"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-500 mb-1">Device</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {ticket.device_type?.replace('-laptop', '').replace('-', ' ')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500 mb-1">Status Changed</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {new Date(ticket.status_changed_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">SLA Progress</span>
+                            <span className="font-bold" style={{ color: slaColor }}>
+                              {Math.min(100, Math.round(slaStatus.percentageUsed))}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${Math.min(100, slaStatus.percentageUsed)}%`,
+                                backgroundColor: slaColor
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">
+                              {slaStatus.hoursElapsed}h elapsed
+                            </span>
+                            <span className="font-semibold" style={{ color: slaColor }}>
+                              {slaStatus.isOverdue
+                                ? `Overdue by ${formatSLATime(slaStatus.hoursElapsed - (ticket.sla_hours || 72))}`
+                                : `${formatSLATime(slaStatus.hoursRemaining)} remaining`
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-
-          {ticketsWithSLA.length === 0 ? (
-            <div className="text-center py-12">
-              <CheckCircle size={48} className="text-green-500 mx-auto mb-3" />
-              <p className="text-gray-600 font-medium">No tickets found matching your filters</p>
-              <p className="text-sm text-gray-500 mt-1">All tickets are within acceptable SLA limits</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {ticketsWithSLA.map(({ ticket, slaStatus }) => {
-                const statusLabel = getStatusLabel(statuses, ticket.status);
-                const statusColors = getStatusDisplayColors(ticket.status);
-                const slaColor = getSLAColor(slaStatus.urgencyLevel);
-
-                return (
-                  <div
-                    key={ticket.id}
-                    className="bg-white border-2 rounded-xl overflow-hidden hover:shadow-lg transition-all"
-                    style={{ borderColor: `${slaColor}40` }}
-                  >
-                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-gray-900">{ticket.ticket_number}</span>
-                          <span className="text-sm font-medium text-gray-700">{ticket.customer?.name}</span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${statusColors.bg} ${statusColors.text}`}>
-                            {statusLabel}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => onViewTicket(ticket)}
-                          className="p-2 rounded-lg hover:bg-gray-200 transition-colors text-gray-600"
-                          title="View Ticket"
-                        >
-                          <Eye size={16} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex-1">
-                          <p className="text-xs text-gray-500 mb-1">Device</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {ticket.device_type?.replace('-laptop', '').replace('-', ' ')}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 mb-1">Status Changed</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {new Date(ticket.status_changed_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">SLA Progress</span>
-                          <span className="font-bold" style={{ color: slaColor }}>
-                            {Math.min(100, Math.round(slaStatus.percentageUsed))}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${Math.min(100, slaStatus.percentageUsed)}%`,
-                              backgroundColor: slaColor
-                            }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500">
-                            {slaStatus.hoursElapsed}h elapsed
-                          </span>
-                          <span className="font-semibold" style={{ color: slaColor }}>
-                            {slaStatus.isOverdue
-                              ? `Overdue by ${formatSLATime(slaStatus.hoursElapsed - (ticket.sla_hours || 72))}`
-                              : `${formatSLATime(slaStatus.hoursRemaining)} remaining`
-                            }
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         <div className="space-y-6">
