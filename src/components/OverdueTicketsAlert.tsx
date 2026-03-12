@@ -57,8 +57,6 @@ export const OverdueTicketsAlert: React.FC<OverdueTicketsAlertProps> = ({ ticket
     return () => clearInterval(interval);
   }, [tickets]);
 
-  if (overdueTickets.length === 0) return null;
-
   const calculateHoursOverdue = (ticket: RepairTicket): number => {
     if (!ticket.status_changed_at || !ticket.sla_hours) return 0;
 
@@ -70,17 +68,32 @@ export const OverdueTicketsAlert: React.FC<OverdueTicketsAlertProps> = ({ ticket
   };
 
   return (
-    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl shadow-lg border-2 border-red-300 overflow-hidden">
-      <div className="bg-red-600 text-white px-6 py-4">
+    <div className={`rounded-2xl shadow-lg border-2 overflow-hidden ${
+      overdueTickets.length > 0
+        ? 'bg-gradient-to-br from-red-50 to-red-100 border-red-300'
+        : 'bg-gradient-to-br from-green-50 to-green-100 border-green-300'
+    }`}>
+      <div className={`text-white px-6 py-4 ${
+        overdueTickets.length > 0 ? 'bg-red-600' : 'bg-green-600'
+      }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-white/20 p-2 rounded-lg">
-              <AlertTriangle size={24} />
+              {overdueTickets.length > 0 ? (
+                <AlertTriangle size={24} />
+              ) : (
+                <Clock size={24} />
+              )}
             </div>
             <div>
-              <h3 className="text-lg font-bold">SLA BREACH ALERT</h3>
-              <p className="text-sm text-red-100">
-                {overdueTickets.length} {overdueTickets.length === 1 ? 'ticket is' : 'tickets are'} overdue
+              <h3 className="text-lg font-bold">
+                {overdueTickets.length > 0 ? 'SLA BREACH ALERT' : 'SLA MONITORING'}
+              </h3>
+              <p className={`text-sm ${overdueTickets.length > 0 ? 'text-red-100' : 'text-green-100'}`}>
+                {overdueTickets.length > 0
+                  ? `${overdueTickets.length} ${overdueTickets.length === 1 ? 'ticket is' : 'tickets are'} overdue`
+                  : 'All tickets are within SLA limits'
+                }
               </p>
             </div>
           </div>
@@ -104,8 +117,9 @@ export const OverdueTicketsAlert: React.FC<OverdueTicketsAlertProps> = ({ ticket
           </div>
         )}
 
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {overdueTickets.map((ticket) => {
+        {overdueTickets.length > 0 ? (
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {overdueTickets.map((ticket) => {
             const hoursOverdue = calculateHoursOverdue(ticket);
 
             return (
@@ -152,9 +166,20 @@ export const OverdueTicketsAlert: React.FC<OverdueTicketsAlertProps> = ({ ticket
               </div>
             );
           })}
-        </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+              <Clock size={32} className="text-green-600" />
+            </div>
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">No Overdue Tickets</h4>
+            <p className="text-sm text-gray-600">
+              All tickets are being handled within their SLA timeframes
+            </p>
+          </div>
+        )}
 
-        <div className="mt-4 pt-4 border-t border-red-200">
+        <div className={`mt-4 pt-4 ${overdueTickets.length > 0 ? 'border-t border-red-200' : 'border-t border-green-200'}`}>
           <p className="text-xs text-gray-600 text-center">
             Email alerts are automatically sent to administrators every 5 minutes for overdue tickets
           </p>
