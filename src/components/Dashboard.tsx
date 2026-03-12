@@ -17,6 +17,7 @@ import { RegistrationRequests } from './RegistrationRequests';
 import { StatusChangeModal } from './StatusChangeModal';
 import { SLABadge } from './SLABadge';
 import { SLADashboard } from './SLADashboard';
+import { OverdueTicketsAlert } from './OverdueTicketsAlert';
 import { generateStatusUpdateEmail } from '../lib/emailTemplates';
 import type { NotificationType } from './Notification';
 
@@ -794,79 +795,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       </div>
                     </div>
 
-                    {/* SLA Breach Alert Block */}
-                    {(() => {
-                      const overdueTickets = tickets.filter(ticket => {
-                        if (ticket.status === 'completed' || ticket.status === 'void') return false;
-                        if (!ticket.status_changed_at || !ticket.sla_hours) return false;
-
-                        const statusChangedAt = new Date(ticket.status_changed_at);
-                        const now = new Date();
-                        const msElapsed = now.getTime() - statusChangedAt.getTime();
-                        const hoursElapsed = msElapsed / (1000 * 60 * 60);
-                        return hoursElapsed >= ticket.sla_hours;
-                      });
-
-                      const criticalTickets = tickets.filter(ticket => {
-                        if (ticket.status === 'completed' || ticket.status === 'void') return false;
-                        if (!ticket.status_changed_at || !ticket.sla_hours) return false;
-
-                        const statusChangedAt = new Date(ticket.status_changed_at);
-                        const now = new Date();
-                        const msElapsed = now.getTime() - statusChangedAt.getTime();
-                        const hoursElapsed = msElapsed / (1000 * 60 * 60);
-                        const percentageUsed = (hoursElapsed / ticket.sla_hours) * 100;
-                        return percentageUsed >= 90 && percentageUsed < 100;
-                      });
-
-                      if (overdueTickets.length === 0 && criticalTickets.length === 0) return null;
-
-                      return (
-                        <div
-                          className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 shadow-sm border-2 border-red-200 hover:shadow-md transition-all cursor-pointer"
-                          onClick={() => setCurrentView('sla-dashboard')}
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-red-100 p-3 rounded-xl">
-                                <AlertTriangle size={24} className="text-red-600" />
-                              </div>
-                              <div>
-                                <h3 className="text-lg font-bold text-gray-900">SLA Breach Alert</h3>
-                                <p className="text-sm text-gray-600">Immediate attention required</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div className="bg-white rounded-xl p-4 shadow-sm">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <span className="text-xs font-medium text-gray-600">Overdue</span>
-                              </div>
-                              <p className="text-2xl font-bold text-red-600">{overdueTickets.length}</p>
-                            </div>
-                            <div className="bg-white rounded-xl p-4 shadow-sm">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                <span className="text-xs font-medium text-gray-600">Critical</span>
-                              </div>
-                              <p className="text-2xl font-bold text-orange-600">{criticalTickets.length}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs text-gray-600">Click to view detailed SLA dashboard</p>
-                            <div className="flex items-center gap-1 text-red-600 font-semibold text-sm">
-                              <span>View Details</span>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    {/* Overdue Tickets Alert */}
+                    <OverdueTicketsAlert
+                      tickets={tickets}
+                      onViewTicket={handleManageTicket}
+                    />
 
                     {/* Recent Tickets with Status Updates */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
