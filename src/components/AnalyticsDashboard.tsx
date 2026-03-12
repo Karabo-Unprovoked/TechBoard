@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Clock, DollarSign, Users, Wrench, Calendar, BarChart3, PieChart, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Users, Wrench, Calendar, BarChart3, PieChart, Activity } from 'lucide-react';
 import type { RepairTicket, Customer } from '../lib/supabase';
 import { getStatusLabel } from '../lib/statusUtils';
 
@@ -98,10 +98,6 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
 
     const avgResolutionTime = calculateAverageResolutionTime();
 
-    const calculateRevenue = () => {
-      return completedTickets.length * 150;
-    };
-
     const newCustomersInRange = customers.filter(c => c.created_at && filterByTimeRange(c.created_at)).length;
 
     const statusBreakdown = statuses.map(status => ({
@@ -146,7 +142,6 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
       completedTickets: completedTickets.length,
       activeTickets: activeTickets.length,
       avgResolutionTime,
-      revenue: calculateRevenue(),
       newCustomers: newCustomersInRange,
       statusBreakdown,
       topDevices,
@@ -179,7 +174,7 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-3">
             <div className="bg-blue-100 p-3 rounded-xl">
@@ -218,17 +213,6 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
           <h4 className="text-gray-600 text-sm font-medium mb-1">Avg Resolution Time</h4>
           <p className="text-3xl font-bold text-gray-900">{formatTime(analytics.avgResolutionTime)}</p>
           <p className="text-xs text-gray-500 mt-2">Time to complete</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <div className="bg-amber-100 p-3 rounded-xl">
-              <DollarSign size={24} className="text-amber-600" />
-            </div>
-          </div>
-          <h4 className="text-gray-600 text-sm font-medium mb-1">Revenue</h4>
-          <p className="text-3xl font-bold text-gray-900">${analytics.revenue.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-2">From completed tickets</p>
         </div>
       </div>
 

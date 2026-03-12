@@ -551,16 +551,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 <Clock size={18} />
                 {!sidebarCollapsed && <span className="text-sm">SLA Dashboard</span>}
               </button>
-              <button
-                onClick={() => { setCurrentView('analytics'); setSidebarOpen(false); }}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
-                  currentView === 'analytics' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-                title={sidebarCollapsed ? 'Analytics' : ''}
-              >
-                <TrendingUp size={18} />
-                {!sidebarCollapsed && <span className="text-sm">Analytics</span>}
-              </button>
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => { setCurrentView('analytics'); setSidebarOpen(false); }}
+                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
+                    currentView === 'analytics' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                  title={sidebarCollapsed ? 'Analytics' : ''}
+                >
+                  <TrendingUp size={18} />
+                  {!sidebarCollapsed && <span className="text-sm">Analytics</span>}
+                </button>
+              )}
               <button
                 onClick={() => { setCurrentView('settings'); setSidebarOpen(false); }}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
@@ -1169,7 +1171,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     statuses={statuses}
                   />
                 )}
-                {currentView === 'analytics' && (
+                {currentView === 'analytics' && userRole === 'admin' && (
                   <AnalyticsDashboard
                     tickets={tickets}
                     customers={customers}
