@@ -776,22 +776,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       </div>
                       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('sla-dashboard')}>
                         <div className="flex items-center justify-between mb-4">
-                          <div className="bg-purple-50 p-3 rounded-xl">
-                            <Clock size={24} className="text-purple-600" />
+                          <div className="bg-amber-50 p-3 rounded-xl">
+                            <Clock size={24} className="text-amber-600" />
                           </div>
-                          <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                          <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
                             SLA
                           </span>
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Overdue Tickets</h4>
+                        <h4 className="text-gray-600 text-sm font-medium mb-1">SLA Monitoring</h4>
                         <p className="text-3xl font-bold text-gray-900">
-                          {tickets.filter(t => {
-                            if (!t.status_changed_at || !t.sla_hours) return false;
-                            const statusChangedTime = new Date(t.status_changed_at).getTime();
-                            const currentTime = Date.now();
-                            const elapsedHours = (currentTime - statusChangedTime) / (1000 * 60 * 60);
-                            return elapsedHours > t.sla_hours;
-                          }).length}
+                          {tickets.filter(t => t.status_changed_at && t.sla_hours).length}
                         </p>
                         <p className="text-xs text-gray-500 mt-2">Click to view SLA dashboard</p>
                       </div>
