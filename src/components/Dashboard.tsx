@@ -796,10 +796,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     </div>
 
                     {/* Overdue Tickets Alert */}
-                    <OverdueTicketsAlert
-                      tickets={tickets}
-                      onViewTicket={handleManageTicket}
-                    />
+                    <div className="max-w-4xl">
+                      <OverdueTicketsAlert
+                        tickets={tickets}
+                        onViewTicket={handleManageTicket}
+                      />
+                    </div>
 
                     {/* Recent Tickets with Status Updates */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
