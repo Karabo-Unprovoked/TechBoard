@@ -57,16 +57,22 @@ Deno.serve(async (req: Request) => {
 
     const notifications = [];
     for (const ticket of overdueTickets as OverdueTicket[]) {
-      const { data: existingNotification } = await supabase
+      const { data: lastNotification } = await supabase
         .from("sla_notifications")
-        .select("id")
+        .select("id, notified_at")
         .eq("ticket_id", ticket.id)
         .eq("notification_type", "overdue")
-        .gte("notified_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .order("notified_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (existingNotification) {
-        continue;
+      if (lastNotification) {
+        const hoursSinceLastNotification =
+          (Date.now() - new Date(lastNotification.notified_at).getTime()) / (1000 * 60 * 60);
+
+        if (hoursSinceLastNotification < 24) {
+          continue;
+        }
       }
 
       const { data: adminSettings } = await supabase
