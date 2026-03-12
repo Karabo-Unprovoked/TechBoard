@@ -35,7 +35,7 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
   };
 
   const analytics = useMemo(() => {
-    const rangeTickets = tickets.filter(t => filterByTimeRange(t.created_at));
+    const rangeTickets = tickets.filter(t => t.created_at && filterByTimeRange(t.created_at));
     const completedTickets = rangeTickets.filter(t => t.status === 'completed');
     const activeTickets = tickets.filter(t =>
       t.status !== 'completed' && t.status !== 'void'
@@ -61,7 +61,7 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
       return completedTickets.length * 150;
     };
 
-    const newCustomersInRange = customers.filter(c => filterByTimeRange(c.created_at)).length;
+    const newCustomersInRange = customers.filter(c => c.created_at && filterByTimeRange(c.created_at)).length;
 
     const statusBreakdown = statuses.map(status => ({
       status: status.status_label,
@@ -86,15 +86,19 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
       : 0;
 
     const previousRangeTickets = tickets.filter(t => {
+      if (!t.created_at) return false;
       const itemDate = new Date(t.created_at);
       const currentRangeDate = getTimeRangeDate(timeRange);
       const previousRangeDate = new Date(currentRangeDate.getTime() - (new Date().getTime() - currentRangeDate.getTime()));
       return itemDate >= previousRangeDate && itemDate < currentRangeDate;
     });
 
-    const ticketGrowth = previousRangeTickets.length > 0
-      ? ((rangeTickets.length - previousRangeTickets.length) / previousRangeTickets.length) * 100
-      : 0;
+    let ticketGrowth = 0;
+    if (previousRangeTickets.length > 0) {
+      ticketGrowth = ((rangeTickets.length - previousRangeTickets.length) / previousRangeTickets.length) * 100;
+    } else if (rangeTickets.length > 0) {
+      ticketGrowth = 100;
+    }
 
     return {
       totalTickets: rangeTickets.length,
@@ -107,7 +111,7 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
       topDevices,
       dailyTicketTrend,
       completionRate,
-      ticketGrowth
+      ticketGrowth: isFinite(ticketGrowth) ? ticketGrowth : 0
     };
   }, [tickets, customers, statuses, timeRange]);
 
@@ -152,7 +156,9 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
     return `${days}d ${remainingHours}h`;
   };
 
-  const maxTrendValue = Math.max(...analytics.dailyTicketTrend.map(d => d.count), 1);
+  const maxTrendValue = analytics.dailyTicketTrend.length > 0
+    ? Math.max(...analytics.dailyTicketTrend.map(d => d.count), 1)
+    : 1;
 
   return (
     <div className="space-y-6">
@@ -315,33 +321,39 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
 
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-bold text-gray-900 mb-6">Top Device Types</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {analytics.topDevices.map(([device, count], index) => {
-            const percentage = analytics.totalTickets > 0
-              ? (count / analytics.totalTickets) * 100
-              : 0;
+        {analytics.topDevices.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {analytics.topDevices.map(([device, count], index) => {
+              const percentage = analytics.totalTickets > 0
+                ? (count / analytics.totalTickets) * 100
+                : 0;
 
-            return (
-              <div key={device} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl font-bold text-gray-900">#{index + 1}</span>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              return (
+                <div key={device} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl font-bold text-gray-900">#{index + 1}</span>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 mb-1 capitalize">
+                    {device.replace('-laptop', '').replace('-', ' ')}
+                  </p>
+                  <p className="text-2xl font-bold text-blue-600 mb-1">{count}</p>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                    <div
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">{percentage.toFixed(1)}% of total</p>
                 </div>
-                <p className="text-sm font-medium text-gray-900 mb-1 capitalize">
-                  {device.replace('-laptop', '').replace('-', ' ')}
-                </p>
-                <p className="text-2xl font-bold text-blue-600 mb-1">{count}</p>
-                <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
-                  <div
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500">{percentage.toFixed(1)}% of total</p>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No device data available for this period</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
