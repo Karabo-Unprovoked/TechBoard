@@ -795,47 +795,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                       </div>
                     </div>
 
-                    {/* Overdue Tickets Alert and Status Overview */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <div className="lg:col-span-2">
-                        <OverdueTicketsAlert
-                          tickets={tickets}
-                          onViewTicket={handleManageTicket}
-                        />
-                      </div>
-
-                      {/* Status Overview - Dynamic based on database */}
-                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
-                        <div className="space-y-3">
-                          {statuses.map((status) => {
-                            const colors = getStatusDisplayColors(status.status_key);
-                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
-                            const count = stats[statusKey] || 0;
-
-                            return (
-                              <button
-                                key={status.id}
-                                onClick={() => {
-                                  setStatusFilter(status.status_key);
-                                  setCurrentView('tickets');
-                                }}
-                                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group cursor-pointer border border-transparent hover:border-gray-200"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                    <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
-                                  </div>
-                                  <span className="text-sm text-gray-600 font-medium group-hover:text-gray-900">{status.status_label}</span>
-                                </div>
-                                <span className="font-bold text-gray-900 group-hover:scale-110 transition-transform">{count}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Recent Tickets with Status Updates */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
@@ -1073,6 +1032,47 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                               })}
                             </div>
                           )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Overdue Tickets Alert and Status Overview */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-2">
+                        <OverdueTicketsAlert
+                          tickets={tickets}
+                          onViewTicket={handleManageTicket}
+                        />
+                      </div>
+
+                      {/* Status Overview - Dynamic based on database */}
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="text-base font-bold text-gray-900 mb-5">Status Overview</h3>
+                        <div className="space-y-3">
+                          {statuses.map((status) => {
+                            const colors = getStatusDisplayColors(status.status_key);
+                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+                            const count = stats[statusKey] || 0;
+
+                            return (
+                              <button
+                                key={status.id}
+                                onClick={() => {
+                                  setStatusFilter(status.status_key);
+                                  setCurrentView('tickets');
+                                }}
+                                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group cursor-pointer border border-transparent hover:border-gray-200"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                    <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
+                                  </div>
+                                  <span className="text-sm text-gray-600 font-medium group-hover:text-gray-900">{status.status_label}</span>
+                                </div>
+                                <span className="font-bold text-gray-900 group-hover:scale-110 transition-transform">{count}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
