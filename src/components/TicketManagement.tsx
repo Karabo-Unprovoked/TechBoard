@@ -52,10 +52,6 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
     outsourced_to: ticket.outsourced_to || '',
     pending_customer_action_type: ticket.pending_customer_action_type || '',
     priority: ticket.priority || 'medium',
-    estimated_cost: ticket.estimated_cost || 0,
-    actual_cost: ticket.actual_cost || 0,
-    estimated_completion: ticket.estimated_completion ?
-      new Date(ticket.estimated_completion).toISOString().slice(0, 16) : '',
     repair_notes: ticket.repair_notes || ''
   });
 
@@ -133,7 +129,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
         break;
       case 'quote_request':
         subject = `Repair Quote - ${ticket.ticket_number}`;
-        content = `Dear ${customerName},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nEstimated Cost: R${ticket.estimated_cost?.toFixed(2) || '0.00'}\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team`;
+        content = `Dear ${customerName},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team`;
         break;
       default:
         subject = '';
@@ -147,8 +143,6 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
     try {
       const updateData = {
         ...editData,
-        estimated_completion: editData.estimated_completion ?
-          new Date(editData.estimated_completion).toISOString() : null,
         updated_at: new Date().toISOString()
       };
 
@@ -395,10 +389,6 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                         outsourced_to: ticket.outsourced_to || '',
                         pending_customer_action_type: ticket.pending_customer_action_type || '',
                         priority: ticket.priority || 'medium',
-                        estimated_cost: ticket.estimated_cost || 0,
-                        actual_cost: ticket.actual_cost || 0,
-                        estimated_completion: ticket.estimated_completion ?
-                          new Date(ticket.estimated_completion).toISOString().slice(0, 16) : '',
                         repair_notes: ticket.repair_notes || ''
                       });
                     }}
@@ -608,59 +598,6 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                     </div>
                   </div>
                 )}
-
-                {/* Cost Information */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-2">Estimated Cost</label>
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={editData.estimated_cost}
-                      onChange={(e) => setEditData({ ...editData, estimated_cost: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                      style={{ focusRingColor: PRIMARY }}
-                      placeholder="0.00"
-                    />
-                  ) : (
-                    <p className="text-gray-900 font-medium">R{ticket.estimated_cost?.toFixed(2) || '0.00'}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-2">Actual Cost</label>
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={editData.actual_cost}
-                      onChange={(e) => setEditData({ ...editData, actual_cost: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                      style={{ focusRingColor: PRIMARY }}
-                      placeholder="0.00"
-                    />
-                  ) : (
-                    <p className="text-gray-900 font-medium">R{ticket.actual_cost?.toFixed(2) || '0.00'}</p>
-                  )}
-                </div>
-
-                {/* Estimated Completion */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-600 mb-2">Estimated Completion</label>
-                  {isEditing ? (
-                    <input
-                      type="datetime-local"
-                      value={editData.estimated_completion}
-                      onChange={(e) => setEditData({ ...editData, estimated_completion: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                      style={{ focusRingColor: PRIMARY }}
-                    />
-                  ) : (
-                    <p className="text-gray-900 font-medium">
-                      {ticket.estimated_completion ? formatDate(ticket.estimated_completion) : 'Not set'}
-                    </p>
-                  )}
-                </div>
               </div>
 
               {/* Issue Description */}
@@ -1071,7 +1008,7 @@ export const TicketManagement: React.FC<TicketManagementProps> = ({
                       emailData.type === 'parts_needed' ?
                         `Dear ${customerName},\n\nWe need to order additional parts for your ${ticket.device_type} repair.\n\nThis may extend the repair time by a few days. We will keep you updated on the progress.\n\nThank you for your patience.\n\nBest regards,\nGuardian Assist Team` :
                       emailData.type === 'quote_request' ?
-                        `Dear ${customerName},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nEstimated Cost: R${ticket.estimated_cost?.toFixed(2) || '0.00'}\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team` :
+                        `Dear ${customerName},\n\nWe have diagnosed your ${ticket.device_type} and prepared a repair quote.\n\nPlease let us know if you would like to proceed with the repair.\n\nBest regards,\nGuardian Assist Team` :
                       'Email content...';
                     })()}
                   />
