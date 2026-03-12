@@ -210,3 +210,5 @@ export const useDashboardLayout = () => {
     sortBlocks,
   };
 };
+
+}
