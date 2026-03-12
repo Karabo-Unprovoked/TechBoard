@@ -48,6 +48,33 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
     return colors[statusKey] || '#6b7280';
   };
 
+  const calculateDailyTrend = (rangeTickets: RepairTicket[]) => {
+    const days = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : timeRange === 'quarter' ? 90 : 365;
+    const trend: { date: string; count: number }[] = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+
+      const count = rangeTickets.filter(t => {
+        const ticketDate = new Date(t.created_at).toISOString().split('T')[0];
+        return ticketDate === dateStr;
+      }).length;
+
+      trend.push({ date: dateStr, count });
+    }
+
+    return trend;
+  };
+
+  const formatTime = (hours: number): string => {
+    if (hours < 24) return `${Math.round(hours)}h`;
+    const days = Math.floor(hours / 24);
+    const remainingHours = Math.round(hours % 24);
+    return `${days}d ${remainingHours}h`;
+  };
+
   const analytics = useMemo(() => {
     const rangeTickets = tickets.filter(t => t.created_at && filterByTimeRange(t.created_at));
     const completedTickets = rangeTickets.filter(t => t.status === 'completed');
@@ -128,33 +155,6 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
       ticketGrowth: isFinite(ticketGrowth) ? ticketGrowth : 0
     };
   }, [tickets, customers, statuses, timeRange]);
-
-  const calculateDailyTrend = (rangeTickets: RepairTicket[]) => {
-    const days = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : timeRange === 'quarter' ? 90 : 365;
-    const trend: { date: string; count: number }[] = [];
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-
-      const count = rangeTickets.filter(t => {
-        const ticketDate = new Date(t.created_at).toISOString().split('T')[0];
-        return ticketDate === dateStr;
-      }).length;
-
-      trend.push({ date: dateStr, count });
-    }
-
-    return trend;
-  };
-
-  const formatTime = (hours: number): string => {
-    if (hours < 24) return `${Math.round(hours)}h`;
-    const days = Math.floor(hours / 24);
-    const remainingHours = Math.round(hours % 24);
-    return `${days}d ${remainingHours}h`;
-  };
 
   const maxTrendValue = analytics.dailyTicketTrend.length > 0
     ? Math.max(...analytics.dailyTicketTrend.map(d => d.count), 1)
