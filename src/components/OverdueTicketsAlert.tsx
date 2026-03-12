@@ -68,31 +68,31 @@ export const OverdueTicketsAlert: React.FC<OverdueTicketsAlertProps> = ({ ticket
   };
 
   return (
-    <div className={`rounded-2xl shadow-lg border-2 overflow-hidden ${
+    <div className={`rounded-xl shadow-md border overflow-hidden ${
       overdueTickets.length > 0
         ? 'bg-gradient-to-br from-red-50 to-red-100 border-red-300'
         : 'bg-gradient-to-br from-green-50 to-green-100 border-green-300'
     }`}>
-      <div className={`text-white px-6 py-4 ${
+      <div className={`text-white px-4 py-3 ${
         overdueTickets.length > 0 ? 'bg-red-600' : 'bg-green-600'
       }`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg">
+          <div className="flex items-center gap-2">
+            <div className="bg-white/20 p-1.5 rounded-lg">
               {overdueTickets.length > 0 ? (
-                <AlertTriangle size={24} />
+                <AlertTriangle size={18} />
               ) : (
-                <Clock size={24} />
+                <Clock size={18} />
               )}
             </div>
             <div>
-              <h3 className="text-lg font-bold">
+              <h3 className="text-base font-bold">
                 {overdueTickets.length > 0 ? 'SLA BREACH ALERT' : 'SLA MONITORING'}
               </h3>
-              <p className={`text-sm ${overdueTickets.length > 0 ? 'text-red-100' : 'text-green-100'}`}>
+              <p className={`text-xs ${overdueTickets.length > 0 ? 'text-red-100' : 'text-green-100'}`}>
                 {overdueTickets.length > 0
                   ? `${overdueTickets.length} ${overdueTickets.length === 1 ? 'ticket is' : 'tickets are'} overdue`
-                  : 'All tickets are within SLA limits'
+                  : 'All tickets within SLA limits'
                 }
               </p>
             </div>
@@ -100,67 +100,58 @@ export const OverdueTicketsAlert: React.FC<OverdueTicketsAlertProps> = ({ ticket
           <button
             onClick={checkAndSendAlerts}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors font-medium text-xs disabled:opacity-50"
             title="Check and send email alerts"
           >
-            <Mail size={16} />
+            <Mail size={14} />
             {loading ? 'Checking...' : 'Send Alerts'}
           </button>
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-4">
         {lastCheck && (
-          <div className="mb-4 text-xs text-gray-600 flex items-center gap-1">
+          <div className="mb-3 text-xs text-gray-600 flex items-center gap-1">
             <Clock size={12} />
             Last checked: {lastCheck.toLocaleTimeString()}
           </div>
         )}
 
         {overdueTickets.length > 0 ? (
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-2 max-h-64 overflow-y-auto">
             {overdueTickets.map((ticket) => {
             const hoursOverdue = calculateHoursOverdue(ticket);
 
             return (
               <div
                 key={ticket.id}
-                className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all cursor-pointer border-l-4 border-red-500"
+                className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 border-red-500"
                 onClick={() => onViewTicket(ticket)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h4 className="font-bold text-gray-900">{ticket.ticket_number}</h4>
-                    <p className="text-sm text-gray-600">{ticket.customer?.name}</p>
+                    <h4 className="font-bold text-sm text-gray-900">{ticket.ticket_number}</h4>
+                    <p className="text-xs text-gray-600">{ticket.customer?.name}</p>
                   </div>
                   <div className="text-right">
-                    <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                    <div className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">
                       {hoursOverdue.toFixed(1)}h overdue
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100">
+                <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-gray-100">
                   <div>
                     <p className="text-xs text-gray-500">Device</p>
-                    <p className="text-sm font-medium text-gray-900">{ticket.device_type}</p>
+                    <p className="text-xs font-medium text-gray-900">{ticket.device_type}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Status</p>
-                    <p className="text-sm font-medium text-gray-900 capitalize">{ticket.status.replace('-', ' ')}</p>
+                    <p className="text-xs font-medium text-gray-900 capitalize">{ticket.status.replace('-', ' ')}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">SLA Limit</p>
-                    <p className="text-sm font-medium text-gray-900">{ticket.sla_hours}h</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Status changed:</span>
-                    <span className="font-medium text-gray-900">
-                      {new Date(ticket.status_changed_at!).toLocaleString()}
-                    </span>
+                    <p className="text-xs font-medium text-gray-900">{ticket.sla_hours}h</p>
                   </div>
                 </div>
               </div>
@@ -168,20 +159,20 @@ export const OverdueTicketsAlert: React.FC<OverdueTicketsAlertProps> = ({ ticket
           })}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-              <Clock size={32} className="text-green-600" />
+          <div className="text-center py-6">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
+              <Clock size={24} className="text-green-600" />
             </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">No Overdue Tickets</h4>
-            <p className="text-sm text-gray-600">
-              All tickets are being handled within their SLA timeframes
+            <h4 className="text-sm font-semibold text-gray-900 mb-1">No Overdue Tickets</h4>
+            <p className="text-xs text-gray-600">
+              All tickets within SLA timeframes
             </p>
           </div>
         )}
 
-        <div className={`mt-4 pt-4 ${overdueTickets.length > 0 ? 'border-t border-red-200' : 'border-t border-green-200'}`}>
+        <div className={`mt-3 pt-3 ${overdueTickets.length > 0 ? 'border-t border-red-200' : 'border-t border-green-200'}`}>
           <p className="text-xs text-gray-600 text-center">
-            Email alerts are automatically sent to administrators every 5 minutes for overdue tickets
+            Alerts sent automatically every 5 minutes
           </p>
         </div>
       </div>
