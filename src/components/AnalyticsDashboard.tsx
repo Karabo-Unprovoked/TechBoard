@@ -34,6 +34,20 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
     return itemDate >= rangeDate;
   };
 
+  const getStatusColor = (statusKey: string): string => {
+    const colors: Record<string, string> = {
+      'pending': '#f59e0b',
+      'received': '#3b82f6',
+      'in-progress': '#8b5cf6',
+      'invoiced': '#f97316',
+      'completed': '#10b981',
+      'unrepairable': '#ef4444',
+      'pending-customer-action': '#eab308',
+      'void': '#6b7280'
+    };
+    return colors[statusKey] || '#6b7280';
+  };
+
   const analytics = useMemo(() => {
     const rangeTickets = tickets.filter(t => t.created_at && filterByTimeRange(t.created_at));
     const completedTickets = rangeTickets.filter(t => t.status === 'completed');
@@ -133,20 +147,6 @@ export function AnalyticsDashboard({ tickets, customers, statuses }: AnalyticsDa
     }
 
     return trend;
-  };
-
-  const getStatusColor = (statusKey: string): string => {
-    const colors: Record<string, string> = {
-      'pending': '#f59e0b',
-      'received': '#3b82f6',
-      'in-progress': '#8b5cf6',
-      'invoiced': '#f97316',
-      'completed': '#10b981',
-      'unrepairable': '#ef4444',
-      'pending-customer-action': '#eab308',
-      'void': '#6b7280'
-    };
-    return colors[statusKey] || '#6b7280';
   };
 
   const formatTime = (hours: number): string => {
