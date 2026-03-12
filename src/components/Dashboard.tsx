@@ -732,19 +732,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                     )}
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('tickets')}>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="bg-blue-50 p-3 rounded-xl">
-                            <Wrench size={24} className="text-blue-600" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-3 sm:mb-4">
+                          <div className="bg-blue-50 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                            <Wrench size={20} className="sm:w-6 sm:h-6 text-blue-600" />
                           </div>
-                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 sm:px-3 py-1 rounded-full">
                             +{stats.todayTickets} today
                           </span>
                         </div>
-                        <h4 className="text-gray-600 text-sm font-medium mb-1">Total Tickets</h4>
-                        <p className="text-3xl font-bold text-gray-900">{stats.totalTickets}</p>
-                        <p className="text-xs text-gray-500 mt-2">Click to view all tickets</p>
+                        <h4 className="text-gray-600 text-xs sm:text-sm font-medium mb-1">Total Tickets</h4>
+                        <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">{stats.totalTickets}</p>
+
+                        {/* Status Breakdown */}
+                        <div className="space-y-2 pt-3 border-t border-gray-100">
+                          {statuses.slice(0, 3).map((status) => {
+                            const statusKey = status.status_key.replace(/-/g, '') + 'Tickets';
+                            const count = stats[statusKey] || 0;
+                            const percentage = stats.totalTickets > 0 ? Math.round((count / stats.totalTickets) * 100) : 0;
+                            const colors = getStatusDisplayColors(status.status_key);
+
+                            return (
+                              <div key={status.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 ${colors.dot} rounded-full`}></div>
+                                  <span className="text-xs text-gray-600">{status.status_label}</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-900">{percentage}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setCurrentView('registration-requests')}>
                         <div className="flex items-center justify-between mb-4">
