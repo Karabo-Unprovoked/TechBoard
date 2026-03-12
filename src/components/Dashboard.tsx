@@ -18,6 +18,7 @@ import { StatusChangeModal } from './StatusChangeModal';
 import { SLABadge } from './SLABadge';
 import { SLADashboard } from './SLADashboard';
 import { OverdueTicketsAlert } from './OverdueTicketsAlert';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { generateStatusUpdateEmail } from '../lib/emailTemplates';
 import type { NotificationType } from './Notification';
 
@@ -28,7 +29,7 @@ interface DashboardProps {
   onNotification: (type: NotificationType, message: string) => void;
 }
 
-type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile' | 'registration-requests' | 'sla-dashboard';
+type DashboardView = 'dashboard' | 'tickets' | 'customers' | 'new-customer' | 'new-ticket' | 'label' | 'manage-ticket' | 'manage-customer' | 'settings' | 'profile' | 'registration-requests' | 'sla-dashboard' | 'analytics';
 type TicketViewLayout = 'detailed' | 'compact' | 'minimal';
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackCustomer, onNotification }) => {
@@ -551,6 +552,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                 {!sidebarCollapsed && <span className="text-sm">SLA Dashboard</span>}
               </button>
               <button
+                onClick={() => { setCurrentView('analytics'); setSidebarOpen(false); }}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
+                  currentView === 'analytics' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+                title={sidebarCollapsed ? 'Analytics' : ''}
+              >
+                <BarChart3 size={18} />
+                {!sidebarCollapsed && <span className="text-sm">Analytics</span>}
+              </button>
+              <button
                 onClick={() => { setCurrentView('settings'); setSidebarOpen(false); }}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl font-medium transition-all ${
                   currentView === 'settings' ? 'bg-white text-gray-800 shadow-lg' : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -618,6 +629,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'profile' && 'My Profile'}
                   {currentView === 'registration-requests' && 'Registration Requests'}
                   {currentView === 'sla-dashboard' && 'SLA Dashboard'}
+                  {currentView === 'analytics' && 'Analytics & Insights'}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">
                   {currentView === 'dashboard' && 'Welcome back! Here\'s your overview'}
@@ -632,6 +644,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   {currentView === 'profile' && 'Manage your account details and security settings'}
                   {currentView === 'registration-requests' && 'Review and approve customer registration requests'}
                   {currentView === 'sla-dashboard' && 'Monitor service level agreements and ticket breach status'}
+                  {currentView === 'analytics' && 'View detailed statistics, trends, and business insights'}
                 </p>
               </div>
               
@@ -1153,6 +1166,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBack, onLogout, onTrackC
                   <SLADashboard
                     tickets={tickets}
                     onViewTicket={handleManageTicket}
+                    statuses={statuses}
+                  />
+                )}
+                {currentView === 'analytics' && (
+                  <AnalyticsDashboard
+                    tickets={tickets}
+                    customers={customers}
                     statuses={statuses}
                   />
                 )}
