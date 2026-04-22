@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash, Users, MapPin, MessageCircle, Truck, Send } from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit3, Save, X, User, Mail, Phone, Calendar, Wrench, Eye, Hash, Users, MapPin, MessageCircle, Truck, Send, Printer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Customer, RepairTicket } from '../lib/supabase';
 import type { NotificationType } from './Notification';
+import { CustomerPrintView } from './CustomerPrintView';
 
 interface CustomerManagementProps {
   customer: Customer;
@@ -24,6 +25,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [loading, setLoading] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [customerTickets, setCustomerTickets] = useState<RepairTicket[]>([]);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   const [editData, setEditData] = useState({
     title: customer.title || '',
@@ -228,14 +230,23 @@ Thank you for choosing Computer Guardian!`;
           
           <div className="flex items-center gap-3">
             {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
-                style={{ backgroundColor: PRIMARY }}
-              >
-                <Edit3 size={16} />
-                <span>Edit Customer</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setShowPrintModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  <Printer size={16} />
+                  <span>Print Report</span>
+                </button>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+                  style={{ backgroundColor: PRIMARY }}
+                >
+                  <Edit3 size={16} />
+                  <span>Edit Customer</span>
+                </button>
+              </>
             ) : (
               <div className="flex items-center gap-2">
                 <button
@@ -722,6 +733,14 @@ Thank you for choosing Computer Guardian!`;
           </div>
         </div>
       </div>
+
+      {showPrintModal && (
+        <CustomerPrintView
+          customer={customer}
+          tickets={customerTickets}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
     </>
   );
 };
