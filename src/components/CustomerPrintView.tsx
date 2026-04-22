@@ -114,17 +114,17 @@ export const CustomerPrintView: React.FC<CustomerPrintViewProps> = ({ customer, 
           }}
         >
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: `3px solid ${PRIMARY}`, marginBottom: '24px' }}>
-            <div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: SECONDARY }}>Client Report</div>
-              <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
-                Generated {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          <div style={{ paddingBottom: '16px', borderBottom: `3px solid ${PRIMARY}`, marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <img src="/Untitled-CG.png" alt="Computer Guardian" style={{ height: '56px', objectFit: 'contain' }} />
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '10px', fontWeight: 600, color: '#9ca3af', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Repair Management System</div>
+                <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '3px' }}>
+                  Generated {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: PRIMARY }}>Computer Guardian</div>
-              <div style={{ fontSize: '10px', color: '#9ca3af' }}>Repair Management System</div>
-            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: SECONDARY }}>Client Report</div>
           </div>
 
           {/* Info grid */}
