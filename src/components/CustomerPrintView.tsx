@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Printer } from 'lucide-react';
 import type { Customer, RepairTicket } from '../lib/supabase';
 
@@ -64,7 +65,7 @@ export const CustomerPrintView: React.FC<CustomerPrintViewProps> = ({ customer, 
 
   const handlePrint = () => window.print();
 
-  return (
+  return createPortal(
     <>
       {/* Print styles injected into head */}
       <style>{`
@@ -280,7 +281,8 @@ export const CustomerPrintView: React.FC<CustomerPrintViewProps> = ({ customer, 
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 
